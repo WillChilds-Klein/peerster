@@ -12,9 +12,18 @@ NetSocket::NetSocket(Peerster* p)
     // We use the range from 32768 to 49151 for this purpose.
     myPortMin = 32768 + (getuid() % 4096)*4;
     myPortMax = myPortMin + 3;
+    port = -1;
+
+    connect(this, SIGNAL(readyRead()), this, SLOT(gotReadyRead()));
 }
 
-NetSocket::~NetSocket() {}
+NetSocket::~NetSocket() 
+{}
+
+int NetSocket::getPort()
+{
+    return this->port;
+}
 
 bool NetSocket::bind()
 {
@@ -22,6 +31,7 @@ bool NetSocket::bind()
     for (int p = myPortMin; p <= myPortMax; p++) {
         if (QUdpSocket::bind(p)) {
             qDebug() << "bound to UDP port " << p;
+            this->port = p;
             return true;
         }
     }
@@ -46,9 +56,31 @@ void NetSocket::send(Message msg){
     /**/
 
     // Send message via UDP
-    for(int port = myPortMin; port <= myPortMax; port++){
-        writeDatagram(messageArr, QHostAddress(QHostAddress::LocalHost), port);
-        
-        qDebug() << "MESSAGE: " << dMap.value("ChatText") << "\n SENT TO PORT: " << port;
+    for(int p = myPortMin; p <= myPortMax; p++){
+        if(p != this->port)
+        {
+            writeDatagram(messageArr, QHostAddress(QHostAddress::LocalHost), p);
+        }
+    }
+}
+
+void NetSocket::gotReadyRead()
+{   
+    QHostAddress sender;
+    QByteArray datagram;
+
+    while (hasPendingDatagrams()) 
+    {
+        sender = QHostAddress::LocalHost;
+        datagram.resize(pendingDatagramSize());
+        quint16 p = (quint16) this->myPortMin;
+
+        readDatagram(datagram.data(), (qint64) datagram.size(),
+                                 &sender, &p);
+
+        QDataStream stream(&datagram, QIODevice::ReadOnly);
+        Message msg;
+        stream >> msg;
+        this->peerster->getDialog()->displayMessage(msg, false);
     }
 }

@@ -13,12 +13,16 @@ class NetSocket : public QUdpSocket
     public:
         NetSocket(Peerster* p);
         ~NetSocket();
+        int getPort();
         bool bind();
         void send(Message msg);
 
+    public slots:
+        void gotReadyRead();
+
     private:
         Peerster* peerster;
-        int myPortMin, myPortMax;
+        int myPortMin, myPortMax, port;
 };
 
 #endif // PEERSTER_NETSOCKET_HH
