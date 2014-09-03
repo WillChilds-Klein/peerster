@@ -36,6 +36,9 @@ ChatDialog::ChatDialog(Peerster* p)
     // so that we can send the message entered by the user.
     connect(textline, SIGNAL(returnPressed()),
         this, SLOT(gotReturnPressed()));
+
+    // L1E1: set line focus to textline on startup
+    textline->setFocus();
 }
 
 ChatDialog::~ChatDialog() {}
