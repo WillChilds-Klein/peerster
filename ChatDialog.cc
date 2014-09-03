@@ -6,7 +6,8 @@
 
 #include "ChatDialog.hh"
 
-ChatDialog::ChatDialog()
+ChatDialog::ChatDialog(Peerster* p)
+    : peerster(p)
 {
     setWindowTitle("Peerster");
 

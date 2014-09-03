@@ -6,16 +6,20 @@
 #include <QLineEdit>
 #include <QUdpSocket>
 
+#include "Peerster.hh"
+
+class Peerster;
 class NetSocket : public QUdpSocket
 {
     Q_OBJECT
 
     public:
-        NetSocket();
+        NetSocket(Peerster* p);
         ~NetSocket();
         bool bind();
 
     private:
+        Peerster* peerster;
         int myPortMin, myPortMax;
 };
 

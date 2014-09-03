@@ -6,18 +6,22 @@
 #include <QLineEdit>
 #include <QUdpSocket>
 
+#include "Peerster.hh"
+
+class Peerster;
 class ChatDialog : public QDialog
 {
     Q_OBJECT
 
     public:
-        ChatDialog();
+        ChatDialog(Peerster* p);
         ~ChatDialog();
 
     public slots:
         void gotReturnPressed();
 
     private:
+        Peerster* peerster;
         QTextEdit* textview;
         QLineEdit* textline;
 };

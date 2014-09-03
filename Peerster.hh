@@ -10,6 +10,8 @@
 #include "ChatDialog.hh"
 #include "NetSocket.hh"
 
+class ChatDialog;
+class NetSocket;
 class Peerster : public QObject
 {
     Q_OBJECT
@@ -17,6 +19,8 @@ class Peerster : public QObject
     public:
         Peerster();
         ~Peerster();
+        ChatDialog* getDialog();
+        NetSocket* getSocket();
 
     private:
         ChatDialog* dialog;

@@ -6,7 +6,8 @@
 
 #include "NetSocket.hh"
 
-NetSocket::NetSocket()
+NetSocket::NetSocket(Peerster* p)
+    : peerster(p)
 {
     // Pick a range of four UDP ports to try to allocate by default,
     // computed based on my Unix user ID.

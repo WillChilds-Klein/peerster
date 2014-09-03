@@ -5,12 +5,20 @@
 #include <QDebug>
 
 #include "Peerster.hh"
-#include "ChatDialog.hh"
-#include "NetSocket.hh"
 
 Peerster::Peerster()
-    // : dialog(new ChatDialog(this))
-    // , socket(new NetSocket(this))
+    : dialog(new ChatDialog(this))
+    , socket(new NetSocket(this))
 {}
 
 Peerster::~Peerster() {}
+
+ChatDialog* Peerster::getDialog() 
+{
+    return this->dialog;
+}
+
+NetSocket* Peerster::getSocket()
+{
+    return this->socket;
+}
