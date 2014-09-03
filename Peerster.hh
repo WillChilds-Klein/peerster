@@ -5,6 +5,11 @@
 #include <QTextEdit>
 #include <QLineEdit>
 #include <QUdpSocket>
+#include <QKeyEvent>
+#include <QVariant>
+#include <QUdpSocket>
+#include <limits>
+#include <QList>
 #include <QObject>
 
 #include "ChatDialog.hh"

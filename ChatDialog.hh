@@ -5,10 +5,17 @@
 #include <QTextEdit>
 #include <QLineEdit>
 #include <QUdpSocket>
+#include <QKeyEvent>
+#include <QVariant>
+#include <QUdpSocket>
+#include <limits>
+#include <QList>
 
 #include "Peerster.hh"
 
 class Peerster;
+class EntryQTextEdit;
+
 class ChatDialog : public QDialog
 {
     Q_OBJECT
@@ -23,7 +30,19 @@ class ChatDialog : public QDialog
     private:
         Peerster* peerster;
         QTextEdit* textview;
-        QLineEdit* textline;
+        EntryQTextEdit* textline;
+};
+
+class EntryQTextEdit : public QTextEdit 
+{
+    Q_OBJECT
+
+    public:
+        EntryQTextEdit();
+        void keyPressEvent(QKeyEvent* event);
+
+    signals:
+        void returnPressed();
 };
 
 #endif // PEERSTER_CHATDIALOG_HH
