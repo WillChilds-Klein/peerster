@@ -26,7 +26,7 @@ ChatDialog::ChatDialog()
     // Lay out the widgets to appear in the main window.
     // For Qt widget and layout concepts see:
     // http://doc.qt.nokia.com/4.7-snapshot/widgets-and-layouts.html
-    QVBoxLayout *layout = new QVBoxLayout();
+    QVBoxLayout* layout = new QVBoxLayout();
     layout->addWidget(textview);
     layout->addWidget(textline);
     setLayout(layout);
@@ -36,6 +36,8 @@ ChatDialog::ChatDialog()
     connect(textline, SIGNAL(returnPressed()),
         this, SLOT(gotReturnPressed()));
 }
+
+ChatDialog::~ChatDialog() {}
 
 void ChatDialog::gotReturnPressed()
 {

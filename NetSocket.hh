@@ -12,8 +12,7 @@ class NetSocket : public QUdpSocket
 
     public:
         NetSocket();
-
-        // Bind this socket to a Peerster-specific default port.
+        ~NetSocket();
         bool bind();
 
     private:

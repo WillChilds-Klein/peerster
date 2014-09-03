@@ -1,4 +1,0 @@
-#ifndef PEERSTER_MAIN_HH
-#define PEERSTER_MAIN_HH
-
-#endif // PEERSTER_MAIN_HH

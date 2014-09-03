@@ -5,11 +5,11 @@
 #include <QApplication>
 #include <QDebug>
 
-#include "main.hh"
+#include "Peerster.hh"
 #include "ChatDialog.hh"
 #include "NetSocket.hh"
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
 	// Initialize Qt toolkit
 	QApplication app(argc,argv);

@@ -10,16 +10,16 @@ class ChatDialog : public QDialog
 {
     Q_OBJECT
 
-public:
-    ChatDialog();
+    public:
+        ChatDialog();
+        ~ChatDialog();
 
-public slots:
-    void gotReturnPressed();
+    public slots:
+        void gotReturnPressed();
 
-private:
-    QTextEdit *textview;
-    QLineEdit *textline;
+    private:
+        QTextEdit* textview;
+        QLineEdit* textline;
 };
-
 
 #endif // PEERSTER_CHATDIALOG_HH

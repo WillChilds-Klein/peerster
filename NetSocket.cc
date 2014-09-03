@@ -19,6 +19,8 @@ NetSocket::NetSocket()
     myPortMax = myPortMin + 3;
 }
 
+NetSocket::~NetSocket() {}
+
 bool NetSocket::bind()
 {
     // Try to bind to each of the range myPortMin..myPortMax in turn.
