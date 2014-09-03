@@ -17,12 +17,10 @@ ChatDialog::ChatDialog(Peerster* p)
     textview->setReadOnly(true);
 
     // Small text-entry box the user can enter messages.
-    // This widget normally expands only horizontally,
-    // leaving extra vertical space for the textview widget.
-    //
-    // You might change this into a read/write QTextEdit,
-    // so that the user can easily enter multi-line messages.
-    textline = new QLineEdit(this);
+    // L1E2: multi-line word-wrapped text entry box
+    textline = new EntryQTextEdit();
+    textline->setReadOnly(false);
+    textline->setLineWrapMode(QTextEdit::WidgetWidth);
 
     // Lay out the widgets to appear in the main window.
     // For Qt widget and layout concepts see:
@@ -47,9 +45,22 @@ void ChatDialog::gotReturnPressed()
 {
     // Initially, just echo the string locally.
     // Insert some networking code here...
-    qDebug() << "FIX: send message to other peers: " << textline->text();
-    textview->append(textline->text());
+    qDebug() << "FIX: send message to other peers: " << textline->toPlainText();
+    textview->append(textline->toPlainText());
 
     // Clear the textline to get ready for the next input message.
     textline->clear();
+}
+
+// L1E2: subclass QTextEdit to get desired UI behavior.
+EntryQTextEdit::EntryQTextEdit() : QTextEdit() {}
+
+void EntryQTextEdit::keyPressEvent(QKeyEvent* event) 
+{
+    if(event->key()==Qt::Key_Return){
+        Q_EMIT(returnPressed());
+    }
+    else {
+        QTextEdit::keyPressEvent(event);
+    }
 }
