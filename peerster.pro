@@ -9,7 +9,7 @@ INCLUDEPATH += .
 QT += network
 
 # Input
-HEADERS += Peerster.hh ChatDialog.hh NetSocket.hh
-SOURCES += Peerster.cc ChatDialog.cc NetSocket.cc main.cc
+HEADERS += Peerster.hh ChatDialog.hh NetSocket.hh Message.hh
+SOURCES += Peerster.cc ChatDialog.cc NetSocket.cc Message.cc main.cc
 
 CONFIG-=app_bundle

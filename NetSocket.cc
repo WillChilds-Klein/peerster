@@ -1,9 +1,3 @@
-#include <unistd.h>
-
-#include <QVBoxLayout>
-#include <QApplication>
-#include <QDebug>
-
 #include "NetSocket.hh"
 
 NetSocket::NetSocket(Peerster* p)
@@ -35,4 +29,26 @@ bool NetSocket::bind()
     qDebug() << "Oops, no ports in my default range " << myPortMin
         << "-" << myPortMax << " available";
     return false;
+}
+
+void NetSocket::send(Message msg){
+    // qDebug() << "NetSocket::send invoked";
+
+    // Serialize map
+    QByteArray messageArr;
+    QDataStream stream(&messageArr, QIODevice::WriteOnly);
+    stream << msg;
+
+    /**/ // Deserializing stuff for testing
+    QMap<QString, QVariant> dMap;
+    QDataStream dStream(&messageArr, QIODevice::ReadOnly);
+    dStream >> dMap;
+    /**/
+
+    // Send message via UDP
+    for(int port = myPortMin; port <= myPortMax; port++){
+        writeDatagram(messageArr, QHostAddress(QHostAddress::LocalHost), port);
+        
+        qDebug() << "MESSAGE: " << dMap.value("ChatText") << "\n SENT TO PORT: " << port;
+    }
 }

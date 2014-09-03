@@ -1,19 +1,11 @@
 #ifndef PEERSTER_NETSOCKET_HH
 #define PEERSTER_NETSOCKET_HH
 
-#include <QDialog>
-#include <QTextEdit>
-#include <QLineEdit>
-#include <QUdpSocket>
-#include <QKeyEvent>
-#include <QVariant>
-#include <QUdpSocket>
-#include <limits>
-#include <QList>
-
 #include "Peerster.hh"
 
 class Peerster;
+class Message;
+
 class NetSocket : public QUdpSocket
 {
     Q_OBJECT
@@ -22,6 +14,7 @@ class NetSocket : public QUdpSocket
         NetSocket(Peerster* p);
         ~NetSocket();
         bool bind();
+        void send(Message msg);
 
     private:
         Peerster* peerster;

@@ -1,9 +1,3 @@
-#include <unistd.h>
-
-#include <QVBoxLayout>
-#include <QApplication>
-#include <QDebug>
-
 #include "Peerster.hh"
 
 Peerster::Peerster()

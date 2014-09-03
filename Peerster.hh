@@ -1,7 +1,12 @@
 #ifndef PEERSTER_PEERSTER_HH
 #define PEERSTER_PEERSTER_HH
 
+#include <unistd.h>
+
 #include <QDialog>
+#include <QVBoxLayout>
+#include <QApplication>
+#include <QDebug>
 #include <QTextEdit>
 #include <QLineEdit>
 #include <QUdpSocket>
@@ -14,9 +19,12 @@
 
 #include "ChatDialog.hh"
 #include "NetSocket.hh"
+#include "Message.hh"
 
 class ChatDialog;
 class NetSocket;
+class Message;
+
 class Peerster : public QObject
 {
     Q_OBJECT

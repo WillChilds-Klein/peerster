@@ -1,20 +1,11 @@
 #ifndef PEERSTER_CHATDIALOG_HH
 #define PEERSTER_CHATDIALOG_HH
 
-#include <QDialog>
-#include <QTextEdit>
-#include <QLineEdit>
-#include <QUdpSocket>
-#include <QKeyEvent>
-#include <QVariant>
-#include <QUdpSocket>
-#include <limits>
-#include <QList>
-
 #include "Peerster.hh"
 
 class Peerster;
 class EntryQTextEdit;
+class Message;
 
 class ChatDialog : public QDialog
 {

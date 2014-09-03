@@ -1,9 +1,3 @@
-#include <unistd.h>
-
-#include <QVBoxLayout>
-#include <QApplication>
-#include <QDebug>
-
 #include "ChatDialog.hh"
 
 ChatDialog::ChatDialog(Peerster* p)
@@ -43,10 +37,15 @@ ChatDialog::~ChatDialog() {}
 
 void ChatDialog::gotReturnPressed()
 {
-    // Initially, just echo the string locally.
-    // Insert some networking code here...
-    qDebug() << "FIX: send message to other peers: " << textline->toPlainText();
-    textview->append(textline->toPlainText());
+    // create rumor map
+    Message msg;
+
+    // // insert Origin
+    msg.insert("ChatText", QString(this->textline->toPlainText()));
+
+    this->peerster->getSocket()->send(msg);
+    // qDebug() << "FIX: send message to other peers: " << textline->toPlainText();
+    this->textview->append("ME: " + textline->toPlainText());
 
     // Clear the textline to get ready for the next input message.
     textline->clear();

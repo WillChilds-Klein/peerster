@@ -1,13 +1,7 @@
-
-#include <unistd.h>
-
-#include <QVBoxLayout>
-#include <QApplication>
-#include <QDebug>
-
 #include "Peerster.hh"
 #include "ChatDialog.hh"
 #include "NetSocket.hh"
+#include "Message.hh"
 
 int main(int argc, char** argv)
 {
