@@ -1,7 +1,4 @@
 #include "Peerster.hh"
-#include "ChatDialog.hh"
-#include "NetSocket.hh"
-#include "Message.hh"
 
 int main(int argc, char** argv)
 {

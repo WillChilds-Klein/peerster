@@ -23,7 +23,6 @@
 
 class ChatDialog;
 class NetSocket;
-class Message;
 
 class Peerster : public QObject
 {
