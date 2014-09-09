@@ -13,8 +13,6 @@ NetSocket::NetSocket(Peerster* p)
     myPortMin = 32768 + (getuid() % 4096)*4;
     myPortMax = myPortMin + 3;
     port = -1;
-
-    connect(this, SIGNAL(readyRead()), this, SLOT(gotReadyRead()));
 }
 
 NetSocket::~NetSocket() 
@@ -42,24 +40,17 @@ bool NetSocket::bind()
 }
 
 void NetSocket::send(Message msg){
-    // qDebug() << "NetSocket::send invoked";
+    // serialize map
+    QByteArray msgArr = msg.serialize();
 
-    // Serialize map
-    QByteArray messageArr;
-    QDataStream stream(&messageArr, QIODevice::WriteOnly);
-    stream << msg;
-
-    /**/ // Deserializing stuff for testing
-    QMap<QString, QVariant> dMap;
-    QDataStream dStream(&messageArr, QIODevice::ReadOnly);
-    dStream >> dMap;
-    /**/
+    // save host address
+    QHostAddress host = QHostAddress(QHostAddress::LocalHost);
 
     // Send message via UDP
     for(int p = myPortMin; p <= myPortMax; p++){
         if(p != this->port)
         {
-            writeDatagram(messageArr, QHostAddress(QHostAddress::LocalHost), p);
+            writeDatagram(msgArr, host, p);
         }
     }
 }
@@ -78,9 +69,10 @@ void NetSocket::gotReadyRead()
         readDatagram(datagram.data(), (qint64) datagram.size(),
                                  &sender, &p);
 
-        QDataStream stream(&datagram, QIODevice::ReadOnly);
-        Message msg;
-        stream >> msg;
-        this->peerster->getDialog()->displayMessage(msg, false);
+        Message* msg = new Message(&datagram);
+        this->peerster->getDialog()->displayMessage(*msg, false);
     }
 }
+
+void NetSocket::sendMessage()
+{}

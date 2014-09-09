@@ -16,13 +16,17 @@
 #include <limits>
 #include <QList>
 #include <QObject>
+#include <QQueue>
+#include <QMap>
 
 #include "ChatDialog.hh"
 #include "NetSocket.hh"
 #include "Message.hh"
+#include "Mailbox.hh"
 
 class ChatDialog;
 class NetSocket;
+class Mailbox;
 
 class Peerster : public QObject
 {
@@ -33,10 +37,12 @@ class Peerster : public QObject
         ~Peerster();
         ChatDialog* getDialog();
         NetSocket* getSocket();
+        Mailbox* getMailbox();
 
     private:
         ChatDialog* dialog;
         NetSocket* socket;
+        Mailbox* mailbox;
 };
 
 #endif // PEERSTER_PEERSTER_HH

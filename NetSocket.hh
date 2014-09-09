@@ -19,6 +19,7 @@ class NetSocket : public QUdpSocket
 
     public slots:
         void gotReadyRead();
+        void sendMessage();
 
     private:
         Peerster* peerster;
