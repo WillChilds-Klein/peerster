@@ -16,18 +16,24 @@ class NetSocket : public QUdpSocket
         int getPort();
         bool bind();
         void send(Message msg);
-        QList<int> findNeighbors();
 
     public slots:
         void gotReadyRead();
         void gotSendMessage(Message);
+        void gotStartPeering();
+        void gotStopPeering();
 
     signals:
         void postToInbox(Message);
 
     private:
         Peerster* peerster;
+        QList<int> neighbors;
         int myPortMin, myPortMax, port;
+        bool peered;
+        int peerPort;
+        QList<int> findNeighbors();
+        void pickNewPeer();
 };
 
 #endif // PEERSTER_NETSOCKET_HH

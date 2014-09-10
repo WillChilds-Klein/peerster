@@ -15,6 +15,18 @@ NetSocket::NetSocket(Peerster* p)
     port = -1;
 
     connect(this, SIGNAL(readyRead()), this, SLOT(gotReadyRead()));
+
+    // Create a UDP network socket
+    if (!bind())
+    {
+        qDebug() << "Peerster failed to bind!";
+        exit(1);
+    }
+
+    neighbors = findNeighbors();
+    qDebug() << "Neighbors: ";
+    int i; foreach(i, neighbors)
+        qDebug() << i << " ";
 }
 
 NetSocket::~NetSocket() 
@@ -40,6 +52,7 @@ bool NetSocket::bind()
 
     qDebug() << "Oops, no ports in my default range " << myPortMin
         << "-" << myPortMax << " available";
+
     return false;
 }
 
@@ -72,26 +85,44 @@ QList<int> NetSocket::findNeighbors()
     return neighbors;
 }
 
+void NetSocket::pickNewPeer()
+{
+    peerPort = neighbors.at(qrand() % 2);
+}
+
 void NetSocket::gotReadyRead()
 {   
-    QHostAddress sender = QHostAddress::LocalHost;
+    QHostAddress senderAddr;
+    quint16 senderPort;
     QByteArray datagram;
-    quint16 pMin = (quint16) myPortMin;
     quint64 size;
     while (hasPendingDatagrams()) 
     {
         datagram.resize(pendingDatagramSize());
         size = datagram.size();
 
-        readDatagram(datagram.data(), size, &sender, &pMin);
+        readDatagram(datagram.data(), size, &senderAddr, &senderPort);
 
-        Message msg = Message(&datagram);
-        Q_EMIT(postToInbox(msg));
+        if(!peered || senderPort == port)
+        {
+            Message msg = Message(&datagram);
+            Q_EMIT(postToInbox(msg));
+        }
     }
 }
 
 void NetSocket::gotSendMessage(Message msg)
 {
     send(msg);
+}
+
+void NetSocket::gotStopPeering()
+{
+    peered = false;
+}
+
+void NetSocket::gotStartPeering()
+{
+    peered = true;
 }
 

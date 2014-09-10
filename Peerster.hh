@@ -18,12 +18,19 @@
 #include <QObject>
 #include <QQueue>
 #include <QMap>
-#include <QTime>
+#include <QTimer>
 
 #include "ChatDialog.hh"
 #include "NetSocket.hh"
 #include "Mailbox.hh"
 #include "Message.hh"
+
+#define ID_MAX (10)
+
+#define CHATTEXT_KEY ("ChatText")
+#define ORIGINID_KEY ("Origin")
+#define SEQNO_KEY ("SeqNo")
+#define WANT_KEY ("Want")
 
 class ChatDialog;
 class NetSocket;

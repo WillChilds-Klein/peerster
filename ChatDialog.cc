@@ -59,7 +59,7 @@ void ChatDialog::gotReturnPressed()
 {
     // create Message
     Message msg;
-    msg.insert("ChatText", QString(textentry->toPlainText()));
+    msg.setText(QString(textentry->toPlainText()));
 
     // send to outbox
     Q_EMIT(postToOutbox(msg));

@@ -1,6 +1,7 @@
 #include "Message.hh"
 
 Message::Message()
+    : isStatus(true)
 {}
 
 Message::Message(QByteArray* arr)
@@ -40,14 +41,23 @@ QByteArray Message::serialize()
     return msgArr;
 }
 
-Rumor::Rumor()
-{}
+bool Message::typeIsStatus()
+{
+    return isStatus;
+}
 
-Rumor::~Rumor()
-{}
+void Message::setText(QString qstr)
+{
+    insert(CHATTEXT_KEY, qstr);
+}
 
-Status::Status()
-{}
+void Message::setOriginID(QString qstr)
+{
+    insert(ORIGINID_KEY, qstr);
+}
 
-Status::~Status()
-{}
+void Message::setSeqNo(quint32 seqno)
+{
+    insert(SEQNO_KEY, seqno);
+}
+

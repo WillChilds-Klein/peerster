@@ -2,26 +2,33 @@
 
 Mailbox::Mailbox(Peerster* p)
     : peerster(p)
-    , inbox(new QQueue<Message>())
-    , outbox(new QQueue<Message>())
-{}
+    , timer(new QTimer())
+    , ID(p->ID)
+    , localSeqNo(1)
+{
+    connect(this, SIGNAL(postToInbox(Message)), 
+        this, SLOT(gotPostToInbox(Message)));
+    connect(timer, SIGNAL(timeout()), 
+        this, SLOT(gotTimeout()));
+}
 
 Mailbox::~Mailbox()
 {}
 
 void Mailbox::gotPostToInbox(Message msg)
 {
-    inbox->enqueue(msg);
-
-    Message out = inbox->dequeue();
     Q_EMIT(displayMessage(msg));
 }
 
 void Mailbox::gotPostToOutbox(Message msg)
 {
-    outbox->enqueue(msg);
-
-    Message out = outbox->dequeue();
-    Q_EMIT(sendMessage(out));
+    msg.setOriginID(QString(ID));
+    msg.setSeqNo(localSeqNo);
+    localSeqNo++;
+    Q_EMIT(postToInbox(msg));
 }
 
+void Mailbox::gotTimeout()
+{
+    Q_EMIT(stopPeering());
+}
