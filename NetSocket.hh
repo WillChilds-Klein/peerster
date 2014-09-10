@@ -16,6 +16,7 @@ class NetSocket : public QUdpSocket
         int getPort();
         bool bind();
         void send(Message msg);
+        QList<int> findNeighbors();
 
     public slots:
         void gotReadyRead();

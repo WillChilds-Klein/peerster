@@ -29,6 +29,8 @@ ChatDialog::ChatDialog(Peerster* p)
     connect(textentry, SIGNAL(returnPressed()), 
         this, SLOT(gotReturnPressed()));
 
+    // connect signal so ChatDialog can display locally entered
+    // messages on dialog.
     connect(this, SIGNAL(displayMessage(Message)), 
         this, SLOT(gotDisplayMessage(Message)));
 

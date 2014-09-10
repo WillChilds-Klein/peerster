@@ -18,7 +18,6 @@ class ChatDialog : public QDialog
         EntryQTextEdit* getTextentry();
         void displayMessage(Message, bool);
 
-
     public slots:
         void gotReturnPressed();
         void gotDisplayMessage(Message);

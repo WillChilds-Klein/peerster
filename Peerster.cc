@@ -5,6 +5,9 @@ Peerster::Peerster()
     , socket(new NetSocket(this))
     , mailbox(new Mailbox(this))
 {
+    qsrand(time(NULL));
+    ID = qrand();
+
     // inbound message signal chain
     connect(socket, SIGNAL(postToInbox(Message)), 
         mailbox, SLOT(gotPostToInbox(Message)));
@@ -34,5 +37,7 @@ void Peerster::run()
         qDebug() << "Peerster failed to bind!";
         exit(1);
     }
+
+    neighbors = socket->findNeighbors();
 }
 

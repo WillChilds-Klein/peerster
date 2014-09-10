@@ -28,8 +28,10 @@ int NetSocket::getPort()
 bool NetSocket::bind()
 {
     // Try to bind to each of the range myPortMin..myPortMax in turn.
-    for (int p = myPortMin; p <= myPortMax; p++) {
-        if (QUdpSocket::bind(p)) {
+    for (int p = myPortMin; p <= myPortMax; p++)
+    {
+        if (QUdpSocket::bind(p))
+        {
             qDebug() << "bound to UDP port " << p;
             port = p;
             return true;
@@ -49,12 +51,25 @@ void NetSocket::send(Message msg){
     QHostAddress host = QHostAddress(QHostAddress::LocalHost);
 
     // Send message via UDP
-    for(int p = myPortMin; p <= myPortMax; p++){
+    for(int p = myPortMin; p <= myPortMax; p++)
+    {
         if(p != this->port)
         {
             writeDatagram(msgArr, host, p);
         }
     }
+}
+
+QList<int> NetSocket::findNeighbors()
+{
+    QList<int> neighbors;
+
+    if(port != myPortMin)
+        neighbors.append(port-1);
+    if(port != myPortMax)
+        neighbors.append(port+1);
+
+    return neighbors;
 }
 
 void NetSocket::gotReadyRead()

@@ -18,6 +18,7 @@
 #include <QObject>
 #include <QQueue>
 #include <QMap>
+#include <QTime>
 
 #include "ChatDialog.hh"
 #include "NetSocket.hh"
@@ -36,11 +37,14 @@ class Peerster : public QObject
         Peerster();
         ~Peerster();
         void run();
+        int ID;
+        QList<int> findNeighbors();
 
     private:
         ChatDialog* dialog;
         NetSocket* socket;
         Mailbox* mailbox;
+        QList<int> neighbors;
 };
 
 #endif // PEERSTER_PEERSTER_HH
