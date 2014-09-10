@@ -17,10 +17,12 @@ class ChatDialog : public QDialog
         QTextEdit* getTextview();
         EntryQTextEdit* getTextentry();
         void displayMessage(Message msg, bool fromMe);
+        void displayQueuePush(Message msg);
 
 
     public slots:
         void gotReturnPressed();
+        void gotDisplayQueueUpdated();
 
     private:
         Peerster* peerster;

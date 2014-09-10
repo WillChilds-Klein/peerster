@@ -6,26 +6,20 @@
 class Peerster;
 class Message;
 
-class Mailbox : QObject
+class Mailbox : public QObject
 {
     Q_OBJECT
 
     public:
         Mailbox(Peerster* p);
         ~Mailbox();
-        void inboxPush(Message msg);
-        Message inboxPop();
-        void outboxPush(Message msg);
-        Message outboxPop();
 
     public slots:
-        void inboxUpdated();
-        void outboxUpdated();
+        void gotInboxUpdated();
+        void gotOutboxUpdated();
 
     private:
         Peerster* peerster;
-        QQueue<Message>* inbox;
-        QQueue<Message>* outbox;
 };
 
 #endif // PEERSTER_MAILBOX_HH

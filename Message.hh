@@ -9,7 +9,22 @@ class Message : public QVariantMap
         Message();
         Message(QByteArray* arr);
         ~Message();
+        QString toString();
         QByteArray serialize();
+};
+
+class Rumor : public Message
+{
+    public:
+        Rumor();
+        ~Rumor();
+};
+
+class Status : public Message
+{
+    public:
+        Status();
+        ~Status();
 };
 
 #endif // PEERSTER_MESSAGE_HH

@@ -37,12 +37,12 @@ ChatDialog::~ChatDialog() {}
 
 QTextEdit* ChatDialog::getTextview()
 {
-    return this->textview;
+    return textview;
 }
         
 EntryQTextEdit* ChatDialog::getTextentry()
 {
-    return this->textentry;
+    return textentry;
 }
 
 void ChatDialog::displayMessage(Message msg, bool fromMe)
@@ -61,18 +61,33 @@ void ChatDialog::displayMessage(Message msg, bool fromMe)
 
 void ChatDialog::gotReturnPressed()
 {
-    // create rumor map
+    // create Message
     Message msg;
+    msg.insert("ChatText", QString(textentry->toPlainText()));
 
-    // send msg
-    msg.insert("ChatText", QString(this->textentry->toPlainText()));
-    this->peerster->getSocket()->send(msg);
+    // send to outbox
+    peerster->outboxPush(msg);
 
     // display locally
-    this->displayMessage(msg, true);
+    peerster->displayQueuePush(msg);
 
     // Clear the textentry to get ready for the next input message.
     textentry->clear();
+}
+
+void ChatDialog::gotDisplayQueueUpdated()
+{
+    Message msg = peerster->displayQueuePop();
+    displayMessage(msg, false);
+    //     displayMessage(msg, false);
+    // Message msg;
+    // while(!(peerster->displayQueueIsEmpty()))
+    // {
+    //     // add conditional logic checking if OriginID
+    //     // equals that of own Peerster instance.
+    //     msg = peerster->displayQueuePop();
+    //     displayMessage(msg, false);
+    // }
 }
 
 // L1E2: subclass QTextEdit to get desired UI behavior.
@@ -87,3 +102,4 @@ void EntryQTextEdit::keyPressEvent(QKeyEvent* event)
         QTextEdit::keyPressEvent(event);
     }
 }
+

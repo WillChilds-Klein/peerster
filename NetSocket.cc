@@ -20,7 +20,7 @@ NetSocket::~NetSocket()
 
 int NetSocket::getPort()
 {
-    return this->port;
+    return port;
 }
 
 bool NetSocket::bind()
@@ -29,7 +29,7 @@ bool NetSocket::bind()
     for (int p = myPortMin; p <= myPortMax; p++) {
         if (QUdpSocket::bind(p)) {
             qDebug() << "bound to UDP port " << p;
-            this->port = p;
+            port = p;
             return true;
         }
     }
@@ -57,22 +57,25 @@ void NetSocket::send(Message msg){
 
 void NetSocket::gotReadyRead()
 {   
-    QHostAddress sender;
+    QHostAddress sender = QHostAddress::LocalHost;
     QByteArray datagram;
-
+    quint16 pMin = (quint16) myPortMin;
+    quint64 size;
     while (hasPendingDatagrams()) 
     {
-        sender = QHostAddress::LocalHost;
         datagram.resize(pendingDatagramSize());
-        quint16 p = (quint16) this->myPortMin;
+        size = datagram.size();
 
-        readDatagram(datagram.data(), (qint64) datagram.size(),
-                                 &sender, &p);
+        readDatagram(datagram.data(), size, &sender, &pMin);
 
-        Message* msg = new Message(&datagram);
-        this->peerster->getDialog()->displayMessage(*msg, false);
+        Message msg = Message(&datagram);
+        peerster->inboxPush(msg);
     }
 }
 
-void NetSocket::sendMessage()
-{}
+void NetSocket::gotSendMessage()
+{
+    Message msg = peerster->sendQueuePop();
+    send(msg);
+}
+
