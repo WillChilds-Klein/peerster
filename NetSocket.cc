@@ -13,6 +13,8 @@ NetSocket::NetSocket(Peerster* p)
     myPortMin = 32768 + (getuid() % 4096)*4;
     myPortMax = myPortMin + 3;
     port = -1;
+
+    connect(this, SIGNAL(readyRead()), this, SLOT(gotReadyRead()));
 }
 
 NetSocket::~NetSocket() 
@@ -69,13 +71,12 @@ void NetSocket::gotReadyRead()
         readDatagram(datagram.data(), size, &sender, &pMin);
 
         Message msg = Message(&datagram);
-        peerster->inboxPush(msg);
+        Q_EMIT(postToInbox(msg));
     }
 }
 
-void NetSocket::gotSendMessage()
+void NetSocket::gotSendMessage(Message msg)
 {
-    Message msg = peerster->sendQueuePop();
     send(msg);
 }
 

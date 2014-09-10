@@ -15,11 +15,17 @@ class Mailbox : public QObject
         ~Mailbox();
 
     public slots:
-        void gotInboxUpdated();
-        void gotOutboxUpdated();
+        void gotPostToOutbox(Message msg);
+        void gotPostToInbox(Message msg);
+
+    signals:
+        void displayMessage(Message);
+        void sendMessage(Message);
 
     private:
         Peerster* peerster;
+        QQueue<Message>* inbox;
+        QQueue<Message>* outbox;
 };
 
 #endif // PEERSTER_MAILBOX_HH

@@ -12,17 +12,20 @@ class ChatDialog : public QDialog
     Q_OBJECT
 
     public:
-        ChatDialog(Peerster* p);
+        ChatDialog(Peerster*);
         ~ChatDialog();
         QTextEdit* getTextview();
         EntryQTextEdit* getTextentry();
-        void displayMessage(Message msg, bool fromMe);
-        void displayQueuePush(Message msg);
+        void displayMessage(Message, bool);
 
 
     public slots:
         void gotReturnPressed();
-        void gotDisplayQueueUpdated();
+        void gotDisplayMessage(Message);
+
+    signals:
+        void postToOutbox(Message);
+        void displayMessage(Message);
 
     private:
         Peerster* peerster;
@@ -36,7 +39,7 @@ class EntryQTextEdit : public QTextEdit
 
     public:
         EntryQTextEdit();
-        void keyPressEvent(QKeyEvent* event);
+        void keyPressEvent(QKeyEvent*);
 
     signals:
         void returnPressed();

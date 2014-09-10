@@ -26,24 +26,18 @@ ChatDialog::ChatDialog(Peerster* p)
 
     // Register a callback on the textentry's returnPressed signal
     // so that we can send the message entered by the user.
-    connect(textentry, SIGNAL(returnPressed()),
+    connect(textentry, SIGNAL(returnPressed()), 
         this, SLOT(gotReturnPressed()));
+
+    connect(this, SIGNAL(displayMessage(Message)), 
+        this, SLOT(gotDisplayMessage(Message)));
 
     // L1E1: set line focus to textentry on startup
     textentry->setFocus();
 }
 
-ChatDialog::~ChatDialog() {}
-
-QTextEdit* ChatDialog::getTextview()
-{
-    return textview;
-}
-        
-EntryQTextEdit* ChatDialog::getTextentry()
-{
-    return textentry;
-}
+ChatDialog::~ChatDialog()
+{}
 
 void ChatDialog::displayMessage(Message msg, bool fromMe)
 {
@@ -66,28 +60,18 @@ void ChatDialog::gotReturnPressed()
     msg.insert("ChatText", QString(textentry->toPlainText()));
 
     // send to outbox
-    peerster->outboxPush(msg);
+    Q_EMIT(postToOutbox(msg));
 
     // display locally
-    peerster->displayQueuePush(msg);
+    Q_EMIT(displayMessage(msg));
 
     // Clear the textentry to get ready for the next input message.
     textentry->clear();
 }
 
-void ChatDialog::gotDisplayQueueUpdated()
+void ChatDialog::gotDisplayMessage(Message msg)
 {
-    Message msg = peerster->displayQueuePop();
     displayMessage(msg, false);
-    //     displayMessage(msg, false);
-    // Message msg;
-    // while(!(peerster->displayQueueIsEmpty()))
-    // {
-    //     // add conditional logic checking if OriginID
-    //     // equals that of own Peerster instance.
-    //     msg = peerster->displayQueuePop();
-    //     displayMessage(msg, false);
-    // }
 }
 
 // L1E2: subclass QTextEdit to get desired UI behavior.

@@ -36,33 +36,11 @@ class Peerster : public QObject
         Peerster();
         ~Peerster();
         void run();
-        void displayQueuePush(Message msg);
-        Message displayQueuePop();
-        bool displayQueueIsEmpty();
-        void inboxPush(Message msg);
-        Message inboxPop();
-        bool inboxIsEmpty();
-        void outboxPush(Message msg);
-        Message outboxPop();
-        bool outboxIsEmpty();
-        void sendQueuePush(Message msg);
-        Message sendQueuePop();
-        bool sendQueueIsEmpty();
-
-    signals:
-        void inboxUpdated();
-        void displayQueueUpdated();
-        void outboxUpdated();
-        void sendMessage();
 
     private:
         ChatDialog* dialog;
         NetSocket* socket;
         Mailbox* mailbox;
-        QQueue<Message>* inbox;
-        QQueue<Message>* displayQueue;
-        QQueue<Message>* outbox;
-        QQueue<Message>* sendQueue;
 };
 
 #endif // PEERSTER_PEERSTER_HH

@@ -4,22 +4,20 @@ Peerster::Peerster()
     : dialog(new ChatDialog(this))
     , socket(new NetSocket(this))
     , mailbox(new Mailbox(this))
-    , inbox(new QQueue<Message>())
-    , displayQueue(new QQueue<Message>())
-    , outbox(new QQueue<Message>())
-    , sendQueue(new QQueue<Message>())
 {
     // inbound message signal chain
-    connect(socket, SIGNAL(readyRead()), socket, SLOT(gotReadyRead()));
-    
-    connect(this, SIGNAL(inboxUpdated()), mailbox, SLOT(gotInboxUpdated()));
+    connect(socket, SIGNAL(postToInbox(Message)), 
+        mailbox, SLOT(gotPostToInbox(Message)));
 
-    connect(this, SIGNAL(displayQueueUpdated()), dialog, SLOT(gotDisplayQueueUpdated()));
+    connect(mailbox, SIGNAL(displayMessage(Message)), 
+        dialog, SLOT(gotDisplayMessage(Message)));
 
     // outbound message signal chain
-    connect(this, SIGNAL(outboxUpdated()), mailbox, SLOT(gotOutboxUpdated()));
+    connect(dialog, SIGNAL(postToOutbox(Message)), 
+        mailbox, SLOT(gotPostToOutbox(Message)));
 
-    connect(this, SIGNAL(sendMessage()), socket, SLOT(gotSendMessage()));
+    connect(mailbox, SIGNAL(sendMessage(Message)), 
+        socket, SLOT(gotSendMessage(Message)));
 }
 
 Peerster::~Peerster()
@@ -36,74 +34,5 @@ void Peerster::run()
         qDebug() << "Peerster failed to bind!";
         exit(1);
     }
-}
-
-void Peerster::displayQueuePush(Message msg)
-{
-    displayQueue->enqueue(msg);
-    qDebug() << "displayQueue pushed onto!";
-    qDebug() << "MSG: " + msg.toString();
-    Q_EMIT(displayQueueUpdated());
-}
-
-Message Peerster::displayQueuePop()
-{
-    return displayQueue->dequeue();
-}
-
-bool Peerster::displayQueueIsEmpty()
-{
-    return displayQueue->isEmpty();
-}
-
-void Peerster::inboxPush(Message msg)
-{
-    inbox->enqueue(msg);
-    qDebug() << "inbox pushed onto!";
-    Q_EMIT(inboxUpdated());
-}
-
-Message Peerster::inboxPop()
-{
-    return inbox->dequeue();
-}
-
-bool Peerster::inboxIsEmpty()
-{
-    return inbox->isEmpty();
-}
-
-void Peerster::outboxPush(Message msg)
-{
-    outbox->enqueue(msg);
-    qDebug() << "outbox pushed onto!";
-    Q_EMIT(outboxUpdated());
-}
-
-Message Peerster::outboxPop()
-{
-    return outbox->dequeue();
-}
-
-bool Peerster::outboxIsEmpty()
-{
-    return outbox->isEmpty();
-}
-
-void Peerster::sendQueuePush(Message msg)
-{
-    sendQueue->enqueue(msg);
-    qDebug() << "sendQueue pushed onto!";
-    Q_EMIT(sendMessage());
-}
-
-Message Peerster::sendQueuePop()
-{
-    return sendQueue->dequeue();
-}
-
-bool Peerster::sendQueueIsEmpty()
-{
-    return sendQueue->isEmpty();
 }
 

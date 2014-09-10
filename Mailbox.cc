@@ -2,20 +2,26 @@
 
 Mailbox::Mailbox(Peerster* p)
     : peerster(p)
+    , inbox(new QQueue<Message>())
+    , outbox(new QQueue<Message>())
 {}
 
 Mailbox::~Mailbox()
 {}
 
-void Mailbox::gotInboxUpdated()
+void Mailbox::gotPostToInbox(Message msg)
 {
-    Message msg = peerster->inboxPop();
-    peerster->displayQueuePush(msg);
+    inbox->enqueue(msg);
+
+    Message out = inbox->dequeue();
+    Q_EMIT(displayMessage(msg));
 }
 
-void Mailbox::gotOutboxUpdated()
+void Mailbox::gotPostToOutbox(Message msg)
 {
-    Message msg = peerster->outboxPop();
-    peerster->sendQueuePush(msg);
+    outbox->enqueue(msg);
+
+    Message out = outbox->dequeue();
+    Q_EMIT(sendMessage(out));
 }
 
