@@ -20,7 +20,7 @@ class NetSocket : public QUdpSocket
     public slots:
         void gotReadyRead();
         void gotSendMessage(Message);
-        void gotStartPeering();
+        void gotStartPeering(quint32);
         void gotStopPeering();
 
     signals:
@@ -28,11 +28,11 @@ class NetSocket : public QUdpSocket
 
     private:
         Peerster* peerster;
-        QList<int> neighbors;
-        int myPortMin, myPortMax, port;
+        QList<quint32> neighbors;
+        quint32 myPortMin, myPortMax, port;
         bool peered;
-        int peerPort;
-        QList<int> findNeighbors();
+        quint32 peerPort;
+        QList<quint32> findNeighbors();
         void pickNewPeer();
 };
 

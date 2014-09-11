@@ -12,10 +12,13 @@ class MessageStore : QObject
     public:
         MessageStore();
         ~MessageStore();
-        bool isNewMessage(Message);
+        bool isNewRumor(Message);
+        void addNewMessage(Message);
+        QList<Message> getMessagesInRange(QString,quint32,quint32);
 
     private:
-        bool isStatus;
+        QMap<QString, QList<Message> >* store;
+        QMap<QString, quint32>* latest;
 };
 
 #endif // PEERSTER_MESSAGESTORE_HH

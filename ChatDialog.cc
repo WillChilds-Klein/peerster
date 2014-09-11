@@ -41,20 +41,6 @@ ChatDialog::ChatDialog(Peerster* p)
 ChatDialog::~ChatDialog()
 {}
 
-void ChatDialog::displayMessage(Message msg, bool fromMe)
-{
-    if(fromMe)
-    {
-        textview->append("ME: " + 
-            msg.value("ChatText").toString());
-    }
-    else
-    {
-        textview->append("ANON: " + 
-            msg.value("ChatText").toString());
-    }
-}
-
 void ChatDialog::gotReturnPressed()
 {
     // create Message
@@ -64,16 +50,15 @@ void ChatDialog::gotReturnPressed()
     // send to outbox
     Q_EMIT(postToOutbox(msg));
 
-    // display locally
-    Q_EMIT(displayMessage(msg));
-
     // Clear the textentry to get ready for the next input message.
     textentry->clear();
 }
 
 void ChatDialog::gotDisplayMessage(Message msg)
 {
-    displayMessage(msg, false);
+    textview->append(msg.getOriginID() + 
+        "<" + QString::number(msg.getSeqNo()) + ">: " + msg.getText());
+    qDebug() << "DISPLAYED: " << msg.toString();
 }
 
 // L1E2: subclass QTextEdit to get desired UI behavior.

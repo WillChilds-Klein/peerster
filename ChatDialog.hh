@@ -16,7 +16,6 @@ class ChatDialog : public QDialog
         ~ChatDialog();
         QTextEdit* getTextview();
         EntryQTextEdit* getTextentry();
-        void displayMessage(Message, bool);
 
     public slots:
         void gotReturnPressed();
@@ -24,7 +23,6 @@ class ChatDialog : public QDialog
 
     signals:
         void postToOutbox(Message);
-        void displayMessage(Message);
 
     private:
         Peerster* peerster;

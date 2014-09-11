@@ -7,7 +7,7 @@ class Message : public QVariantMap
 {
     public:
         Message();
-        Message(QByteArray* arr);
+        Message(QByteArray*);
         ~Message();
         QString toString();
         QByteArray serialize();
@@ -15,6 +15,11 @@ class Message : public QVariantMap
         void setText(QString);
         void setOriginID(QString);
         void setSeqNo(quint32);
+        void setPortOfOrigin(quint32);
+        QString getText();
+        QString getOriginID();
+        quint32 getSeqNo();
+        quint32 getPortOfOrigin();
 
     private:
         bool isStatus;
