@@ -1,7 +1,8 @@
 #include "MessageStore.hh"
 
-MessageStore::MessageStore()
-    : store(new QMap< QString, QList<Message> >())
+MessageStore::MessageStore(Peerster* p)
+    : peerster(p)
+    , store(new QMap< QString, QList<Message> >())
     , latest(new QMap<QString, quint32>())
 {}
 
@@ -10,7 +11,7 @@ MessageStore::~MessageStore()
 
 bool MessageStore::isNewRumor(Message msg)
 {
-    if(msg.typeIsStatus())
+    if(!msg.typeIsRumor())
         return false;
     else if(!store->contains(msg.getOriginID()))
         return true;
@@ -26,7 +27,12 @@ bool MessageStore::isNewRumor(Message msg)
         return true;
 }
 
-void MessageStore::addNewMessage(Message msg)
+bool MessageStore::isNewOrigin(Message msg)
+{
+    return store->contains(msg.getOriginID());
+}
+
+void MessageStore::addNewRumor(Message msg)
 {
     QString origin = msg.getOriginID();
     QList<Message> originHistory;
@@ -39,11 +45,14 @@ void MessageStore::addNewMessage(Message msg)
         originHistory = QList<Message>();
     }
 
+    originHistory.append(msg);
+    latest->insert(origin, msg.getSeqNo());
+
     store->insert(origin, originHistory);
 }
 
 
-QList<Message> MessageStore::getMessagesInRange(QString origin, 
+const QList<Message> MessageStore::getMessagesInRange(QString origin, 
     quint32 firstSeqNo, quint32 lastSeqNo)
 {
     Message curr;
@@ -69,5 +78,20 @@ QList<Message> MessageStore::getMessagesInRange(QString origin,
     }
 
     return ret;
+}
+
+const Message MessageStore::getStatus()
+{
+    Message status;
+    QVariantMap want;
+
+    QMap<QString, quint32>::iterator i;
+    for(i = latest->begin(); i != latest->end(); i++)
+    {
+        want.insert(i.key(), (i.value() + 1));
+    }
+    status.insert(WANT_KEY, want);
+
+    return status;
 }
 

@@ -1,7 +1,7 @@
 #include "Message.hh"
 
 Message::Message()
-    : isStatus(false)
+    : isRumor(true)
 {}
 
 Message::Message(QByteArray* arr)
@@ -12,7 +12,7 @@ Message::Message(QByteArray* arr)
     QDataStream stream(arr, QIODevice::ReadOnly);
     stream >> msg;
 
-    isStatus = msg.typeIsStatus();
+    isRumor = msg.typeIsRumor();
 
     Message::iterator i;
     for(i = msg.begin(); i != msg.end(); i++)
@@ -27,7 +27,7 @@ Message::~Message()
 QString Message::toString()
 {
     QString str = "size = " + QString::number(size()) +" [";
-    foreach(QString e, this->keys())
+    foreach(QString e, keys())
     {
         str += "<" + e + " : " + value(e).toString() + ">, ";
     }
@@ -44,9 +44,9 @@ QByteArray Message::serialize()
     return msgArr;
 }
 
-bool Message::typeIsStatus()
+void Message::setIsRumor(bool b)
 {
-    return isStatus;
+    isRumor = b;
 }
 
 void Message::setText(QString qstr)
@@ -67,6 +67,11 @@ void Message::setSeqNo(quint32 seqno)
 void Message::setPortOfOrigin(quint32 p)
 {
     insert(PORTOFORIGIN_KEY, p);
+}
+
+bool Message::typeIsRumor()
+{
+    return isRumor;
 }
 
 QString Message::getText()

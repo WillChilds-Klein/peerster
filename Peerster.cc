@@ -4,11 +4,8 @@ Peerster::Peerster()
     : dialog(new ChatDialog(this))
     , socket(new NetSocket(this))
     , mailbox(new Mailbox(this))
+    , msgstore(new MessageStore(this))
 {
-    qsrand(QTime(0,0,0).msecsTo(QTime::currentTime()));
-    ID = (qrand() % ID_MAX) + 1;
-    qDebug() << "Instance ID: "<< ID; 
-
     // inbound message signal chain
     connect(socket, SIGNAL(postToInbox(Message)), 
         mailbox, SLOT(gotPostToInbox(Message)));
@@ -20,15 +17,28 @@ Peerster::Peerster()
     connect(dialog, SIGNAL(postToOutbox(Message)), 
         mailbox, SLOT(gotPostToOutbox(Message)));
 
-    connect(mailbox, SIGNAL(sendMessage(Message)), 
-        socket, SLOT(gotSendMessage(Message)));
+    connect(mailbox, SIGNAL(sendMessage(Message,Peer)), 
+        socket, SLOT(gotSendMessage(Message,Peer)));
 
-    // peering stuff
-    connect(mailbox, SIGNAL(startPeering(quint32)),
-        socket, SLOT(gotStartPeering(quint32)));
+    qsrand(QTime(0,0,0).msecsTo(QTime::currentTime()));
+    ID = (qrand() % ID_MAX) + 1;
+    qDebug() << "Instance ID: "<< ID; 
 
-    connect(mailbox, SIGNAL(stopPeering()),
-        socket, SLOT(gotStopPeering()));
+    myPortMin = 32768 + (getuid() % 4096)*4;
+    myPortMax = myPortMin + 3;
+
+    socket->setPortRange(myPortMin, myPortMax);
+    port = socket->bind();
+    if(port < 0)
+    {
+        qDebug() << "Peerster failed to bind to a port!";
+        exit(1);
+    }
+
+    mailbox->setPortInfo(myPortMin, myPortMax, port);
+    mailbox->setID(ID);
+    mailbox->setMessageStore(msgstore);
+    mailbox->populateNeighbors();
 }
 
 Peerster::~Peerster()
@@ -38,10 +48,5 @@ void Peerster::run()
 {   
     // Create an initial chat dialog window
     dialog->show();
-}
-
-void Peerster::setPort(quint32 p)
-{
-    port = p;
 }
 

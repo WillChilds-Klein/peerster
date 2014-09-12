@@ -14,8 +14,6 @@ class ChatDialog : public QDialog
     public:
         ChatDialog(Peerster*);
         ~ChatDialog();
-        QTextEdit* getTextview();
-        EntryQTextEdit* getTextentry();
 
     public slots:
         void gotReturnPressed();

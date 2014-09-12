@@ -11,18 +11,19 @@ class Message : public QVariantMap
         ~Message();
         QString toString();
         QByteArray serialize();
-        bool typeIsStatus();
+        void setIsRumor(bool);
         void setText(QString);
         void setOriginID(QString);
         void setSeqNo(quint32);
         void setPortOfOrigin(quint32);
+        bool typeIsRumor();
         QString getText();
         QString getOriginID();
         quint32 getSeqNo();
         quint32 getPortOfOrigin();
 
     private:
-        bool isStatus;
+        bool isRumor;
 };
 
 #endif // PEERSTER_MESSAGE_HH

@@ -2,17 +2,22 @@
 
 ChatDialog::ChatDialog(Peerster* p)
     : peerster(p)
+    , textview(new QTextEdit(this))
+    , textentry(new EntryQTextEdit())
 {
+    // Register a callback on the textentry's returnPressed signal
+    // so that we can send the message entered by the user.
+    connect(textentry, SIGNAL(returnPressed()), 
+        this, SLOT(gotReturnPressed()));
+
     setWindowTitle("Peerster");
 
     // Read-only text box where we display messages from everyone.
     // This widget expands both horizontally and vertically.
-    textview = new QTextEdit(this);
     textview->setReadOnly(true);
 
     // Small text-entry box the user can enter messages.
     // L1E2: multi-line word-wrapped text entry box
-    textentry = new EntryQTextEdit();
     textentry->setReadOnly(false);
     textentry->setLineWrapMode(QTextEdit::WidgetWidth);
 
@@ -23,16 +28,6 @@ ChatDialog::ChatDialog(Peerster* p)
     layout->addWidget(textview);
     layout->addWidget(textentry);
     setLayout(layout);
-
-    // Register a callback on the textentry's returnPressed signal
-    // so that we can send the message entered by the user.
-    connect(textentry, SIGNAL(returnPressed()), 
-        this, SLOT(gotReturnPressed()));
-
-    // connect signal so ChatDialog can display locally entered
-    // messages on dialog.
-    connect(this, SIGNAL(displayMessage(Message)), 
-        this, SLOT(gotDisplayMessage(Message)));
 
     // L1E1: set line focus to textentry on startup
     textentry->setFocus();
@@ -66,10 +61,12 @@ EntryQTextEdit::EntryQTextEdit() : QTextEdit() {}
 
 void EntryQTextEdit::keyPressEvent(QKeyEvent* event) 
 {
-    if(event->key()==Qt::Key_Return){
+    if(event->key()==Qt::Key_Return)
+    {
         Q_EMIT(returnPressed());
     }
-    else {
+    else
+    {
         QTextEdit::keyPressEvent(event);
     }
 }

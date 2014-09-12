@@ -5,6 +5,7 @@
 
 class Peerster;
 class Message;
+class Peer;
 
 class NetSocket : public QUdpSocket
 {
@@ -13,27 +14,22 @@ class NetSocket : public QUdpSocket
     public:
         NetSocket(Peerster* p);
         ~NetSocket();
-        int getPort();
-        bool bind();
-        void send(Message msg);
+        void setPortRange(quint32,quint32);
+        quint32 getPort();
+        quint32 getMyPortMin();
+        quint32 getMyPortMax();
+        qint32 bind();
 
     public slots:
         void gotReadyRead();
-        void gotSendMessage(Message);
-        void gotStartPeering(quint32);
-        void gotStopPeering();
+        void gotSendMessage(Message,Peer);
 
     signals:
         void postToInbox(Message);
 
     private:
         Peerster* peerster;
-        QList<quint32> neighbors;
-        quint32 myPortMin, myPortMax, port;
-        bool peered;
-        quint32 peerPort;
-        QList<quint32> findNeighbors();
-        void pickNewPeer();
+        quint32 port, myPortMin, myPortMax;
 };
 
 #endif // PEERSTER_NETSOCKET_HH

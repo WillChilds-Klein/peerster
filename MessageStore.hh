@@ -5,19 +5,27 @@
 
 class Message;
 
-class MessageStore : QObject
+class MessageStore : public QObject
 {
     Q_OBJECT
 
     public:
-        MessageStore();
+        MessageStore(Peerster*);
         ~MessageStore();
         bool isNewRumor(Message);
-        void addNewMessage(Message);
-        QList<Message> getMessagesInRange(QString,quint32,quint32);
+        bool isNewOrigin(Message);
+        void addNewRumor(Message);
+        const QList<Message> getMessagesInRange(QString,quint32,quint32);
+        const Message getStatus();
+
+    signals:
+        void canHelpPeer(Peer,QList<Message>);
+        void needHelpFromPeer(Peer);
+        void inConsensusWithPeer(Peer);
 
     private:
-        QMap<QString, QList<Message> >* store;
+        Peerster* peerster;
+        QMap< QString, QList<Message> >* store;
         QMap<QString, quint32>* latest;
 };
 

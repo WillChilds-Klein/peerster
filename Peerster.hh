@@ -28,8 +28,9 @@
 #include "Mailbox.hh"
 #include "MessageStore.hh"
 #include "Message.hh"
+#include "Peer.hh"
 
-#define ID_MAX (10)
+#define ID_MAX (1000)
 
 #define CHATTEXT_KEY ("ChatText")
 #define ORIGINID_KEY ("Origin")
@@ -49,14 +50,15 @@ class Peerster : public QObject
         Peerster();
         ~Peerster();
         void run();
-        void setPort(quint32);
-        quint32 ID, port;
         QList<quint32> findNeighbors();
 
     private:
+        qint32 port;
+        quint32 ID, myPortMin, myPortMax;
         ChatDialog* dialog;
         NetSocket* socket;
         Mailbox* mailbox;
+        MessageStore* msgstore;
         QList<quint32> neighbors;
 };
 
