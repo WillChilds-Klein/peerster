@@ -9,16 +9,22 @@ Peerster::Peerster()
     // inbound message signal chain
     connect(socket, SIGNAL(postToInbox(Message)), 
         mailbox, SLOT(gotPostToInbox(Message)));
-
     connect(mailbox, SIGNAL(displayMessage(Message)), 
         dialog, SLOT(gotDisplayMessage(Message)));
 
     // outbound message signal chain
     connect(dialog, SIGNAL(postToOutbox(Message)), 
         mailbox, SLOT(gotPostToOutbox(Message)));
-
     connect(mailbox, SIGNAL(sendMessage(Message,Peer)), 
         socket, SLOT(gotSendMessage(Message,Peer)));
+
+    // message processing logic
+    connect(msgstore, SIGNAL(canHelpPeer(Peer,QList<Message>)),
+        mailbox, SLOT(gotCanHelpPeer(Peer,QList<Message>)));
+    connect(msgstore, SIGNAL(needHelpFromPeer(Peer)),
+        mailbox, SLOT(gotNeedHelpFromPeer(Peer)));
+    connect(msgstore, SIGNAL(inConsensusWithPeer(Peer)),
+        mailbox, SLOT(gotInConsensusWithPeer(Peer)));
 
     qsrand(QTime(0,0,0).msecsTo(QTime::currentTime()));
     ID = (qrand() % ID_MAX) + 1;

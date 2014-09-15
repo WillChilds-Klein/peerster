@@ -26,4 +26,34 @@ class Message : public QVariantMap
         bool isRumor;
 };
 
+// class Message : public QVariantMap
+// {
+//     public:
+//         Message();
+//         Message(QByteArray*);
+//         ~Message();
+//         QString toString();
+//         QByteArray serialize();
+//         void setPortOfOrigin(quint32);
+//         quint32 getPortOfOrigin();
+// };
+
+// class Rumor : Message
+// {
+//     public:
+//         void setText(QString);
+//         void setOriginID(QString);
+//         void setSeqNo(quint32);
+//         QString getText();
+//         QString getOriginID();
+//         quint32 getSeqNo();
+// };
+
+// class Status : Message
+// {
+//     public:
+//         void setWantMap(QVariantMap);
+//         QVariantMap getWantMap();
+// };
+
 #endif // PEERSTER_MESSAGE_HH

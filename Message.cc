@@ -94,3 +94,12 @@ quint32 Message::getPortOfOrigin()
     return value(PORTOFORIGIN_KEY).toInt();
 }
 
+void Message::setWantMap(QVariantMap qvm)
+{
+    insert(WANT_KEY, qvm);
+}
+
+QVariantMap Message::getWantMap()
+{
+    return value(WANT_KEY);
+}

@@ -52,7 +52,7 @@ void MessageStore::addNewRumor(Message msg)
 }
 
 
-const QList<Message> MessageStore::getMessagesInRange(QString origin, 
+QList<Message> MessageStore::getMessagesInRange(QString origin, 
     quint32 firstSeqNo, quint32 lastSeqNo)
 {
     Message curr;
@@ -80,7 +80,7 @@ const QList<Message> MessageStore::getMessagesInRange(QString origin,
     return ret;
 }
 
-const Message MessageStore::getStatus()
+Message MessageStore::getStatus()
 {
     Message status;
     QVariantMap want;
@@ -94,4 +94,72 @@ const Message MessageStore::getStatus()
 
     return status;
 }
+
+bool MessageStore::isNextInSeq(Message msg)
+{
+    if(store->contains(msg.getOriginID())
+    {
+        if(msg.getSeqNo() == (latest->value(msg.getOriginID()) + 1))
+            return true;
+        else
+            return false;
+    }
+    else
+    {
+        if(msg.getSeqNo() == 1)
+            return true;
+        else
+            return false;
+    }
+}   
+
+void MessageStore::processIncomingStatus(Message status)
+{
+    QVariantMap ownWant = getStatus().getWantMap();
+    QVariantMap incomingWant = status.getWantMap();
+    quint32 ownSeqNo, incomingSeqNo;
+    Peer incoming = Peer(status.getPortOfOrigin());
+
+    QList<QString> inOwnButNotIncoming;
+    bool needHelp = false;
+
+    QVariantMap::iterator i;
+    for(i = incomingWant.begin(); i != incomingWant.end(); i++)
+    {
+        if(ownWant.contains(i.key()))
+        {
+            // compare notes on seqNo
+            if()
+        }   
+        else
+        {
+            needHelp = true;
+            status->insert(i.key(), 0);
+        }
+    }
+
+    if(needHelp)
+    {
+        Q_EMIT(needHelpFromPeer(incoming));
+    }
+
+    for(i = ownWant.begin(); i != ownWant.end(); j++)
+    {
+        if(!incomingWant.contains(j.key()))
+            inOwnButNotIncoming.append(j.key());
+    }
+
+    if(!inOwnButNotIncoming.isEmpty())
+    {
+        QListIterator<QString> j(inOwnButNotIncoming);
+        QString curr;
+        while (j.hasNext())
+        {
+            curr = j.next();
+            // send rumors in order
+        }
+        Q_EMIT(canHelpPeer(incoming));
+    }
+}
+
 

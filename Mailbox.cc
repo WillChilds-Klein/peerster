@@ -4,12 +4,15 @@ Mailbox::Mailbox(Peerster* p)
     : peerster(p)
     , localSeqNo(1)
     , neighbors(new QList<Peer>())
-    , timer(new QTimer())
 {
     connect(this, SIGNAL(postToInbox(Message)), 
         this, SLOT(gotPostToInbox(Message)));
-    connect(timer, SIGNAL(timeout()), 
-        this, SLOT(gotTimeout()));
+
+    connect(this, SIGNAL(monger(Message))),
+        this, SLOT(gotMonger(Message));
+
+    connect(this, SIGNAL(monger()),
+        this, SLOT(gotMonger()));
 }
 
 Mailbox::~Mailbox()
@@ -69,18 +72,25 @@ void Mailbox::gotPostToInbox(Message msg)
     {
         if(msgstore->isNewRumor(msg))
         {
-
-
-            Q_EMIT(displayMessage(msg));
+            if(msgstore->isNextInSeq(msg))
+            {
+                msgstore->addNewMessage(msg);
+                Q_EMIT(monger(msg));
+                Q_EMIT(displayMessage(msg));
+            }
+            else
+            {
+                // do nada
+            }
         }
         else
         {
-
+            // do nothing
         }
     }
     else
     {
-
+        msgstore->processIncomingStatus(msg);
     }
 }
 
@@ -106,18 +116,30 @@ void Mailbox::gotCanHelpPeer(Peer p, QList<Message> list)
         msg = list[i];
         Q_EMIT(sendMessage(msg, p));
     }
-
-    return;
 }
 
 void Mailbox::gotNeedHelpFromPeer(Peer p)
 {
-
+    Message status = msgstore->getStatus();
+    Q_EMIT(sendMessage(status, p));
 }
 
-void Mailbox::gotInConsensusWithPeer(Peer p)
+void Mailbox::gotInConsensusWithPeer()
 {
+    if(qrand() % 2 == 0)
+    {
+        Q_EMIT(monger(store->getStatus()));
+    }
+    else
+    {
+        // halt
+    }
+}
 
+void Mailbox::gotMonger(Message msg)
+{
+    Peer peer = pickRandomPeer();
+    Q_EMIT(sendMessage(Message, peer));
 }
 
 

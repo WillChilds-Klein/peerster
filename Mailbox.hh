@@ -26,20 +26,20 @@ class Mailbox : public QObject
     public slots:
         void gotPostToOutbox(Message);
         void gotPostToInbox(Message);
-        void gotTimeout();
         void gotCanHelpPeer(Peer,QList<Message>);
         void gotNeedHelpFromPeer(Peer);
         void gotInConsensusWithPeer(Peer);
+        void gotMonger(Message);
 
     signals:
         void displayMessage(Message);
         void sendMessage(Message,Peer);
         void postToInbox(Message);
+        void monger(Message);
 
     private:
         Peerster* peerster;
         QList<Peer>* neighbors;
-        QTimer* timer;
         MessageStore* msgstore;
         quint32 ID, localSeqNo;
         quint32 port, myPortMin, myPortMax;

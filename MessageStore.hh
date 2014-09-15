@@ -15,8 +15,10 @@ class MessageStore : public QObject
         bool isNewRumor(Message);
         bool isNewOrigin(Message);
         void addNewRumor(Message);
-        const QList<Message> getMessagesInRange(QString,quint32,quint32);
-        const Message getStatus();
+        QList<Message> getMessagesInRange(QString,quint32,quint32);
+        Message getStatus();
+        bool isNextInSeq(Message msg);
+        void processIncomingStatus(Message);
 
     signals:
         void canHelpPeer(Peer,QList<Message>);
