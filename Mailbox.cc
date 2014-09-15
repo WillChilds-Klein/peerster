@@ -1,18 +1,20 @@
 #include "Mailbox.hh"
 
+#define CMD_PRINT_MSGSTORE ("PRINT_MSGSTORE")
+
 Mailbox::Mailbox(Peerster* p)
     : peerster(p)
-    , localSeqNo(1)
     , neighbors(new QList<Peer>())
+    , localSeqNo(1)
 {
     connect(this, SIGNAL(postToInbox(Message)), 
         this, SLOT(gotPostToInbox(Message)));
 
-    connect(this, SIGNAL(monger(Message))),
-        this, SLOT(gotMonger(Message));
+    connect(this, SIGNAL(monger(Message)),
+        this, SLOT(gotMonger(Message)));
 
-    connect(this, SIGNAL(monger()),
-        this, SLOT(gotMonger()));
+    connect(this, SIGNAL(needHelpFromPeer(Peer)),
+        this, SLOT(gotNeedHelpFromPeer(Peer)));
 }
 
 Mailbox::~Mailbox()
@@ -37,19 +39,13 @@ void Mailbox::setID(quint32 i)
 
 void Mailbox::populateNeighbors()
 {
-    quint32 neighborPort;
-    Peer neighborPeer;
     if(port != myPortMin)
     {
-        neighborPort = port - 1;
-        neighborPeer = Peer::Peer(neighborPort);
-        neighbors->append(neighborPeer);
+        neighbors->append(Peer(port-1));
     }
     if(port != myPortMax)
     {
-        neighborPort = port + 1;
-        neighborPeer = Peer::Peer(neighborPort);
-        neighbors->append(neighborPeer);
+        neighbors->append(Peer(port+1));
     }
 
     // print neighbors.
@@ -74,13 +70,13 @@ void Mailbox::gotPostToInbox(Message msg)
         {
             if(msgstore->isNextInSeq(msg))
             {
-                msgstore->addNewMessage(msg);
-                Q_EMIT(monger(msg));
+                msgstore->addNewRumor(msg);
                 Q_EMIT(displayMessage(msg));
+                Q_EMIT(monger(msg));
             }
             else
             {
-                // do nada
+                Q_EMIT(needHelpFromPeer(Peer(msg.getPortOfOrigin())));
             }
         }
         else
@@ -92,6 +88,8 @@ void Mailbox::gotPostToInbox(Message msg)
     {
         msgstore->processIncomingStatus(msg);
     }
+
+    processCommand(msg.getText());
 }
 
 void Mailbox::gotPostToOutbox(Message msg)
@@ -103,32 +101,26 @@ void Mailbox::gotPostToOutbox(Message msg)
     Q_EMIT(postToInbox(msg));
 }
 
-void Mailbox::gotTimeout()
+void Mailbox::gotCanHelpPeer(Peer peer, QList<Message> list)
 {
-    qDebug() << "timeout!!";
-}
-
-void Mailbox::gotCanHelpPeer(Peer p, QList<Message> list)
-{
-    Message msg;
-    for(int i = 0; i < list.size(); i++)
+    QList<Message>::iterator i;
+    for(i = list.begin(); i != list.end(); ++i)
     {
-        msg = list[i];
-        Q_EMIT(sendMessage(msg, p));
+        Q_EMIT(sendMessage(*i, peer));
     }
 }
 
-void Mailbox::gotNeedHelpFromPeer(Peer p)
+void Mailbox::gotNeedHelpFromPeer(Peer peer)
 {
     Message status = msgstore->getStatus();
-    Q_EMIT(sendMessage(status, p));
+    Q_EMIT(sendMessage(status, peer));
 }
 
 void Mailbox::gotInConsensusWithPeer()
 {
     if(qrand() % 2 == 0)
     {
-        Q_EMIT(monger(store->getStatus()));
+        Q_EMIT(monger(msgstore->getStatus()));
     }
     else
     {
@@ -139,7 +131,13 @@ void Mailbox::gotInConsensusWithPeer()
 void Mailbox::gotMonger(Message msg)
 {
     Peer peer = pickRandomPeer();
-    Q_EMIT(sendMessage(Message, peer));
+    Q_EMIT(sendMessage(msg, peer));
 }
 
-
+void Mailbox::processCommand(QString cmd)
+{
+    if(cmd == CMD_PRINT_MSGSTORE)
+    {
+        qDebug() << msgstore->toString();
+    }
+}

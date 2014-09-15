@@ -14,6 +14,7 @@ class ChatDialog : public QDialog
     public:
         ChatDialog(Peerster*);
         ~ChatDialog();
+        void setTitle(QString);
 
     public slots:
         void gotReturnPressed();
@@ -26,6 +27,7 @@ class ChatDialog : public QDialog
         Peerster* peerster;
         QTextEdit* textview;
         EntryQTextEdit* textentry;
+        QString title;
 };
 
 class EntryQTextEdit : public QTextEdit 

@@ -28,7 +28,7 @@ class Mailbox : public QObject
         void gotPostToInbox(Message);
         void gotCanHelpPeer(Peer,QList<Message>);
         void gotNeedHelpFromPeer(Peer);
-        void gotInConsensusWithPeer(Peer);
+        void gotInConsensusWithPeer();
         void gotMonger(Message);
 
     signals:
@@ -36,6 +36,7 @@ class Mailbox : public QObject
         void sendMessage(Message,Peer);
         void postToInbox(Message);
         void monger(Message);
+        void needHelpFromPeer(Peer);
 
     private:
         Peerster* peerster;
@@ -43,6 +44,7 @@ class Mailbox : public QObject
         MessageStore* msgstore;
         quint32 ID, localSeqNo;
         quint32 port, myPortMin, myPortMax;
+        void processCommand(QString);
 };
 
 #endif // PEERSTER_MAILBOX_HH

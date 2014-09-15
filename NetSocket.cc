@@ -55,18 +55,21 @@ void NetSocket::gotReadyRead()
         Message msg = Message(&datagram);
         msg.setPortOfOrigin(port);    
         Q_EMIT(postToInbox(msg));
+
+        qDebug() << "RECEIVED FROM PORT " << senderPort 
+            << ": " << msg.toString();
     }
 }
 
-void NetSocket::gotSendMessage(Message msg, Peer p)
+void NetSocket::gotSendMessage(Message msg, Peer peer)
 {
     // serialize map
     QByteArray msgArr = msg.serialize();
 
     // Send message via UDP
-    writeDatagram(msgArr, p.getHost(), p.getPort());
+    writeDatagram(msgArr, peer.getHost(), peer.getPort());
 
-    qDebug() << "SENT:" << msg.toString();
+    qDebug() << "SENT: " << msg.toString() << "TO PORT: " << peer.getPort();
 }
 
 

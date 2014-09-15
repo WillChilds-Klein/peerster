@@ -5,6 +5,7 @@
 
 class Message;
 
+// TODO: make MessageStore inherit from type of store
 class MessageStore : public QObject
 {
     Q_OBJECT
@@ -13,21 +14,21 @@ class MessageStore : public QObject
         MessageStore(Peerster*);
         ~MessageStore();
         bool isNewRumor(Message);
-        bool isNewOrigin(Message);
         void addNewRumor(Message);
         QList<Message> getMessagesInRange(QString,quint32,quint32);
         Message getStatus();
         bool isNextInSeq(Message msg);
         void processIncomingStatus(Message);
+        QString toString();
 
     signals:
         void canHelpPeer(Peer,QList<Message>);
         void needHelpFromPeer(Peer);
-        void inConsensusWithPeer(Peer);
+        void inConsensusWithPeer();
 
     private:
         Peerster* peerster;
-        QMap< QString, QList<Message> >* store;
+        QMap< QString, QList<Message> >* store; 
         QMap<QString, quint32>* latest;
 };
 

@@ -16,15 +16,19 @@ class Message : public QVariantMap
         void setOriginID(QString);
         void setSeqNo(quint32);
         void setPortOfOrigin(quint32);
+        void setWantMap(QVariantMap);
         bool typeIsRumor();
         QString getText();
         QString getOriginID();
         quint32 getSeqNo();
         quint32 getPortOfOrigin();
+        QVariantMap getWantMap();
 
     private:
         bool isRumor;
 };
+
+// TODO: implement Rumor/Status sub-types of Message in all code.
 
 // class Message : public QVariantMap
 // {

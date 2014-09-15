@@ -23,14 +23,14 @@ Peerster::Peerster()
         mailbox, SLOT(gotCanHelpPeer(Peer,QList<Message>)));
     connect(msgstore, SIGNAL(needHelpFromPeer(Peer)),
         mailbox, SLOT(gotNeedHelpFromPeer(Peer)));
-    connect(msgstore, SIGNAL(inConsensusWithPeer(Peer)),
-        mailbox, SLOT(gotInConsensusWithPeer(Peer)));
+    connect(msgstore, SIGNAL(inConsensusWithPeer()),
+        mailbox, SLOT(gotInConsensusWithPeer()));
 
     qsrand(QTime(0,0,0).msecsTo(QTime::currentTime()));
     ID = (qrand() % ID_MAX) + 1;
     qDebug() << "Instance ID: "<< ID; 
 
-    myPortMin = 32768 + (getuid() % 4096)*4;
+    myPortMin = 32718 + (getuid() % 4096)*4;
     myPortMax = myPortMin + 3;
 
     socket->setPortRange(myPortMin, myPortMax);
@@ -40,6 +40,10 @@ Peerster::Peerster()
         qDebug() << "Peerster failed to bind to a port!";
         exit(1);
     }
+
+    QString title = "Peerster Instance " + QString::number(ID) + 
+        " on port " + QString::number(port);
+    dialog->setTitle(title);
 
     mailbox->setPortInfo(myPortMin, myPortMax, port);
     mailbox->setID(ID);

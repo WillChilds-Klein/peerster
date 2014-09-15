@@ -6,7 +6,7 @@ Message::Message()
 
 Message::Message(QByteArray* arr)
 {
-    // add robustness code to make sure arr deserializes
+    // TODO: add robustness code to make sure arr deserializes
     // to well-formed Message object.
     Message msg;
     QDataStream stream(arr, QIODevice::ReadOnly);
@@ -27,9 +27,10 @@ Message::~Message()
 QString Message::toString()
 {
     QString str = "size = " + QString::number(size()) +" [";
-    foreach(QString e, keys())
+    QVariantMap::iterator i;
+    for(i = this->begin(); i != this->end(); ++i)
     {
-        str += "<" + e + " : " + value(e).toString() + ">, ";
+        str += "<" + i.key() + " : " + i.value().toString() + ">, ";
     }
     str += "]";
     return str;
@@ -101,5 +102,5 @@ void Message::setWantMap(QVariantMap qvm)
 
 QVariantMap Message::getWantMap()
 {
-    return value(WANT_KEY);
+    return value(WANT_KEY).toMap();
 }

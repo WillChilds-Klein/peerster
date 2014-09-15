@@ -10,8 +10,6 @@ ChatDialog::ChatDialog(Peerster* p)
     connect(textentry, SIGNAL(returnPressed()), 
         this, SLOT(gotReturnPressed()));
 
-    setWindowTitle("Peerster");
-
     // Read-only text box where we display messages from everyone.
     // This widget expands both horizontally and vertically.
     textview->setReadOnly(true);
@@ -35,6 +33,12 @@ ChatDialog::ChatDialog(Peerster* p)
 
 ChatDialog::~ChatDialog()
 {}
+
+void ChatDialog::setTitle(QString str)
+{
+    title = str;
+    setWindowTitle(title);
+}
 
 void ChatDialog::gotReturnPressed()
 {

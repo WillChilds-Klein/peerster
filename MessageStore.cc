@@ -21,15 +21,10 @@ bool MessageStore::isNewRumor(Message msg)
     QList<Message> senderHistory = store->value(msg.getOriginID());
 
     if(!senderHistory.isEmpty() && 
-        senderHistory.back().getSeqNo() > msgSeqNo)
+        senderHistory.back().getSeqNo() >= msgSeqNo)
         return false;
     else
         return true;
-}
-
-bool MessageStore::isNewOrigin(Message msg)
-{
-    return store->contains(msg.getOriginID());
 }
 
 void MessageStore::addNewRumor(Message msg)
@@ -54,7 +49,7 @@ void MessageStore::addNewRumor(Message msg)
 
 QList<Message> MessageStore::getMessagesInRange(QString origin, 
     quint32 firstSeqNo, quint32 lastSeqNo)
-{
+{   // range is inclusive on both ends.
     Message curr;
     quint32 currSeqNo;
     QList<Message> originHistory, ret;
@@ -65,13 +60,13 @@ QList<Message> MessageStore::getMessagesInRange(QString origin,
     if(firstSeqNo > latest->value(origin))
         return ret;
 
-    QListIterator<Message> i(originHistory);
-    while (i.hasNext())
+    QList<Message>::iterator i;
+    for(i = originHistory.begin(); i != originHistory.end(); ++i)
     {
-        // inefficient access, consider assuming well-orderedness
+        // TODO: inefficient access, consider assuming well-orderedness
         // and contiguity of SeqNo's in history and access element
         // index by seqNo - 1
-        curr = i.next();
+        curr = *i;
         currSeqNo = curr.getSeqNo();
         if(currSeqNo >= firstSeqNo && currSeqNo <= lastSeqNo)
             ret.append(curr);
@@ -97,7 +92,7 @@ Message MessageStore::getStatus()
 
 bool MessageStore::isNextInSeq(Message msg)
 {
-    if(store->contains(msg.getOriginID())
+    if(store->contains(msg.getOriginID()))
     {
         if(msg.getSeqNo() == (latest->value(msg.getOriginID()) + 1))
             return true;
@@ -117,49 +112,85 @@ void MessageStore::processIncomingStatus(Message status)
 {
     QVariantMap ownWant = getStatus().getWantMap();
     QVariantMap incomingWant = status.getWantMap();
-    quint32 ownSeqNo, incomingSeqNo;
-    Peer incoming = Peer(status.getPortOfOrigin());
-
+    quint32 ownWantSeqNo, incomingWantSeqNo;
+    Peer incomingPeer = Peer(status.getPortOfOrigin());
+    Message curr;
     QList<QString> inOwnButNotIncoming;
+    QList<Message> toSend;
     bool needHelp = false;
 
     QVariantMap::iterator i;
-    for(i = incomingWant.begin(); i != incomingWant.end(); i++)
+    QList<Message>::iterator j;
+    for(i = incomingWant.begin(); i != incomingWant.end(); ++i)
     {
         if(ownWant.contains(i.key()))
         {
             // compare notes on seqNo
-            if()
+            ownWantSeqNo = ownWant.value(i.key()).toInt();
+            incomingWantSeqNo = incomingWant.value(i.key()).toInt();
+            
+            if(ownWantSeqNo < incomingWantSeqNo)
+            {
+                needHelp = true;
+            }
+            else if(ownWantSeqNo > incomingWantSeqNo)
+            { // prepare list
+                toSend = getMessagesInRange(i.key(), 
+                    incomingWantSeqNo-1, ownWantSeqNo-1);
+                Q_EMIT(canHelpPeer(incomingPeer, toSend));
+            }
         }   
         else
         {
             needHelp = true;
-            status->insert(i.key(), 0);
+        }
+    }
+
+    // handle msgs that incomingPeer has, but we don't.
+    for(i = ownWant.begin(); i != ownWant.end(); ++i)
+    {
+        if(!incomingWant.contains(i.key()))
+            inOwnButNotIncoming.append(i.key());
+    }
+
+    if(!inOwnButNotIncoming.isEmpty())
+    {
+        QList<QString>::iterator k;
+        for(k = inOwnButNotIncoming.begin(); k != inOwnButNotIncoming.end(); ++k)
+        {
+            toSend = getMessagesInRange(*k, 0, latest->value(*k)-1);
+            Q_EMIT(canHelpPeer(incomingPeer, toSend));
         }
     }
 
     if(needHelp)
     {
-        Q_EMIT(needHelpFromPeer(incoming));
+        Q_EMIT(needHelpFromPeer(incomingPeer));
     }
 
-    for(i = ownWant.begin(); i != ownWant.end(); j++)
+    if(!needHelp & inOwnButNotIncoming.isEmpty())
     {
-        if(!incomingWant.contains(j.key()))
-            inOwnButNotIncoming.append(j.key());
-    }
-
-    if(!inOwnButNotIncoming.isEmpty())
-    {
-        QListIterator<QString> j(inOwnButNotIncoming);
-        QString curr;
-        while (j.hasNext())
-        {
-            curr = j.next();
-            // send rumors in order
-        }
-        Q_EMIT(canHelpPeer(incoming));
+        Q_EMIT(inConsensusWithPeer());
     }
 }
 
+QString MessageStore::toString()
+{
+    QString qstr;
+    QList<Message> senderHistory;
+    QMap<QString, QList<Message> >::iterator i;
+    QList<Message>::iterator j;
 
+    for(i = store->begin(); i != store->end(); ++i)
+    {
+        qstr += "<ID: " + i.key() + ">, <";
+        senderHistory = i.value();
+        for(j = senderHistory.begin(); j != senderHistory.end(); ++j)
+        {
+            qstr += QString::number(j->getSeqNo()) + ", ";
+        }
+        qstr += ">\n";
+    }
+
+    return qstr;
+}
