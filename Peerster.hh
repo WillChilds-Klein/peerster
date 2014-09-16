@@ -16,14 +16,34 @@
 #include <limits>
 #include <QList>
 #include <QObject>
+#include <QQueue>
+#include <QMap>
+#include <QTime>
+#include <QTimer>
+#include <QListIterator>
+#include <QThread>
 
 #include "ChatDialog.hh"
 #include "NetSocket.hh"
+#include "Mailbox.hh"
+#include "MessageStore.hh"
 #include "Message.hh"
+#include "Peer.hh"
+
+#define ID_MAX (1000)
+
+#define CHATTEXT_KEY ("ChatText")
+#define ORIGINID_KEY ("Origin")
+#define SEQNO_KEY ("SeqNo")
+#define WANT_KEY ("Want")
+#define PORTOFORIGIN_KEY ("Port")
+#define TYPE_KEY ("Type")
+#define TYPE_RUMOR ("Rumor")
+#define TYPE_STATUS ("Status")
 
 class ChatDialog;
 class NetSocket;
-class Message;
+class Mailbox;
 
 class Peerster : public QObject
 {
@@ -32,12 +52,17 @@ class Peerster : public QObject
     public:
         Peerster();
         ~Peerster();
-        ChatDialog* getDialog();
-        NetSocket* getSocket();
+        void run();
+        QList<quint32> findNeighbors();
 
     private:
+        qint32 port;
+        quint32 ID, myPortMin, myPortMax;
         ChatDialog* dialog;
         NetSocket* socket;
+        Mailbox* mailbox;
+        MessageStore* msgstore;
+        QList<quint32> neighbors;
 };
 
 #endif // PEERSTER_PEERSTER_HH
