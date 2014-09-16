@@ -26,6 +26,10 @@ Peerster::Peerster()
     connect(msgstore, SIGNAL(inConsensusWithPeer()),
         mailbox, SLOT(gotInConsensusWithPeer()));
 
+    // detect new neighbors
+    connect(socket, SIGNAL(potentialNewNeighbor(Peer)),
+        mailbox, SLOT(gotPotentialNewNeighbor(Peer)));
+
     qsrand(QTime(0,0,0).msecsTo(QTime::currentTime()));
     ID = (qrand() % ID_MAX) + 1;
     qDebug() << "Instance ID: "<< ID; 

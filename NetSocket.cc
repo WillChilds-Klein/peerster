@@ -42,9 +42,12 @@ qint32 NetSocket::bind()
 void NetSocket::gotReadyRead()
 {   
     QHostAddress senderAddr;
+    QString senderInfo;
     quint16 senderPort;
     QByteArray datagram;
+    Peer sender;
     quint64 size;
+
     while (hasPendingDatagrams()) 
     {
         datagram.resize(pendingDatagramSize());
@@ -52,23 +55,32 @@ void NetSocket::gotReadyRead()
 
         readDatagram(datagram.data(), size, &senderAddr, &senderPort);
 
-        Message msg = Message(&datagram); 
-        Q_EMIT(postToInbox(msg));
+        senderInfo = senderAddr.toString() + ":" 
+                                           + QString::num(senderPort);
+        sender = Peer(senderInfo);
+        Message msg = Message(&datagram, sender);
+        if(msg.isWellFormed()) 
+        {
+            Q_EMIT(potentialNewNeighbor(sender));
+            Q_EMIT(postToInbox(msg));
 
-        qDebug() << "RECEIVED FROM PORT " << senderPort 
-            << ": " << msg.toString() << "type: " << msg.getType();
+            qDebug() << "MSG FROM: " << senderInfo;
+        }
     }
 }
 
 void NetSocket::gotSendMessage(Message msg, Peer peer)
 {
-    // serialize map
-    QByteArray msgArr = msg.serialize();
+    if(peer.isValid())
+    {
+        // serialize map
+        QByteArray msgArr = msg.toSerializedQVMap();
 
-    // Send message via UDP
-    writeDatagram(msgArr, peer.getHost(), peer.getPort());
+        // Send message via UDP
+        writeDatagram(msgArr, peer.getAddress(), peer.getPort());
 
-    qDebug() << "SENT: " << msg.toString() << "TO PORT: " << peer.getPort();
+        qDebug() << "SENT MSG TO: " << peer.toString();
+    }
 }
 
 

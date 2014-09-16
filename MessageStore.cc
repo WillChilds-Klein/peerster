@@ -128,7 +128,7 @@ void MessageStore::processIncomingStatus(Message status)
     QVariantMap ownWant = getStatus().getWantMap();
     QVariantMap incomingWant = status.getWantMap();
     quint32 ownWantSeqNo, incomingWantSeqNo;
-    Peer incomingPeer = Peer(status.getPortOfOrigin());
+    Peer incomingPeer = status.getPeerOfOrigin();
     Message curr;
     QList<QString> inOwnButNotIncoming;
     QList<Message> toSend;

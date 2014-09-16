@@ -22,6 +22,9 @@
 #include <QTimer>
 #include <QListIterator>
 #include <QThread>
+#include <typeinfo>
+#include <QHostInfo>
+#include <QHostAddress>
 
 #include "ChatDialog.hh"
 #include "NetSocket.hh"
@@ -36,7 +39,7 @@
 #define ORIGINID_KEY ("Origin")
 #define SEQNO_KEY ("SeqNo")
 #define WANT_KEY ("Want")
-#define PORTOFORIGIN_KEY ("Port")
+#define PEEROFORIGIN_KEY ("Peer")
 #define TYPE_KEY ("Type")
 #define TYPE_RUMOR ("Rumor")
 #define TYPE_STATUS ("Status")

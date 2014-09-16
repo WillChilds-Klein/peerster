@@ -24,6 +24,7 @@ class Mailbox : public QObject
         void setPortInfo(quint32,quint32,quint32);
         void setID(quint32);
         void populateNeighbors();
+        void addNeighbor(Peer);
         Peer pickRandomPeer();
 
     public slots:
@@ -33,6 +34,7 @@ class Mailbox : public QObject
         void gotNeedHelpFromPeer(Peer);
         void gotInConsensusWithPeer();
         void gotMonger(Message);
+        void gotPotentialNewNeighbor(Peer);
 
     private slots:
         void chime();

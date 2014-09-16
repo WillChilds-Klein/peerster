@@ -43,13 +43,14 @@ void Mailbox::setID(quint32 i)
 
 void Mailbox::populateNeighbors()
 {
-    if(port != myPortMin)
+    QString info:
+    for(int i = myPortMin; i <= myPortMax; i++)
     {
-        neighbors->append(Peer(port-1));
-    }
-    if(port != myPortMax)
-    {
-        neighbors->append(Peer(port+1));
+        if(i != port)
+        {
+            info = QHostInfo::localHostName() + ":" + QString::num(i);
+            neighbors->append(Peer(info));
+        }
     }
 
     // print neighbors.
@@ -59,6 +60,11 @@ void Mailbox::populateNeighbors()
     {
         qDebug() << i->getPort();
     }
+}
+
+void Mailbox::addNeighbor(Peer peer)
+{
+    neighbors->append(peer);
 }
 
 Peer Mailbox::pickRandomPeer()
@@ -81,7 +87,7 @@ void Mailbox::gotPostToInbox(Message msg)
             }
             else
             {
-                Q_EMIT(needHelpFromPeer(Peer(msg.getPortOfOrigin())));
+                Q_EMIT(needHelpFromPeer(msg.getPeerOfOrigin()));
             }
         }
         else
@@ -102,7 +108,6 @@ void Mailbox::gotPostToOutbox(Message msg)
     msg.setOriginID(QString::number(ID));
     msg.setSeqNo(localSeqNo);
     localSeqNo++;
-    msg.setPortOfOrigin(port);
     Q_EMIT(postToInbox(msg));
 }
 
@@ -111,7 +116,6 @@ void Mailbox::gotCanHelpPeer(Peer peer, QList<Message> list)
     QList<Message>::iterator i;
     for(i = list.begin(); i != list.end(); ++i)
     {
-        i->setPortOfOrigin(port);
         Q_EMIT(sendMessage(*i, peer));
     }
     qDebug() << "Helped Peer on port " << peer.getPort() << 
@@ -121,7 +125,6 @@ void Mailbox::gotCanHelpPeer(Peer peer, QList<Message> list)
 void Mailbox::gotNeedHelpFromPeer(Peer peer)
 {
     Message status = msgstore->getStatus();
-    status.setPortOfOrigin(port);
     Q_EMIT(sendMessage(status, peer));
     qDebug() << "Need Help from Peer on port " << peer.getPort();
 }
@@ -142,16 +145,22 @@ void Mailbox::gotInConsensusWithPeer()
 void Mailbox::gotMonger(Message msg)
 {
     Peer peer = pickRandomPeer();
-    msg.setPortOfOrigin(port);
     Q_EMIT(sendMessage(msg, peer));
     qDebug() << "MONGER to Port " << peer.getPort() << ": <" << 
         msg.getOriginID() << ", " << msg.getSeqNo() << ">";
 }
 
+void Mailbox::gotPotentialNewNeighbor(Peer peer)
+{
+    if(!neighbors->contains(peer))
+    {
+        neighbors->append(peer);
+    }
+}
+
 void Mailbox::chime()
 {
     Message status = msgstore->getStatus();
-    status.setPortOfOrigin(port);
     Q_EMIT(monger(status));
 }
 

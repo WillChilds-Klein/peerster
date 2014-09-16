@@ -1,22 +1,41 @@
 #include "Message.hh"
 
 Message::Message()
+    : wellFormed(true)
 {
-    insert(TYPE_KEY, TYPE_RUMOR);
+    setType(TYPE_RUMOR);
 }
 
-Message::Message(QByteArray* arr)
+Message::Message(QByteArray* arr, Peer peer)
+    : wellFormed(true)
 {
-    // TODO: add robustness code to make sure arr deserializes
-    // to well-formed Message object.
-    Message msg;
+    QVariantMap map;
     QDataStream stream(arr, QIODevice::ReadOnly);
-    stream >> msg;
+    stream >> map;
 
-    Message::iterator i;
-    for(i = msg.begin(); i != msg.end(); i++)
+    if(stream.status() == QDataStream::Ok)
     {
-        insert(i.key(), i.value());       
+        QVariantMap::iterator i;
+        for(i = map.begin(); i != map.end(); i++)
+        {
+            insert(i.key(), i.value());       
+        }
+
+        if(contains(WANT_KEY))
+        {
+            setType(TYPE_STATUS);
+            setPeerOfOrigin(peer);
+        }
+        else if(contains(CHATTEXT_KEY) && contains(ORIGINID_KEY) 
+            && contains(SEQNO_KEY))
+        {
+            setType(TYPE_RUMOR);
+        }
+    }
+    else
+    {
+        setWellFormed(false);
+        qDebug() << "malformed message!";
     }
 }
 
@@ -36,7 +55,7 @@ QString Message::toString()
         }
         str += "]";
     }
-    else
+    else if(getType() == TYPE_STATUS)
     {
         str += "<Want: ";
         QVariantMap wantMap = value(WANT_KEY).toMap();
@@ -59,14 +78,50 @@ QByteArray Message::serialize()
     return msgArr;
 }
 
+QByteArray Message::toSerializedQVMap()
+{
+    QByteArray msgArr;
+    QDataStream stream(&msgArr, QIODevice::WriteOnly);
+
+    QVariantMap map;
+    if(getType() == TYPE_RUMOR)
+    {
+        map.insert(CHATTEXT_KEY, getText());
+        map.insert(ORIGINID_KEY, getOriginID());
+        map.insert(SEQNO_KEY, getSeqNo());
+    }
+    else if(getType() == TYPE_STATUS)
+    {
+        map.insert(WANT_KEY, getWantMap());
+    }
+
+    stream << map;
+
+    return msgArr;
+}
+
+bool Message::isWellFormed()
+{
+    bool isStatus, isRumor;
+    isStatus = contains(WANT_KEY);
+    isRumor = (contains(CHATTEXT_KEY) && contains(ORIGINID_KEY) 
+        && contains(SEQNO_KEY));
+    if(!isStatus && !isRumor)
+    {
+        return false;
+    }
+
+    return true;
+}
+
 void Message::setType(QString str)
 {
     insert(TYPE_KEY, str);
 }
 
-void Message::setPortOfOrigin(quint32 p)
+void Message::setPeerOfOrigin(Peer peer)
 {
-    insert(PORTOFORIGIN_KEY, p);
+    insert(PEEROFORIGIN_KEY, peer);
 }
 
 void Message::setText(QString qstr)
@@ -94,9 +149,9 @@ QString Message::getType()
     return value(TYPE_KEY).toString();
 }
 
-quint32 Message::getPortOfOrigin()
+Peer Message::getPeerOfOrigin()
 {
-    return value(PORTOFORIGIN_KEY).toInt();
+    return qvariant_cast<Peer>(value(PEEROFORIGIN_KEY));
 }
 
 QString Message::getText()
