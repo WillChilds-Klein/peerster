@@ -3,7 +3,10 @@
 
 #include "Peerster.hh"
 
-#define TIMEOUT_MS (1000)
+#define CMD_PRINT_MSGSTORE ("PRINT_MSGSTORE")
+#define CMD_PRINT_STATUS ("PRINT_STATUS")
+
+#define CLOCK_RATE (10000) // in ms
 
 class Peerster;
 class Message;
@@ -31,6 +34,9 @@ class Mailbox : public QObject
         void gotInConsensusWithPeer();
         void gotMonger(Message);
 
+    private slots:
+        void chime();
+
     signals:
         void displayMessage(Message);
         void sendMessage(Message,Peer);
@@ -42,6 +48,7 @@ class Mailbox : public QObject
         Peerster* peerster;
         QList<Peer>* neighbors;
         MessageStore* msgstore;
+        QTimer* clock;
         quint32 ID, localSeqNo;
         quint32 port, myPortMin, myPortMax;
         void processCommand(QString);

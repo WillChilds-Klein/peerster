@@ -1,11 +1,9 @@
 #include "Mailbox.hh"
 
-#define CMD_PRINT_MSGSTORE ("PRINT_MSGSTORE")
-#define CMD_PRINT_STATUS ("PRINT_STATUS")
-
 Mailbox::Mailbox(Peerster* p)
     : peerster(p)
     , neighbors(new QList<Peer>())
+    , clock(new QTimer(this))
     , localSeqNo(1)
 {
     connect(this, SIGNAL(postToInbox(Message)), 
@@ -16,6 +14,11 @@ Mailbox::Mailbox(Peerster* p)
 
     connect(this, SIGNAL(needHelpFromPeer(Peer)),
         this, SLOT(gotNeedHelpFromPeer(Peer)));
+
+    connect(clock, SIGNAL(timeout()), 
+        this, SLOT(chime()));
+
+    clock->start(CLOCK_RATE);
 }
 
 Mailbox::~Mailbox()
@@ -143,6 +146,13 @@ void Mailbox::gotMonger(Message msg)
     Q_EMIT(sendMessage(msg, peer));
     qDebug() << "MONGER to Port " << peer.getPort() << ": <" << 
         msg.getOriginID() << ", " << msg.getSeqNo() << ">";
+}
+
+void Mailbox::chime()
+{
+    Message status = msgstore->getStatus();
+    status.setPortOfOrigin(port);
+    Q_EMIT(monger(status));
 }
 
 void Mailbox::processCommand(QString cmd)

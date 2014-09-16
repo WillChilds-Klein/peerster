@@ -25,10 +25,11 @@ Message::~Message()
 
 QString Message::toString()
 {
-    QString str = "size = " + QString::number(size()) +" [";
+    QString str;
     QVariantMap::iterator i;
     if(getType() == TYPE_RUMOR)
     {
+        str += "[";
         for(i = this->begin(); i != this->end(); ++i)
         {
             str += "<" + i.key() + ": " + i.value().toString() + ">,";
@@ -63,6 +64,11 @@ void Message::setType(QString str)
     insert(TYPE_KEY, str);
 }
 
+void Message::setPortOfOrigin(quint32 p)
+{
+    insert(PORTOFORIGIN_KEY, p);
+}
+
 void Message::setText(QString qstr)
 {
     insert(CHATTEXT_KEY, qstr);
@@ -78,14 +84,19 @@ void Message::setSeqNo(quint32 seqno)
     insert(SEQNO_KEY, seqno);
 }
 
-void Message::setPortOfOrigin(quint32 p)
+void Message::setWantMap(QVariantMap qvm)
 {
-    insert(PORTOFORIGIN_KEY, p);
+    insert(WANT_KEY, qvm);
 }
 
 QString Message::getType()
 {
     return value(TYPE_KEY).toString();
+}
+
+quint32 Message::getPortOfOrigin()
+{
+    return value(PORTOFORIGIN_KEY).toInt();
 }
 
 QString Message::getText()
@@ -101,16 +112,6 @@ QString Message::getOriginID()
 quint32 Message::getSeqNo()
 {
     return value(SEQNO_KEY).toInt();
-}
-
-quint32 Message::getPortOfOrigin()
-{
-    return value(PORTOFORIGIN_KEY).toInt();
-}
-
-void Message::setWantMap(QVariantMap qvm)
-{
-    insert(WANT_KEY, qvm);
 }
 
 QVariantMap Message::getWantMap()
