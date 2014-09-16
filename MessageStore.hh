@@ -29,7 +29,7 @@ class MessageStore : public QObject
     private:
         Peerster* peerster;
         QMap< QString, QList<Message> >* store; 
-        QMap<QString, quint32>* latest;
+        QMap<QString, quint32> getLatest();
 };
 
 #endif // PEERSTER_MESSAGESTORE_HH

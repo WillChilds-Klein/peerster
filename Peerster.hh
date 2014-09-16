@@ -37,6 +37,9 @@
 #define SEQNO_KEY ("SeqNo")
 #define WANT_KEY ("Want")
 #define PORTOFORIGIN_KEY ("Port")
+#define TYPE_KEY ("Type")
+#define TYPE_RUMOR ("Rumor")
+#define TYPE_STATUS ("Status")
 
 class ChatDialog;
 class NetSocket;

@@ -57,7 +57,6 @@ void ChatDialog::gotDisplayMessage(Message msg)
 {
     textview->append(msg.getOriginID() + 
         "<" + QString::number(msg.getSeqNo()) + ">: " + msg.getText());
-    qDebug() << "DISPLAYED: " << msg.toString();
 }
 
 // L1E2: subclass QTextEdit to get desired UI behavior.

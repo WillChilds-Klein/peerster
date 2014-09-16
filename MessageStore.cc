@@ -3,7 +3,6 @@
 MessageStore::MessageStore(Peerster* p)
     : peerster(p)
     , store(new QMap< QString, QList<Message> >())
-    , latest(new QMap<QString, quint32>())
 {}
 
 MessageStore::~MessageStore()
@@ -11,20 +10,18 @@ MessageStore::~MessageStore()
 
 bool MessageStore::isNewRumor(Message msg)
 {
-    if(!msg.typeIsRumor())
+    if(!(msg.getType() == TYPE_RUMOR))
         return false;
     else if(!store->contains(msg.getOriginID()))
         return true;
 
     quint32 msgSeqNo = msg.getSeqNo();
-
-    QList<Message> senderHistory = store->value(msg.getOriginID());
-
-    if(!senderHistory.isEmpty() && 
-        senderHistory.back().getSeqNo() >= msgSeqNo)
-        return false;
-    else
+    QMap<QString, quint32> latest = getLatest();
+    
+    if(msgSeqNo > latest.value(msg.getOriginID()))
         return true;
+    else
+        return false;
 }
 
 void MessageStore::addNewRumor(Message msg)
@@ -41,7 +38,6 @@ void MessageStore::addNewRumor(Message msg)
     }
 
     originHistory.append(msg);
-    latest->insert(origin, msg.getSeqNo());
 
     store->insert(origin, originHistory);
 }
@@ -57,7 +53,7 @@ QList<Message> MessageStore::getMessagesInRange(QString origin,
     originHistory = store->value(origin);
     ret = QList<Message>();
 
-    if(firstSeqNo > latest->value(origin))
+    if(firstSeqNo > getLatest().value(origin))
         return ret;
 
     QList<Message>::iterator i;
@@ -80,31 +76,50 @@ Message MessageStore::getStatus()
     Message status;
     QVariantMap want;
 
-    QMap<QString, quint32>::iterator i;
-    for(i = latest->begin(); i != latest->end(); i++)
+    QMap<QString, quint32> latest = getLatest();
+
+    QMap<QString, QList<Message> >::iterator i;
+    for(i = store->begin(); i != store->end(); ++i)
     {
-        want.insert(i.key(), (i.value() + 1));
+        want.insert(i.key(), latest.value(i.key())+1);
     }
-    status.insert(WANT_KEY, want);
+    status.setWantMap(want);
+
+    status.setType(TYPE_STATUS);
 
     return status;
 }
 
+QMap<QString, quint32> MessageStore::getLatest()
+{
+    QMap<QString, quint32> latest;
+
+    QMap<QString, QList<Message> >::iterator i;
+    for(i = store->begin(); i != store->end(); ++i)
+    {
+        latest.insert(i.key(), i.value().back().getSeqNo());
+    }
+
+    return latest;
+}
+
 bool MessageStore::isNextInSeq(Message msg)
 {
+    QMap<QString, quint32> latest = getLatest();
     if(store->contains(msg.getOriginID()))
     {
-        if(msg.getSeqNo() == (latest->value(msg.getOriginID()) + 1))
+        if(msg.getSeqNo() == latest.value(msg.getOriginID())+1)
             return true;
         else
             return false;
     }
+    else if(msg.getSeqNo() == 1)
+    {
+        return true;
+    }
     else
     {
-        if(msg.getSeqNo() == 1)
-            return true;
-        else
-            return false;
+        return false;
     }
 }   
 
@@ -158,7 +173,7 @@ void MessageStore::processIncomingStatus(Message status)
         QList<QString>::iterator k;
         for(k = inOwnButNotIncoming.begin(); k != inOwnButNotIncoming.end(); ++k)
         {
-            toSend = getMessagesInRange(*k, 0, latest->value(*k)-1);
+            toSend = getMessagesInRange(*k, 1, getLatest().value(*k));
             Q_EMIT(canHelpPeer(incomingPeer, toSend));
         }
     }
@@ -168,7 +183,7 @@ void MessageStore::processIncomingStatus(Message status)
         Q_EMIT(needHelpFromPeer(incomingPeer));
     }
 
-    if(!needHelp & inOwnButNotIncoming.isEmpty())
+    if(!needHelp && inOwnButNotIncoming.isEmpty())
     {
         Q_EMIT(inConsensusWithPeer());
     }

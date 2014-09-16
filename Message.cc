@@ -1,8 +1,9 @@
 #include "Message.hh"
 
 Message::Message()
-    : isRumor(true)
-{}
+{
+    insert(TYPE_KEY, TYPE_RUMOR);
+}
 
 Message::Message(QByteArray* arr)
 {
@@ -11,8 +12,6 @@ Message::Message(QByteArray* arr)
     Message msg;
     QDataStream stream(arr, QIODevice::ReadOnly);
     stream >> msg;
-
-    isRumor = msg.typeIsRumor();
 
     Message::iterator i;
     for(i = msg.begin(); i != msg.end(); i++)
@@ -28,11 +27,25 @@ QString Message::toString()
 {
     QString str = "size = " + QString::number(size()) +" [";
     QVariantMap::iterator i;
-    for(i = this->begin(); i != this->end(); ++i)
+    if(getType() == TYPE_RUMOR)
     {
-        str += "<" + i.key() + " : " + i.value().toString() + ">, ";
+        for(i = this->begin(); i != this->end(); ++i)
+        {
+            str += "<" + i.key() + ": " + i.value().toString() + ">,";
+        }
+        str += "]";
     }
-    str += "]";
+    else
+    {
+        str += "<Want: ";
+        QVariantMap wantMap = value(WANT_KEY).toMap();
+        for(i = wantMap.begin(); i != wantMap.end(); ++i)
+        {
+            str += "<" + i.key() + ": " + i.value().toString() + ">,";
+        }
+        str += ">";
+    }
+
     return str;
 }
 
@@ -45,9 +58,9 @@ QByteArray Message::serialize()
     return msgArr;
 }
 
-void Message::setIsRumor(bool b)
+void Message::setType(QString str)
 {
-    isRumor = b;
+    insert(TYPE_KEY, str);
 }
 
 void Message::setText(QString qstr)
@@ -70,9 +83,9 @@ void Message::setPortOfOrigin(quint32 p)
     insert(PORTOFORIGIN_KEY, p);
 }
 
-bool Message::typeIsRumor()
+QString Message::getType()
 {
-    return isRumor;
+    return value(TYPE_KEY).toString();
 }
 
 QString Message::getText()

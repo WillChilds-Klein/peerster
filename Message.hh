@@ -11,21 +11,18 @@ class Message : public QVariantMap
         ~Message();
         QString toString();
         QByteArray serialize();
-        void setIsRumor(bool);
+        void setType(QString);
         void setText(QString);
         void setOriginID(QString);
         void setSeqNo(quint32);
         void setPortOfOrigin(quint32);
         void setWantMap(QVariantMap);
-        bool typeIsRumor();
+        QString getType();
         QString getText();
         QString getOriginID();
         quint32 getSeqNo();
         quint32 getPortOfOrigin();
         QVariantMap getWantMap();
-
-    private:
-        bool isRumor;
 };
 
 // TODO: implement Rumor/Status sub-types of Message in all code.

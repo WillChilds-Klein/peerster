@@ -52,12 +52,11 @@ void NetSocket::gotReadyRead()
 
         readDatagram(datagram.data(), size, &senderAddr, &senderPort);
 
-        Message msg = Message(&datagram);
-        msg.setPortOfOrigin(port);    
+        Message msg = Message(&datagram); 
         Q_EMIT(postToInbox(msg));
 
         qDebug() << "RECEIVED FROM PORT " << senderPort 
-            << ": " << msg.toString();
+            << ": " << msg.toString() << "type: " << msg.getType();
     }
 }
 
