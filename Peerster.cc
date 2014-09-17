@@ -30,6 +30,12 @@ Peerster::Peerster()
     connect(socket, SIGNAL(potentialNewNeighbor(Peer)),
         mailbox, SLOT(gotPotentialNewNeighbor(Peer)));
 
+    // add peers manually
+    connect(dialog, SIGNAL(potentialNewNeighbor(Peer)),
+        mailbox, SLOT(gotPotentialNewNeighbor(Peer)));
+    connect(this, SIGNAL(potentialNewNeighbor(Peer)),
+        mailbox, SLOT(gotPotentialNewNeighbor(Peer)));
+
     qsrand(QTime(0,0,0).msecsTo(QTime::currentTime()));
     ID = QString::number((qrand() % ID_MAX) + 1);
     qDebug() << "Instance ID: "<< ID; 
@@ -53,6 +59,13 @@ Peerster::Peerster()
     mailbox->setID(ID);
     mailbox->setMessageStore(msgstore);
     mailbox->populateNeighbors();
+
+    QStringList clargs = QCoreApplication::arguments();
+    for(int i = 1; i < clargs.size(); i++)
+    {
+        Peer peer = Peer(clargs.at(i));
+        Q_EMIT(potentialNewNeighbor(peer));
+    }
 }
 
 Peerster::~Peerster()

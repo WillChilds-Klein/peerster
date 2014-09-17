@@ -6,6 +6,7 @@
 class Peerster;
 class EntryQTextEdit;
 class Message;
+class Peer;
 
 class ChatDialog : public QDialog
 {
@@ -19,14 +20,18 @@ class ChatDialog : public QDialog
     public slots:
         void gotReturnPressed();
         void gotDisplayMessage(Message);
+        void gotNewPeerEntered();
 
     signals:
         void postToOutbox(Message);
+        void potentialNewNeighbor(Peer);
 
     private:
         Peerster* peerster;
         QTextEdit* textview;
         EntryQTextEdit* textentry;
+        EntryQTextEdit* peerentry;
+        QPushButton* addbtn;
         QString title;
 };
 

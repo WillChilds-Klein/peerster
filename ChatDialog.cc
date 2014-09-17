@@ -4,11 +4,15 @@ ChatDialog::ChatDialog(Peerster* p)
     : peerster(p)
     , textview(new QTextEdit(this))
     , textentry(new EntryQTextEdit())
+    , peerentry(new EntryQTextEdit())
+    , addbtn(new QPushButton())
 {
-    // Register a callback on the textentry's returnPressed signal
-    // so that we can send the message entered by the user.
     connect(textentry, SIGNAL(returnPressed()), 
         this, SLOT(gotReturnPressed()));
+    connect(peerentry, SIGNAL(returnPressed()),
+        this, SLOT(gotNewPeerEntered()));
+    connect(addbtn, SIGNAL(clicked()),
+        this, SLOT(gotNewPeerEntered()));
 
     // Read-only text box where we display messages from everyone.
     // This widget expands both horizontally and vertically.
@@ -19,12 +23,20 @@ ChatDialog::ChatDialog(Peerster* p)
     textentry->setReadOnly(false);
     textentry->setLineWrapMode(QTextEdit::WidgetWidth);
 
-    // Lay out the widgets to appear in the main window.
-    // For Qt widget and layout concepts see:
-    // http://doc.qt.nokia.com/4.7-snapshot/widgets-and-layouts.html
+    
+    QHBoxLayout* peeradder = new QHBoxLayout();
+    peerentry->setReadOnly(false);
+    peerentry->setLineWrapMode(QTextEdit::WidgetWidth);
+    addbtn->setText("Add Peer");
+    // peeradder->addWidget(peerentry);
+    // peeradder->addWidget(addpeer);
+
     QVBoxLayout* layout = new QVBoxLayout();
     layout->addWidget(textview);
     layout->addWidget(textentry);
+    // layout->addWidget(peeradder);
+    layout->addWidget(peerentry);
+    layout->addWidget(addbtn);
     setLayout(layout);
 
     // L1E1: set line focus to textentry on startup
@@ -57,6 +69,17 @@ void ChatDialog::gotDisplayMessage(Message msg)
 {
     textview->append(msg.getOriginID() + 
         "<" + QString::number(msg.getSeqNo()) + ">: " + msg.getText());
+}
+
+void ChatDialog::gotNewPeerEntered()
+{
+    Peer peer = Peer(QString(peerentry->toPlainText()));
+
+    qDebug() << "new peer?" << peer.toString();
+
+    Q_EMIT(potentialNewNeighbor(peer));
+
+    peerentry->clear();
 }
 
 // L1E2: subclass QTextEdit to get desired UI behavior.

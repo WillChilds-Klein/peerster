@@ -5,6 +5,7 @@
 
 #define CMD_PRINT_MSGSTORE ("PRINT_MSGSTORE")
 #define CMD_PRINT_STATUS ("PRINT_STATUS")
+#define CMD_PRINT_NEIGHBORS ("PRINT_NEIGHBORS")
 
 #define CLOCK_RATE (5000) // in ms
 
@@ -24,7 +25,6 @@ class Mailbox : public QObject
         void setPortInfo(quint32,quint32,quint32);
         void setID(QString);
         void populateNeighbors();
-        void addNeighbor(Peer);
         Peer pickRandomPeer();
 
     public slots:

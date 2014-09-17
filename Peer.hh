@@ -13,6 +13,7 @@ class Peer
         quint32 getPort();
         QHostAddress getAddress();
         bool isValid();
+        bool isWellFormed();
         QString toString();
         void newHostInfo(QHostInfo);
         bool operator==(Peer);
@@ -21,7 +22,7 @@ class Peer
         QHostInfo* info;
         HostInfoHandler* handler;
         quint32 port;
-        bool valid;
+        bool valid, wellFormed;
 };
 
 class HostInfoHandler : public QObject

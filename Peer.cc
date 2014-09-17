@@ -3,39 +3,41 @@
 Peer::Peer(QString qstr)
     : info(new QHostInfo(0))
     , handler(new HostInfoHandler(this))
-    , valid(true)
+    , valid(false)
+    , wellFormed(false)
 {
     qDebug() << "IN PEER CONSTRUCTOR OF:" << qstr;
 
     QString nameOrAddr;
     QHostAddress address;
     QList<QHostAddress> addresses;
+    bool isInt;
 
     QStringList args = qstr.split(":", QString::SkipEmptyParts);
 
     if(args.size() == 2)
-    {
+    {    
         nameOrAddr = args.first(); 
-        port = args.last().toInt();  
+        port = args.last().toInt(&isInt); 
 
-        if(address.setAddress(nameOrAddr))
+        if(isInt)
         {
-            qDebug() << "able to set address";
-            addresses.append(address);
-            info->setAddresses(addresses);
-            valid = true;
+            wellFormed = true;
+
+            if(address.setAddress(nameOrAddr))
+            {
+                qDebug() << "able to set address";
+                addresses.append(address);
+                info->setAddresses(addresses);
+                valid = true;
+            }
+            else
+            {
+                qDebug() << "need to lookup hostname in DNS...";
+                QHostInfo::lookupHost(nameOrAddr, handler, SIGNAL(hostResolved(QHostInfo)));
+                valid = false; // until lookup completes.
+            }
         }
-        else
-        {
-            qDebug() << "need to lookup hostname in DNS...";
-            QHostInfo::lookupHost(nameOrAddr, handler, SIGNAL(hostResolved(QHostInfo)));
-            valid = false;
-            // *info = QHostInfo::fromName(args.at(0));
-        }
-    }
-    else
-    {
-        valid = false;
     }
 }
 
@@ -61,6 +63,11 @@ QHostAddress Peer::getAddress()
 bool Peer::isValid()
 {
     return valid;
+}
+
+bool Peer::isWellFormed()
+{
+    return wellFormed;
 }
 
 QString Peer::toString()

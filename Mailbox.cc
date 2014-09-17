@@ -62,15 +62,17 @@ void Mailbox::populateNeighbors()
     }
 }
 
-void Mailbox::addNeighbor(Peer peer)
-{
-    neighbors->append(peer);
-}
-
 Peer Mailbox::pickRandomPeer()
 {
-    quint32 randIndex = qrand() % neighbors->size();
-    return (*neighbors)[randIndex];
+    Peer peer = neighbors->at(qrand() % neighbors->size());
+
+    // keep trying until valid peer is picked.
+    while(!peer.isValid())
+    {
+        peer = neighbors->at(qrand() % neighbors->size());
+    }
+
+    return peer;
 }
 
 void Mailbox::gotPostToInbox(Message msg, Peer peer)
@@ -153,7 +155,8 @@ void Mailbox::gotMonger(Message msg)
 
 void Mailbox::gotPotentialNewNeighbor(Peer peer)
 {
-    if(!neighbors->contains(peer))
+    qDebug() << "CONSIDERING" << peer.toString();
+    if(!neighbors->contains(peer) && peer.isWellFormed())
     {
         neighbors->append(peer);
         qDebug() << "new neighbor" << peer.toString() << "!";
@@ -178,6 +181,12 @@ void Mailbox::processCommand(QString cmd)
     else if(cmd == CMD_PRINT_STATUS)
     {
         qDebug() << msgstore->getStatus().toString();
+    }
+    else if(cmd == CMD_PRINT_NEIGHBORS)
+    {
+        qDebug() << "NEIGHBORS:";
+        foreach(Peer peer, *neighbors)
+            qDebug() << "   " << peer.toString();
     }
 }
 

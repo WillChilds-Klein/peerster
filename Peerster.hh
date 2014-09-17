@@ -25,6 +25,8 @@
 #include <typeinfo>
 #include <QHostInfo>
 #include <QHostAddress>
+#include <QPushButton>
+#include <QCoreApplication>
 
 #include "ChatDialog.hh"
 #include "NetSocket.hh"
@@ -57,6 +59,9 @@ class Peerster : public QObject
         ~Peerster();
         void run();
         QList<quint32> findNeighbors();
+
+    signals:
+        void potentialNewNeighbor(Peer);
 
     private:
         qint32 port;

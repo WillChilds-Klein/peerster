@@ -57,13 +57,14 @@ void NetSocket::gotReadyRead()
                                            + QString::number(senderPort);
         qDebug() << "Something recieved!" << senderInfo;
         Peer sender = Peer(senderInfo);
+        // while(!sender.isValid()) // block while waiting for hostname resolution?
         if(sender.isValid())
         {
             Message msg = Message(&datagram);
-            qDebug() << "NEW MSG RECIEVED OF SIZE" << msg.size() << ", KEYS:";
-            foreach(QString qstr, msg.keys())
-                qDebug() << qstr;
-            qDebug() << "END KEYS";
+            // qDebug() << "NEW MSG RECIEVED OF SIZE" << msg.size() << ", KEYS:";
+            // foreach(QString qstr, msg.keys())
+            //     qDebug() << qstr;
+            // qDebug() << "END KEYS";
             if(msg.isWellFormed()) 
             {
                 Q_EMIT(potentialNewNeighbor(sender));
