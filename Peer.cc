@@ -84,11 +84,7 @@ void Peer::newHostInfo(QHostInfo newInfo)
         qDebug() << "BAD NEW HOST INFO!";
         return;
     }
-    //*info = newInfo;
-    //info.setAddresses(newInfo.addresses());
-    //info.setHostName(newInfo.hostName());
-    free(info);
-    info = new QHostInfo(newInfo);
+    info->setAddresses(newInfo.addresses());
     valid = true;
 }
 
