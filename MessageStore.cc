@@ -84,7 +84,6 @@ Message MessageStore::getStatus()
         want.insert(i.key(), latest.value(i.key())+1);
     }
     status.setWantMap(want);
-
     status.setType(TYPE_STATUS);
 
     return status;
@@ -123,12 +122,11 @@ bool MessageStore::isNextInSeq(Message msg)
     }
 }   
 
-void MessageStore::processIncomingStatus(Message status)
+void MessageStore::processIncomingStatus(Message status, Peer peer)
 {
     QVariantMap ownWant = getStatus().getWantMap();
     QVariantMap incomingWant = status.getWantMap();
     quint32 ownWantSeqNo, incomingWantSeqNo;
-    Peer incomingPeer = status.getPeerOfOrigin();
     Message curr;
     QList<QString> inOwnButNotIncoming;
     QList<Message> toSend;
@@ -152,7 +150,7 @@ void MessageStore::processIncomingStatus(Message status)
             { // prepare list
                 toSend = getMessagesInRange(i.key(), 
                     incomingWantSeqNo-1, ownWantSeqNo-1);
-                Q_EMIT(canHelpPeer(incomingPeer, toSend));
+                Q_EMIT(canHelpPeer(peer, toSend));
             }
         }   
         else
@@ -161,7 +159,7 @@ void MessageStore::processIncomingStatus(Message status)
         }
     }
 
-    // handle msgs that incomingPeer has, but we don't.
+    // handle msgs that peer has, but we don't.
     for(i = ownWant.begin(); i != ownWant.end(); ++i)
     {
         if(!incomingWant.contains(i.key()))
@@ -174,13 +172,13 @@ void MessageStore::processIncomingStatus(Message status)
         for(k = inOwnButNotIncoming.begin(); k != inOwnButNotIncoming.end(); ++k)
         {
             toSend = getMessagesInRange(*k, 1, getLatest().value(*k));
-            Q_EMIT(canHelpPeer(incomingPeer, toSend));
+            Q_EMIT(canHelpPeer(peer, toSend));
         }
     }
 
     if(needHelp)
     {
-        Q_EMIT(needHelpFromPeer(incomingPeer));
+        Q_EMIT(needHelpFromPeer(peer));
     }
 
     if(!needHelp && inOwnButNotIncoming.isEmpty())

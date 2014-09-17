@@ -25,7 +25,7 @@ class NetSocket : public QUdpSocket
         void gotSendMessage(Message,Peer);
 
     signals:
-        void postToInbox(Message);
+        void postToInbox(Message,Peer);
         void potentialNewNeighbor(Peer);
 
     private:

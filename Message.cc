@@ -1,15 +1,13 @@
 #include "Message.hh"
 
 Message::Message()
-    : peerOfOrigin(new Peer())
-    , wellFormed(true)
+    : wellFormed(true)
 {
     setType(TYPE_RUMOR);
 }
 
-Message::Message(QByteArray* arr, Peer peer)
-    : peerOfOrigin(new Peer())
-    , wellFormed(true)
+Message::Message(QByteArray* arr)
+    : wellFormed(true)
 {
     QVariantMap map;
     QDataStream stream(arr, QIODevice::ReadOnly);
@@ -26,7 +24,6 @@ Message::Message(QByteArray* arr, Peer peer)
         if(contains(WANT_KEY))
         {
             setType(TYPE_STATUS);
-            setPeerOfOrigin(peer);
         }
         else if(contains(CHATTEXT_KEY) && contains(ORIGINID_KEY) 
             && contains(SEQNO_KEY))
@@ -88,13 +85,13 @@ QByteArray Message::toSerializedQVMap()
     QVariantMap map;
     if(getType() == TYPE_RUMOR)
     {
-        map.insert(CHATTEXT_KEY, getText());
-        map.insert(ORIGINID_KEY, getOriginID());
-        map.insert(SEQNO_KEY, getSeqNo());
+        map.insert(CHATTEXT_KEY, value(CHATTEXT_KEY));
+        map.insert(ORIGINID_KEY, value(ORIGINID_KEY));
+        map.insert(SEQNO_KEY, value(SEQNO_KEY));
     }
     else if(getType() == TYPE_STATUS)
     {
-        map.insert(WANT_KEY, getWantMap());
+        map.insert(WANT_KEY, value(WANT_KEY));
     }
 
     stream << map;
@@ -108,27 +105,22 @@ bool Message::isWellFormed()
     isStatus = contains(WANT_KEY);
     isRumor = (contains(CHATTEXT_KEY) && contains(ORIGINID_KEY) 
         && contains(SEQNO_KEY));
-    if(!isStatus && !isRumor)
+    if(isStatus || isRumor)
     {
-        return false;
+        return true;
     }
 
-    return true;
+    return false;
 }
 
-bool Message::isEmptyMsg()
+bool Message::isEmptyStatus()
 {
-    return isWellFormed();
+    return value(WANT_KEY).toMap().size() == 0;
 }
 
 void Message::setType(QString str)
 {
     insert(TYPE_KEY, str);
-}
-
-void Message::setPeerOfOrigin(Peer peer)
-{
-    *peerOfOrigin = peer;
 }
 
 void Message::setText(QString qstr)
@@ -154,11 +146,6 @@ void Message::setWantMap(QVariantMap qvm)
 QString Message::getType()
 {
     return value(TYPE_KEY).toString();
-}
-
-Peer Message::getPeerOfOrigin()
-{
-    return *peerOfOrigin;
 }
 
 QString Message::getText()

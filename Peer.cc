@@ -1,36 +1,42 @@
 #include "Peer.hh"
 
-Peer::Peer()
-    : info(new QHostInfo(0))
-    // , handler(new HostInfoHandler(this))
-{}
-
 Peer::Peer(QString qstr)
     : info(new QHostInfo(0))
-    // , handler(new HostInfoHandler(this))
+    , handler(new HostInfoHandler(this))
+    , valid(true)
 {
-    QStringList args = qstr.split(":", QString::SkipEmptyParts);
+    qDebug() << "IN PEER CONSTRUCTOR OF:" << qstr;
 
-    qDebug() << "IN PEER CONSTRUCTOR:" << qstr;
-
+    QString nameOrAddr;
     QHostAddress address;
     QList<QHostAddress> addresses;
 
-    if(address.setAddress(args.at(0)))
+    QStringList args = qstr.split(":", QString::SkipEmptyParts);
+
+    if(args.size() == 2)
     {
-        // qDebug() << "able to set address";
-        addresses.append(address);
-        info->setAddresses(addresses);
-        // valid = true;
+        nameOrAddr = args.first(); 
+        port = args.last().toInt();  
+
+        if(address.setAddress(nameOrAddr))
+        {
+            qDebug() << "able to set address";
+            addresses.append(address);
+            info->setAddresses(addresses);
+            valid = true;
+        }
+        else
+        {
+            qDebug() << "need to lookup hostname in DNS...";
+            QHostInfo::lookupHost(nameOrAddr, handler, SIGNAL(hostResolved(QHostInfo)));
+            valid = false;
+            // *info = QHostInfo::fromName(args.at(0));
+        }
     }
     else
     {
-        // QHostInfo::lookupHost(args[0], handler, SIGNAL(hostResolved(QHostInfo)));
-        // valid = false;
-        *info = QHostInfo::fromName(args.at(0));
+        valid = false;
     }
-
-    port = args.at(1).toInt();
 }
 
 Peer::~Peer()
@@ -43,33 +49,35 @@ quint32 Peer::getPort()
 
 QHostAddress Peer::getAddress()
 {
-    QList<QHostAddress> addr = info->addresses();
-    qDebug() << addr.size() << "addresses for" << info->hostName();
-    return addr.at(0);
-}
+    QList<QHostAddress> addrs = info->addresses();
+    // qDebug() << addr.size() << "addresses for" << info->hostName();
+    if(!addrs.isEmpty()){
+        return addrs.first();
+    }
+ 
+    return QHostAddress::LocalHost;
+}   
 
-// bool Peer::isValid()
-// {
-//     return valid;
-// }
+bool Peer::isValid()
+{
+    return valid;
+}
 
 QString Peer::toString()
 {
-    return info->addresses().at(0).toString() + ":" + QString::number(port);
+    return getAddress().toString() + ":" + QString::number(port);
 }
 
-// void Peer::newHostInfo(QHostInfo newInfo)
-// {
-//     qDebug() << "yoyoyoyoyo";
-//     if(newInfo.error() != QHostInfo::NoError)
-//     {
-//         qDebug() << "bad hostinfo!";
-//         return;
-//     }
-//     qDebug() << "ayayaya" << newInfo.addresses().at(0).toString();
-//     *info = newInfo;
-//     valid = true;
-// }
+void Peer::newHostInfo(QHostInfo newInfo)
+{
+    if(newInfo.error() != QHostInfo::NoError)
+    {
+        qDebug() << "BAD NEW HOST INFO!";
+        return;
+    }
+    *info = newInfo;
+    valid = true;
+}
 
 bool Peer::operator==(Peer other)
 {
@@ -77,15 +85,15 @@ bool Peer::operator==(Peer other)
             (this->getPort() == other.getPort());
 } 
 
-// HostInfoHandler::HostInfoHandler(Peer* p)
-//     : peer(p)
-// {
-//     connect(this, SIGNAL(hostResolved(QHostInfo)),
-//         this, SLOT(gotHostResolved(QHostInfo)));
-// }
+HostInfoHandler::HostInfoHandler(Peer* peer)
+    : peer(peer)
+{
+    connect(this, SIGNAL(hostResolved(QHostInfo)),
+        this, SLOT(gotHostResolved(QHostInfo)));
+}
 
-// void HostInfoHandler::gotHostResolved(QHostInfo newInfo)
-// {
-//     peer->newHostInfo(newInfo);
-// }
+void HostInfoHandler::gotHostResolved(QHostInfo newInfo)
+{
+    peer->newHostInfo(newInfo);
+}
 

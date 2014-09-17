@@ -3,43 +3,42 @@
 
 #include "Peerster.hh"
 
-// class HostInfoHandler;
+class HostInfoHandler;
 
 class Peer
 {
     public:
-        Peer();
         Peer(QString);
         ~Peer();
         quint32 getPort();
         QHostAddress getAddress();
-        // bool isValid();
+        bool isValid();
         QString toString();
-        // void newHostInfo(QHostInfo);
+        void newHostInfo(QHostInfo);
         bool operator==(Peer);
 
     private:
         QHostInfo* info;
-        // HostInfoHandler* handler;
+        HostInfoHandler* handler;
         quint32 port;
-        // bool valid;
+        bool valid;
 };
 
-// class HostInfoHandler : public QObject
-// {
-//     Q_OBJECT
+class HostInfoHandler : public QObject
+{
+    Q_OBJECT
 
-//     public:
-//         HostInfoHandler(Peer*);
+    public:
+        HostInfoHandler(Peer*);
 
-//     signals:
-//         void hostResolved(QHostInfo);
+    signals:
+        void hostResolved(QHostInfo);
 
-//     private slots:
-//         void gotHostResolved(QHostInfo);
+    private slots:
+        void gotHostResolved(QHostInfo);
 
-//     private:
-//         Peer* peer;
-// };
+    private:
+        Peer* peer;
+};
 
 #endif // PEERSTER_PEER_HH

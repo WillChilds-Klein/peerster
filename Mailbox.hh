@@ -6,7 +6,7 @@
 #define CMD_PRINT_MSGSTORE ("PRINT_MSGSTORE")
 #define CMD_PRINT_STATUS ("PRINT_STATUS")
 
-#define CLOCK_RATE (10000) // in ms
+#define CLOCK_RATE (5000) // in ms
 
 class Peerster;
 class Message;
@@ -22,14 +22,14 @@ class Mailbox : public QObject
         ~Mailbox();
         void setMessageStore(MessageStore*);
         void setPortInfo(quint32,quint32,quint32);
-        void setID(quint32);
+        void setID(QString);
         void populateNeighbors();
         void addNeighbor(Peer);
         Peer pickRandomPeer();
 
     public slots:
         void gotPostToOutbox(Message);
-        void gotPostToInbox(Message);
+        void gotPostToInbox(Message,Peer);
         void gotCanHelpPeer(Peer,QList<Message>);
         void gotNeedHelpFromPeer(Peer);
         void gotInConsensusWithPeer();
@@ -42,7 +42,7 @@ class Mailbox : public QObject
     signals:
         void displayMessage(Message);
         void sendMessage(Message,Peer);
-        void postToInbox(Message);
+        void postToInbox(Message,Peer);
         void monger(Message);
         void needHelpFromPeer(Peer);
 
@@ -51,7 +51,8 @@ class Mailbox : public QObject
         QList<Peer>* neighbors;
         MessageStore* msgstore;
         QTimer* clock;
-        quint32 ID, localSeqNo;
+        QString ID;
+        quint32 localSeqNo;
         quint32 port, myPortMin, myPortMax;
         void processCommand(QString);
 };

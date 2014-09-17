@@ -6,8 +6,8 @@ Mailbox::Mailbox(Peerster* p)
     , clock(new QTimer(this))
     , localSeqNo(1)
 {
-    connect(this, SIGNAL(postToInbox(Message)), 
-        this, SLOT(gotPostToInbox(Message)));
+    connect(this, SIGNAL(postToInbox(Message,Peer)), 
+        this, SLOT(gotPostToInbox(Message,Peer)));
 
     connect(this, SIGNAL(monger(Message)),
         this, SLOT(gotMonger(Message)));
@@ -36,9 +36,9 @@ void Mailbox::setPortInfo(quint32 min, quint32 max, quint32 p)
     port = p;
 }
 
-void Mailbox::setID(quint32 i)
+void Mailbox::setID(QString str)
 {
-    ID = i;
+    ID = str;
 }
 
 void Mailbox::populateNeighbors()
@@ -48,7 +48,7 @@ void Mailbox::populateNeighbors()
     {
         if(i != port)
         {
-            info = QHostInfo::localHostName() + ":" + QString::number(i);
+            info = "127.0.0.1:" + QString::number(i);
             neighbors->append(Peer(info));
         }
     }
@@ -73,8 +73,9 @@ Peer Mailbox::pickRandomPeer()
     return (*neighbors)[randIndex];
 }
 
-void Mailbox::gotPostToInbox(Message msg)
+void Mailbox::gotPostToInbox(Message msg, Peer peer)
 {   
+    qDebug() << "in gotPostToInbox!";
     if(msg.getType() == TYPE_RUMOR)
     {
         if(msgstore->isNewRumor(msg))
@@ -85,9 +86,9 @@ void Mailbox::gotPostToInbox(Message msg)
                 Q_EMIT(displayMessage(msg));
                 Q_EMIT(monger(msg));
             }
-            else
+            else if(msg.getOriginID() != ID)
             {
-                Q_EMIT(needHelpFromPeer(msg.getPeerOfOrigin()));
+                Q_EMIT(needHelpFromPeer(peer));
             }
         }
         else
@@ -97,7 +98,7 @@ void Mailbox::gotPostToInbox(Message msg)
     }
     else
     {
-        msgstore->processIncomingStatus(msg);
+        msgstore->processIncomingStatus(msg, peer);
     }
 
     processCommand(msg.getText());
@@ -105,10 +106,11 @@ void Mailbox::gotPostToInbox(Message msg)
 
 void Mailbox::gotPostToOutbox(Message msg)
 {
-    msg.setOriginID(QString::number(ID));
+    msg.setOriginID(ID);
     msg.setSeqNo(localSeqNo);
     localSeqNo++;
-    Q_EMIT(postToInbox(msg));
+    Peer peer = Peer("127.0.0.1:" + QString::number(port));
+    Q_EMIT(postToInbox(msg, peer));
 }
 
 void Mailbox::gotCanHelpPeer(Peer peer, QList<Message> list)
@@ -145,9 +147,8 @@ void Mailbox::gotInConsensusWithPeer()
 void Mailbox::gotMonger(Message msg)
 {
     Peer peer = pickRandomPeer();
+    qDebug() << "MONGER TO PORT" << peer.getPort() << "ON" << peer.getAddress();
     Q_EMIT(sendMessage(msg, peer));
-    qDebug() << "MONGER to Port" << peer.getPort() << "on" << peer.getAddress() 
-        <<": <" << msg.getOriginID() << ", " << msg.getSeqNo() << ">";
 }
 
 void Mailbox::gotPotentialNewNeighbor(Peer peer)
@@ -162,7 +163,7 @@ void Mailbox::gotPotentialNewNeighbor(Peer peer)
 void Mailbox::chime()
 {
     Message status = msgstore->getStatus();
-    if(!status.isEmptyMsg())
+    if(!status.isEmptyStatus())
     {
         Q_EMIT(monger(status));
     }

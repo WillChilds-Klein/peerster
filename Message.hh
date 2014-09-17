@@ -9,28 +9,25 @@ class Message : public QVariantMap
 
     public:
         Message();
-        Message(QByteArray*,Peer);
+        Message(QByteArray*);
         ~Message();
         QString toString();
         QByteArray serialize();
         QByteArray toSerializedQVMap();
         bool isWellFormed();
-        bool isEmptyMsg();
+        bool isEmptyStatus();
         void setType(QString);
-        void setPeerOfOrigin(Peer);
         void setText(QString);
         void setOriginID(QString);
         void setSeqNo(quint32);
         void setWantMap(QVariantMap);
         QString getType();
-        Peer getPeerOfOrigin();
         QString getText();
         QString getOriginID();
         quint32 getSeqNo();
         QVariantMap getWantMap();
 
     private:
-        Peer* peerOfOrigin;
         bool wellFormed;
         void setWellFormed(bool);
 };

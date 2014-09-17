@@ -22,7 +22,6 @@ void NetSocket::setPortRange(quint32 min, quint32 max)
 
 qint32 NetSocket::bind()
 {
-    // Try to bind to each of the range myPortMin..myPortMax in turn.
     for (quint32 p = myPortMin; p <= myPortMax; p++)
     {
         if (QUdpSocket::bind(p))
@@ -45,7 +44,6 @@ void NetSocket::gotReadyRead()
     QString senderInfo;
     quint16 senderPort;
     QByteArray datagram;
-    Peer sender;
     quint64 size;
 
     while (hasPendingDatagrams()) 
@@ -58,37 +56,41 @@ void NetSocket::gotReadyRead()
         senderInfo = senderAddr.toString() + ":" 
                                            + QString::number(senderPort);
         qDebug() << "Something recieved!" << senderInfo;
-        sender = Peer(senderInfo);
-        // if(sender.isValid())
-        // {
-            Message msg = Message(&datagram, sender);
+        Peer sender = Peer(senderInfo);
+        if(sender.isValid())
+        {
+            Message msg = Message(&datagram);
+            qDebug() << "NEW MSG RECIEVED OF SIZE" << msg.size() << ", KEYS:";
+            foreach(QString qstr, msg.keys())
+                qDebug() << qstr;
+            qDebug() << "END KEYS";
             if(msg.isWellFormed()) 
             {
                 Q_EMIT(potentialNewNeighbor(sender));
-                Q_EMIT(postToInbox(msg));
+                Q_EMIT(postToInbox(msg, sender));
 
-                qDebug() << "MSG FROM: " << senderInfo;
+                qDebug() << "GOT GOOD MSG" << msg.toString() << "FROM: " << senderInfo;
             }
             else
             {
-                qDebug() << "BAD MSG FROM: " << senderInfo;
+                qDebug() << "GOT BAD MSG FROM: " << senderInfo;
             }
-        // }
+        }
     }
 }
 
 void NetSocket::gotSendMessage(Message msg, Peer peer)
 {
-    // if(peer.isValid())
-    // {
+    if(peer.isValid())
+    {
         // serialize map
         QByteArray msgArr = msg.toSerializedQVMap();
 
+        qDebug() << "SEND MSG" << msg.toString() << "TO:" << peer.toString();
+
         // Send message via UDP
         writeDatagram(msgArr, peer.getAddress(), peer.getPort());
-
-        qDebug() << "SENT MSG TO: " << peer.toString();
-    // }
+    }
 }
 
 

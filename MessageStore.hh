@@ -18,7 +18,7 @@ class MessageStore : public QObject
         QList<Message> getMessagesInRange(QString,quint32,quint32);
         Message getStatus();
         bool isNextInSeq(Message msg);
-        void processIncomingStatus(Message);
+        void processIncomingStatus(Message,Peer);
         QString toString();
 
     signals:

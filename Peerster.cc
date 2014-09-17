@@ -7,8 +7,8 @@ Peerster::Peerster()
     , msgstore(new MessageStore(this))
 {
     // inbound message signal chain
-    connect(socket, SIGNAL(postToInbox(Message)), 
-        mailbox, SLOT(gotPostToInbox(Message)));
+    connect(socket, SIGNAL(postToInbox(Message,Peer)), 
+        mailbox, SLOT(gotPostToInbox(Message,Peer)));
     connect(mailbox, SIGNAL(displayMessage(Message)), 
         dialog, SLOT(gotDisplayMessage(Message)));
 
@@ -31,7 +31,7 @@ Peerster::Peerster()
         mailbox, SLOT(gotPotentialNewNeighbor(Peer)));
 
     qsrand(QTime(0,0,0).msecsTo(QTime::currentTime()));
-    ID = (qrand() % ID_MAX) + 1;
+    ID = QString::number((qrand() % ID_MAX) + 1);
     qDebug() << "Instance ID: "<< ID; 
 
     myPortMin = 32718 + (getuid() % 4096)*4;
@@ -45,7 +45,7 @@ Peerster::Peerster()
         exit(1);
     }
 
-    QString title = "Peerster Instance " + QString::number(ID) + 
+    QString title = "Peerster Instance " + ID + 
         " on port " + QString::number(port);
     dialog->setTitle(title);
 

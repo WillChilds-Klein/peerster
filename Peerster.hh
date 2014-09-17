@@ -60,7 +60,8 @@ class Peerster : public QObject
 
     private:
         qint32 port;
-        quint32 ID, myPortMin, myPortMax;
+        quint32 myPortMin, myPortMax;
+        QString ID;
         ChatDialog* dialog;
         NetSocket* socket;
         Mailbox* mailbox;
