@@ -77,12 +77,18 @@ QString Peer::toString()
 
 void Peer::newHostInfo(QHostInfo newInfo)
 {
+    qDebug() << "Host info should be ready now!!";
+	
     if(newInfo.error() != QHostInfo::NoError)
     {
         qDebug() << "BAD NEW HOST INFO!";
         return;
     }
-    *info = newInfo;
+    //*info = newInfo;
+    //info.setAddresses(newInfo.addresses());
+    //info.setHostName(newInfo.hostName());
+    free(info);
+    info = new QHostInfo(newInfo);
     valid = true;
 }
 
