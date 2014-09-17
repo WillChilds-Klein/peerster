@@ -1,13 +1,15 @@
 #include "Message.hh"
 
 Message::Message()
-    : wellFormed(true)
+    : peerOfOrigin(new Peer())
+    , wellFormed(true)
 {
     setType(TYPE_RUMOR);
 }
 
 Message::Message(QByteArray* arr, Peer peer)
-    : wellFormed(true)
+    : peerOfOrigin(new Peer())
+    , wellFormed(true)
 {
     QVariantMap map;
     QDataStream stream(arr, QIODevice::ReadOnly);
@@ -34,7 +36,7 @@ Message::Message(QByteArray* arr, Peer peer)
     }
     else
     {
-        setWellFormed(false);
+        wellFormed = false;
         qDebug() << "malformed message!";
     }
 }
@@ -114,6 +116,11 @@ bool Message::isWellFormed()
     return true;
 }
 
+bool Message::isEmptyMsg()
+{
+    return isWellFormed();
+}
+
 void Message::setType(QString str)
 {
     insert(TYPE_KEY, str);
@@ -121,7 +128,7 @@ void Message::setType(QString str)
 
 void Message::setPeerOfOrigin(Peer peer)
 {
-    insert(PEEROFORIGIN_KEY, peer);
+    *peerOfOrigin = peer;
 }
 
 void Message::setText(QString qstr)
@@ -151,7 +158,7 @@ QString Message::getType()
 
 Peer Message::getPeerOfOrigin()
 {
-    return qvariant_cast<Peer>(value(PEEROFORIGIN_KEY));
+    return *peerOfOrigin;
 }
 
 QString Message::getText()

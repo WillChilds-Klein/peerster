@@ -6,7 +6,7 @@
 class Message : public QVariantMap
 {
     // Q_DECLARE_METATYPE(Peer);
-    
+
     public:
         Message();
         Message(QByteArray*,Peer);
@@ -15,6 +15,7 @@ class Message : public QVariantMap
         QByteArray serialize();
         QByteArray toSerializedQVMap();
         bool isWellFormed();
+        bool isEmptyMsg();
         void setType(QString);
         void setPeerOfOrigin(Peer);
         void setText(QString);
@@ -29,9 +30,12 @@ class Message : public QVariantMap
         QVariantMap getWantMap();
 
     private:
-        void setWellFormed(bool);
+        Peer* peerOfOrigin;
         bool wellFormed;
+        void setWellFormed(bool);
 };
+
+// Q_DECLARE_METATYPE(Message);
 
 // TODO: implement Rumor/Status sub-types of Message in all code.
 

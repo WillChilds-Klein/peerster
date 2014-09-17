@@ -56,23 +56,31 @@ void NetSocket::gotReadyRead()
         readDatagram(datagram.data(), size, &senderAddr, &senderPort);
 
         senderInfo = senderAddr.toString() + ":" 
-                                           + QString::num(senderPort);
+                                           + QString::number(senderPort);
+        qDebug() << "Something recieved!" << senderInfo;
         sender = Peer(senderInfo);
-        Message msg = Message(&datagram, sender);
-        if(msg.isWellFormed()) 
-        {
-            Q_EMIT(potentialNewNeighbor(sender));
-            Q_EMIT(postToInbox(msg));
+        // if(sender.isValid())
+        // {
+            Message msg = Message(&datagram, sender);
+            if(msg.isWellFormed()) 
+            {
+                Q_EMIT(potentialNewNeighbor(sender));
+                Q_EMIT(postToInbox(msg));
 
-            qDebug() << "MSG FROM: " << senderInfo;
-        }
+                qDebug() << "MSG FROM: " << senderInfo;
+            }
+            else
+            {
+                qDebug() << "BAD MSG FROM: " << senderInfo;
+            }
+        // }
     }
 }
 
 void NetSocket::gotSendMessage(Message msg, Peer peer)
 {
-    if(peer.isValid())
-    {
+    // if(peer.isValid())
+    // {
         // serialize map
         QByteArray msgArr = msg.toSerializedQVMap();
 
@@ -80,7 +88,7 @@ void NetSocket::gotSendMessage(Message msg, Peer peer)
         writeDatagram(msgArr, peer.getAddress(), peer.getPort());
 
         qDebug() << "SENT MSG TO: " << peer.toString();
-    }
+    // }
 }
 
 

@@ -60,7 +60,8 @@ void ChatDialog::gotDisplayMessage(Message msg)
 }
 
 // L1E2: subclass QTextEdit to get desired UI behavior.
-EntryQTextEdit::EntryQTextEdit() : QTextEdit() {}
+EntryQTextEdit::EntryQTextEdit()
+{}
 
 void EntryQTextEdit::keyPressEvent(QKeyEvent* event) 
 {

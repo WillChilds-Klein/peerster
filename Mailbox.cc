@@ -43,12 +43,12 @@ void Mailbox::setID(quint32 i)
 
 void Mailbox::populateNeighbors()
 {
-    QString info:
-    for(int i = myPortMin; i <= myPortMax; i++)
+    QString info;
+    for(quint32 i = myPortMin; i <= myPortMax; i++)
     {
         if(i != port)
         {
-            info = QHostInfo::localHostName() + ":" + QString::num(i);
+            info = QHostInfo::localHostName() + ":" + QString::number(i);
             neighbors->append(Peer(info));
         }
     }
@@ -146,8 +146,8 @@ void Mailbox::gotMonger(Message msg)
 {
     Peer peer = pickRandomPeer();
     Q_EMIT(sendMessage(msg, peer));
-    qDebug() << "MONGER to Port " << peer.getPort() << ": <" << 
-        msg.getOriginID() << ", " << msg.getSeqNo() << ">";
+    qDebug() << "MONGER to Port" << peer.getPort() << "on" << peer.getAddress() 
+        <<": <" << msg.getOriginID() << ", " << msg.getSeqNo() << ">";
 }
 
 void Mailbox::gotPotentialNewNeighbor(Peer peer)
@@ -155,13 +155,17 @@ void Mailbox::gotPotentialNewNeighbor(Peer peer)
     if(!neighbors->contains(peer))
     {
         neighbors->append(peer);
+        qDebug() << "new neighbor" << peer.toString() << "!";
     }
 }
 
 void Mailbox::chime()
 {
     Message status = msgstore->getStatus();
-    Q_EMIT(monger(status));
+    if(!status.isEmptyMsg())
+    {
+        Q_EMIT(monger(status));
+    }
 }
 
 void Mailbox::processCommand(QString cmd)
