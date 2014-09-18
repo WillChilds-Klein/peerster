@@ -33,6 +33,8 @@ Peerster::Peerster()
     // add peers manually
     connect(dialog, SIGNAL(potentialNewNeighbor(Peer)),
         mailbox, SLOT(gotPotentialNewNeighbor(Peer)));
+    connect(dialog, SIGNAL(sendStatusToPeer(Peer)),
+        mailbox, SLOT(gotSendStatusToPeer(Peer)));
     connect(this, SIGNAL(potentialNewNeighbor(Peer)),
         mailbox, SLOT(gotPotentialNewNeighbor(Peer)));
 

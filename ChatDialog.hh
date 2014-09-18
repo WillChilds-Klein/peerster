@@ -25,6 +25,7 @@ class ChatDialog : public QDialog
     signals:
         void postToOutbox(Message);
         void potentialNewNeighbor(Peer);
+        void sendStatusToPeer(Peer);
 
     private:
         Peerster* peerster;

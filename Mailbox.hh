@@ -38,6 +38,7 @@ class Mailbox : public QObject
 
     private slots:
         void chime();
+        void gotSendStatusToPeer(Peer);
 
     signals:
         void displayMessage(Message);

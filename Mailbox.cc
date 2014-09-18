@@ -172,6 +172,15 @@ void Mailbox::chime()
     }
 }
 
+void Mailbox::gotSendStatusToPeer(Peer peer)
+{
+    Message status = msgstore->getStatus();
+    if(!status.isEmptyStatus())
+    {
+        Q_EMIT(sendMessage(status, peer));
+    }
+}
+
 void Mailbox::processCommand(QString cmd)
 {
     if(cmd == CMD_PRINT_MSGSTORE)
