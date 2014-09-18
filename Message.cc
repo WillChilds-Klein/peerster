@@ -34,7 +34,7 @@ Message::Message(QByteArray* arr)
     else
     {
         wellFormed = false;
-        qDebug() << "malformed message!";
+        qDebug() << "MALFORMED MESSAGE";
     }
 }
 

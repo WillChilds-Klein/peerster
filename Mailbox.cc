@@ -105,13 +105,13 @@ void Mailbox::gotCanHelpPeer(Peer peer, QList<Message> list)
     {
         Q_EMIT(sendMessage(*i, peer));
     }
-    qDebug() << "Peer" << peer.toString() << "needs help with " 
-                                          << list.size() << "messages!";
+    // qDebug() << "Peer" << peer.toString() << "needs help with " 
+    //                                       << list.size() << "messages!";
 }
 
 void Mailbox::gotNeedHelpFromPeer(Peer peer)
 {
-    qDebug() << "Need Help from Peer" << peer.toString();
+    // qDebug() << "Need Help from Peer" << peer.toString();
     Message status = msgstore->getStatus();
     Q_EMIT(sendMessage(status, peer));
 }
@@ -139,7 +139,7 @@ void Mailbox::gotPotentialNewNeighbor(Peer peer)
     if(peer.isWellFormed() && !neighbors->contains(peer))
     {
         neighbors->append(peer);
-        qDebug() << "NEW NEIGHBOR:" << peer.toString();
+        // qDebug() << "NEW NEIGHBOR:" << peer.toString();
     }
 }
 

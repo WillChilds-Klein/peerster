@@ -25,7 +25,7 @@ Peer::Peer(QString qstr)
             }
             else
             {
-                qDebug() << "need to lookup hostname in DNS...";
+                // qDebug() << "need to lookup hostname in DNS...";
                 QHostInfo info = QHostInfo::fromName(nameOrAddr);
                 
                 if(info.error() == QHostInfo::NoError)
@@ -55,7 +55,7 @@ QHostAddress Peer::getAddress()
         return addresses->first();
     }
 
-    qDebug() << "Oh Noes! address list is empty for this Peer!";
+    // qDebug() << "Oh Noes! address list is empty for this Peer!";
     return QHostAddress::LocalHost;
 }
 

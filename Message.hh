@@ -5,8 +5,6 @@
 
 class Message : public QVariantMap
 {
-    // Q_DECLARE_METATYPE(Peer);
-
     public:
         Message();
         Message(QByteArray*);
@@ -31,8 +29,6 @@ class Message : public QVariantMap
         bool wellFormed;
         void setWellFormed(bool);
 };
-
-// Q_DECLARE_METATYPE(Message);
 
 // TODO: implement Rumor/Status sub-types of Message in all code.
 

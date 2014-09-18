@@ -75,7 +75,7 @@ void NetSocket::gotSendMessage(Message msg, Peer peer)
     // serialize map
     QByteArray msgArr = msg.toSerializedQVMap();
 
-    qDebug() << "SEND MSG" << msg.toString() << "TO:" << peer.toString();
+    // qDebug() << "SEND MSG" << msg.toString() << "TO:" << peer.toString();
 
     // Send message via UDP
     writeDatagram(msgArr, peer.getAddress(), peer.getPort());
