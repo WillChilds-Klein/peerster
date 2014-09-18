@@ -20,26 +20,8 @@ class Peer
 
     private:
         QList<QHostAddress>* addresses;
-        HostInfoHandler* handler;
         quint32 port;
-        bool valid, wellFormed;
-};
-
-class HostInfoHandler : public QObject
-{
-    Q_OBJECT
-
-    public:
-        HostInfoHandler(Peer*);
-
-    signals:
-        void hostResolved(QHostInfo);
-
-    private slots:
-        void gotHostResolved(QHostInfo);
-
-    private:
-        Peer* peer;
+        bool wellFormed;
 };
 
 #endif // PEERSTER_PEER_HH

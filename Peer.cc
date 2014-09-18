@@ -1,14 +1,10 @@
 #include "Peer.hh"
 
 Peer::Peer(QString qstr)
-    // : info(new QHostInfo(0))
     : addresses(new QList<QHostAddress>())
     , handler(new HostInfoHandler(this))
-    , valid(false)
     , wellFormed(false)
 {
-    qDebug() << "IN PEER CONSTRUCTOR OF:" << qstr;
-
     QString nameOrAddr;
     QHostAddress address;
     bool isInt;
@@ -28,13 +24,13 @@ Peer::Peer(QString qstr)
             {
                 qDebug() << "able to set address";
                 addresses->append(address);
-                valid = true;
             }
             else
             {
                 qDebug() << "need to lookup hostname in DNS...";
-                QHostInfo::lookupHost(nameOrAddr, handler, SIGNAL(hostResolved(QHostInfo)));
-                valid = false; // until lookup completes.
+                QHostInfo info = QHostInfo::fromName(nameOrAddr);
+                addresses = new QList<QHostAddress>(info.addresses());
+                valid = true;   
             }
         }
     }
@@ -53,7 +49,7 @@ QHostAddress Peer::getAddress()
     if(!addresses->isEmpty()){
         return addresses->first();
     }
-    qDebug() << "Oh Noes! address list is empty for" << toString();
+    qDebug() << "Oh Noes! address list is empty for" << port;
     return QHostAddress::LocalHost;
 }   
 
