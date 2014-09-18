@@ -53,7 +53,7 @@ QHostAddress Peer::getAddress()
     if(!addresses->isEmpty()){
         return addresses->first();
     }
- 
+    qDebug() << "Oh Noes! address list is empty for" << toString();
     return QHostAddress::LocalHost;
 }   
 
@@ -81,7 +81,7 @@ void Peer::newHostInfo(QHostInfo newInfo)
         qDebug() << "BAD NEW HOST INFO!";
         return;
     }
-    *addresses = newInfo.addresses();
+    addresses = new QList<QHostAddress>(newInfo.addresses());
     valid = true;
 }
 
