@@ -55,43 +55,30 @@ void NetSocket::gotReadyRead()
 
         senderInfo = senderAddr.toString() + ":" 
                                            + QString::number(senderPort);
-        qDebug() << "Something recieved!" << senderInfo;
         Peer sender = Peer(senderInfo);
-        // while(!sender.isValid()) // block while waiting for hostname resolution?
-        if(sender.isValid())
+        Message msg = Message(&datagram);
+        
+        if(msg.isWellFormed()) 
         {
-            Message msg = Message(&datagram);
-            // qDebug() << "NEW MSG RECIEVED OF SIZE" << msg.size() << ", KEYS:";
-            // foreach(QString qstr, msg.keys())
-            //     qDebug() << qstr;
-            // qDebug() << "END KEYS";
-            if(msg.isWellFormed()) 
-            {
-                Q_EMIT(potentialNewNeighbor(sender));
-                Q_EMIT(postToInbox(msg, sender));
-
-                qDebug() << "GOT GOOD MSG" << msg.toString() << "FROM: " << senderInfo;
-            }
-            else
-            {
-                qDebug() << "GOT BAD MSG FROM: " << senderInfo;
-            }
+            Q_EMIT(potentialNewNeighbor(sender));
+            Q_EMIT(postToInbox(msg, sender));
+        }
+        else
+        {
+            qDebug() << "GOT BAD MSG FROM: " << senderInfo;
         }
     }
 }
 
 void NetSocket::gotSendMessage(Message msg, Peer peer)
 {
-    if(peer.isValid())
-    {
-        // serialize map
-        QByteArray msgArr = msg.toSerializedQVMap();
+    // serialize map
+    QByteArray msgArr = msg.toSerializedQVMap();
 
-        qDebug() << "SEND MSG" << msg.toString() << "TO:" << peer.toString();
+    qDebug() << "SEND MSG" << msg.toString() << "TO:" << peer.toString();
 
-        // Send message via UDP
-        writeDatagram(msgArr, peer.getAddress(), peer.getPort());
-    }
+    // Send message via UDP
+    writeDatagram(msgArr, peer.getAddress(), peer.getPort());
 }
 
 

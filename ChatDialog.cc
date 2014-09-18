@@ -23,20 +23,16 @@ ChatDialog::ChatDialog(Peerster* p)
     textentry->setReadOnly(false);
     textentry->setLineWrapMode(QTextEdit::WidgetWidth);
 
-    
-    // QHBoxLayout* peeradder = new QHBoxLayout();
-    peerentry->setReadOnly(false);
-    peerentry->setLineWrapMode(QTextEdit::WidgetWidth);
-    addbtn->setText("Add Peer");
-    // peeradder->addWidget(peerentry);
-    // peeradder->addWidget(addpeer);
-
     QVBoxLayout* layout = new QVBoxLayout();
     layout->addWidget(textview);
     layout->addWidget(textentry);
-    // layout->addWidget(peeradder);
+
+    peerentry->setReadOnly(false);
+    peerentry->setLineWrapMode(QTextEdit::WidgetWidth);
     layout->addWidget(peerentry);
+    addbtn->setText("Add Peer");
     layout->addWidget(addbtn);
+    
     setLayout(layout);
 
     // L1E1: set line focus to textentry on startup
@@ -74,8 +70,6 @@ void ChatDialog::gotDisplayMessage(Message msg)
 void ChatDialog::gotNewPeerEntered()
 {
     Peer peer = Peer(QString(peerentry->toPlainText()));
-
-    qDebug() << "new peer?" << peer.toString();
 
     Q_EMIT(potentialNewNeighbor(peer));
     Q_EMIT(sendStatusToPeer(peer));

@@ -12,10 +12,8 @@ class Peer
         ~Peer();
         quint32 getPort();
         QHostAddress getAddress();
-        bool isValid();
         bool isWellFormed();
         QString toString();
-        void newHostInfo(QHostInfo);
         bool operator==(Peer);
 
     private:
