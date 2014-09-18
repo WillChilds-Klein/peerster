@@ -137,8 +137,7 @@ void MessageStore::processIncomingStatus(Message status, Peer peer)
     for(i = incomingWant.begin(); i != incomingWant.end(); ++i)
     {
         if(ownWant.contains(i.key()))
-        {
-            // compare notes on seqNo
+        {   // compare notes on seqNo
             ownWantSeqNo = ownWant.value(i.key()).toInt();
             incomingWantSeqNo = incomingWant.value(i.key()).toInt();
             
@@ -147,7 +146,7 @@ void MessageStore::processIncomingStatus(Message status, Peer peer)
                 needHelp = true;
             }
             else if(ownWantSeqNo > incomingWantSeqNo)
-            { // prepare list
+            {   // prepare list
                 toSend = getMessagesInRange(i.key(), 
                     incomingWantSeqNo-1, ownWantSeqNo-1);
                 Q_EMIT(canHelpPeer(peer, toSend));

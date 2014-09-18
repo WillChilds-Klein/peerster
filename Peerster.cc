@@ -53,8 +53,7 @@ Peerster::Peerster()
         exit(1);
     }
 
-    QString title = "Peerster Instance " + ID + 
-        " on port " + QString::number(port);
+    QString title = "Peerster Instance " + ID + " on port " + QString::number(port);
     dialog->setTitle(title);
 
     mailbox->setPortInfo(myPortMin, myPortMax, port);
