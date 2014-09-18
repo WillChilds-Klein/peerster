@@ -19,7 +19,7 @@ class Peer
         bool operator==(Peer);
 
     private:
-        QHostInfo* info;
+        QList<QHostAddress>* addresses;
         HostInfoHandler* handler;
         quint32 port;
         bool valid, wellFormed;

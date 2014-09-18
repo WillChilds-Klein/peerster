@@ -1,7 +1,8 @@
 #include "Peer.hh"
 
 Peer::Peer(QString qstr)
-    : info(new QHostInfo(0))
+    // : info(new QHostInfo(0))
+    : addresses(new QList<QHostAddress>())
     , handler(new HostInfoHandler(this))
     , valid(false)
     , wellFormed(false)
@@ -10,7 +11,6 @@ Peer::Peer(QString qstr)
 
     QString nameOrAddr;
     QHostAddress address;
-    QList<QHostAddress> addresses;
     bool isInt;
 
     QStringList args = qstr.split(":", QString::SkipEmptyParts);
@@ -27,8 +27,7 @@ Peer::Peer(QString qstr)
             if(address.setAddress(nameOrAddr))
             {
                 qDebug() << "able to set address";
-                addresses.append(address);
-                info->setAddresses(addresses);
+                addresses->append(address);
                 valid = true;
             }
             else
@@ -51,10 +50,8 @@ quint32 Peer::getPort()
 
 QHostAddress Peer::getAddress()
 {
-    QList<QHostAddress> addrs = info->addresses();
-    // qDebug() << addr.size() << "addresses for" << info->hostName();
-    if(!addrs.isEmpty()){
-        return addrs.first();
+    if(!addresses->isEmpty()){
+        return addresses->first();
     }
  
     return QHostAddress::LocalHost;
@@ -84,7 +81,7 @@ void Peer::newHostInfo(QHostInfo newInfo)
         qDebug() << "BAD NEW HOST INFO!";
         return;
     }
-    info->setAddresses(newInfo.addresses());
+    *addresses = newInfo.addresses();
     valid = true;
 }
 
