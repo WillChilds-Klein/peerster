@@ -27,6 +27,7 @@ Peer::Peer(QString qstr)
             {
                 qDebug() << "need to lookup hostname in DNS...";
                 QHostInfo info = QHostInfo::fromName(nameOrAddr);
+                
                 if(info.error() == QHostInfo::NoError)
                 {
                     addresses = new QList<QHostAddress>(info.addresses());
