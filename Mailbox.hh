@@ -8,7 +8,8 @@
 #define CMD_PRINT_NEIGHBORS ("PRINT_NEIGHBORS")
 #define CMD_PRINT_TABLE ("PRINT_TABLE")
 
-#define CLOCK_RATE (5000) // in ms
+#define STATUS_CLOCK_RATE (5000) // 5s in ms
+#define ROUTE_CLOCK_RATE (6000) // 6s in ms
 
 class Peerster;
 class MessageStore;
@@ -27,6 +28,7 @@ class Mailbox : public QObject
         void setRoutingTable(RoutingTable*);
         void setPortInfo(quint32,quint32,quint32);
         void setID(QString);
+        Message routeRumor();
         void populateLocalNeighbors();
         Peer pickRandomPeer();
 
@@ -40,7 +42,8 @@ class Mailbox : public QObject
         void gotPotentialNewNeighbor(Peer);
 
     private slots:
-        void chime();
+        void status_chime();
+        void route_chime();
         void gotSendStatusToPeer(Peer);
 
     signals:
@@ -56,7 +59,7 @@ class Mailbox : public QObject
         QList<Peer>* neighbors;
         MessageStore* msgstore;
         RoutingTable* table;
-        QTimer* clock;
+        QTimer *status_clock, *route_clock;
         QString ID;
         quint32 localSeqNo;
         quint32 port, myPortMin, myPortMax;

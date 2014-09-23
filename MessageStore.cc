@@ -10,18 +10,26 @@ MessageStore::~MessageStore()
 
 bool MessageStore::isNewRumor(Message msg)
 {
-    if(!(msg.getType() == TYPE_RUMOR))
+    if(!(msg.getType() == TYPE_RUMOR_CHAT) == !(msg.getType() == TYPE_RUMOR_ROUTE))
+    {
         return false;
+    }
     else if(!store->contains(msg.getOriginID()))
+    {
         return true;
+    }
 
     quint32 msgSeqNo = msg.getSeqNo();
     QMap<QString, quint32> latest = getLatest();
     
     if(msgSeqNo > latest.value(msg.getOriginID()))
+    {
         return true;
+    }
     else
+    {
         return false;
+    }
 }
 
 void MessageStore::addNewRumor(Message msg)

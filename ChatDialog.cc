@@ -52,6 +52,7 @@ void ChatDialog::gotReturnPressed()
 {
     // create Message
     Message msg;
+    msg.setType(TYPE_RUMOR_CHAT);
     msg.setText(QString(textentry->toPlainText()));
 
     // send to outbox

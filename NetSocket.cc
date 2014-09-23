@@ -62,6 +62,7 @@ void NetSocket::gotReadyRead()
         {
             Q_EMIT(potentialNewNeighbor(sender));
             Q_EMIT(postToInbox(msg, sender));
+            qDebug() << "GOT MSG: " << msg.toString();
         }
         else
         {

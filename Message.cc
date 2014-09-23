@@ -3,7 +3,7 @@
 Message::Message()
     : wellFormed(true)
 {
-    setType(TYPE_RUMOR);
+    setType(TYPE_NONE);
 }
 
 Message::Message(QByteArray* arr)
@@ -21,14 +21,19 @@ Message::Message(QByteArray* arr)
             insert(i.key(), i.value());       
         }
 
-        if(contains(WANT_KEY))
+        if(contains(KEY_WANT))
         {
             setType(TYPE_STATUS);
         }
-        else if(contains(CHATTEXT_KEY) && contains(ORIGINID_KEY) 
-            && contains(SEQNO_KEY))
+        else if(contains(KEY_ORIGINID) && contains(KEY_SEQNO) 
+            && contains(KEY_CHATTEXT))
         {
-            setType(TYPE_RUMOR);
+            setType(TYPE_RUMOR_CHAT);
+        }
+        else if(contains(KEY_ORIGINID) && contains(KEY_SEQNO)
+            && !contains(KEY_CHATTEXT))
+        {
+            setType(TYPE_RUMOR_ROUTE);
         }
     }
     else
@@ -45,7 +50,7 @@ QString Message::toString()
 {
     QString str;
     QVariantMap::iterator i;
-    if(getType() == TYPE_RUMOR)
+    if(getType() == TYPE_RUMOR_CHAT || getType() == TYPE_RUMOR_ROUTE)
     {
         str += "[";
         for(i = this->begin(); i != this->end(); ++i)
@@ -56,13 +61,13 @@ QString Message::toString()
     }
     else if(getType() == TYPE_STATUS)
     {
-        str += "<Want: ";
-        QVariantMap wantMap = value(WANT_KEY).toMap();
+        str += "[Want: ";
+        QVariantMap wantMap = value(KEY_WANT).toMap();
         for(i = wantMap.begin(); i != wantMap.end(); ++i)
         {
             str += "<" + i.key() + ": " + i.value().toString() + ">,";
         }
-        str += ">";
+        str += "]";
     }
 
     return str;
@@ -83,15 +88,20 @@ QByteArray Message::toSerializedQVMap()
     QDataStream stream(&msgArr, QIODevice::WriteOnly);
 
     QVariantMap map;
-    if(getType() == TYPE_RUMOR)
+    if(getType() == TYPE_RUMOR_CHAT)
     {
-        map.insert(CHATTEXT_KEY, value(CHATTEXT_KEY));
-        map.insert(ORIGINID_KEY, value(ORIGINID_KEY));
-        map.insert(SEQNO_KEY, value(SEQNO_KEY));
+        map.insert(KEY_CHATTEXT, value(KEY_CHATTEXT));
+        map.insert(KEY_ORIGINID, value(KEY_ORIGINID));
+        map.insert(KEY_SEQNO, value(KEY_SEQNO));
+    }
+    else if(getType() == TYPE_RUMOR_ROUTE)
+    {
+        map.insert(KEY_ORIGINID, value(KEY_ORIGINID));
+        map.insert(KEY_SEQNO, value(KEY_SEQNO));
     }
     else if(getType() == TYPE_STATUS)
     {
-        map.insert(WANT_KEY, value(WANT_KEY));
+        map.insert(KEY_WANT, value(KEY_WANT));
     }
 
     stream << map;
@@ -102,9 +112,8 @@ QByteArray Message::toSerializedQVMap()
 bool Message::isWellFormed()
 {
     bool isStatus, isRumor;
-    isStatus = contains(WANT_KEY);
-    isRumor = (contains(CHATTEXT_KEY) && contains(ORIGINID_KEY) 
-        && contains(SEQNO_KEY));
+    isStatus = contains(KEY_WANT);
+    isRumor = (contains(KEY_ORIGINID) && contains(KEY_SEQNO));
     if(isStatus || isRumor)
     {
         return true;
@@ -115,55 +124,55 @@ bool Message::isWellFormed()
 
 bool Message::isEmptyStatus()
 {
-    return value(WANT_KEY).toMap().size() == 0;
+    return value(KEY_WANT).toMap().size() == 0;
 }
 
 void Message::setType(QString str)
 {
-    insert(TYPE_KEY, str);
+    insert(KEY_TYPE, str);
 }
 
 void Message::setText(QString qstr)
 {
-    insert(CHATTEXT_KEY, qstr);
+    insert(KEY_CHATTEXT, qstr);
 }
 
 void Message::setOriginID(QString qstr)
 {
-    insert(ORIGINID_KEY, qstr);
+    insert(KEY_ORIGINID, qstr);
 }
 
 void Message::setSeqNo(quint32 seqno)
 {
-    insert(SEQNO_KEY, seqno);
+    insert(KEY_SEQNO, seqno);
 }
 
 void Message::setWantMap(QVariantMap qvm)
 {
-    insert(WANT_KEY, qvm);
+    insert(KEY_WANT, qvm);
 }
 
 QString Message::getType()
 {
-    return value(TYPE_KEY).toString();
+    return value(KEY_TYPE).toString();
 }
 
 QString Message::getText()
 {
-    return value(CHATTEXT_KEY).toString();
+    return value(KEY_CHATTEXT).toString();
 }
 
 QString Message::getOriginID()
 {
-    return value(ORIGINID_KEY).toString();
+    return value(KEY_ORIGINID).toString();
 }
 
 quint32 Message::getSeqNo()
 {
-    return value(SEQNO_KEY).toInt();
+    return value(KEY_SEQNO).toInt();
 }
 
 QVariantMap Message::getWantMap()
 {
-    return value(WANT_KEY).toMap();
+    return value(KEY_WANT).toMap();
 }

@@ -39,14 +39,15 @@
 
 #define ID_MAX (1000)
 
-#define CHATTEXT_KEY ("ChatText")
-#define ORIGINID_KEY ("Origin")
-#define SEQNO_KEY ("SeqNo")
-#define WANT_KEY ("Want")
-#define PEEROFORIGIN_KEY ("Peer")
-#define TYPE_KEY ("Type")
-#define TYPE_RUMOR ("Rumor")
+#define KEY_CHATTEXT ("ChatText")
+#define KEY_ORIGINID ("Origin")
+#define KEY_SEQNO ("SeqNo")
+#define KEY_WANT ("Want")
+#define KEY_TYPE ("Type")
+#define TYPE_RUMOR_CHAT ("ChatRumor")
+#define TYPE_RUMOR_ROUTE ("RouteRumor")
 #define TYPE_STATUS ("Status")
+#define TYPE_NONE ("None")
 
 class ChatDialog;
 class NetSocket;

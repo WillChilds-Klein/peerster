@@ -65,7 +65,7 @@ Peerster::Peerster()
     mailbox->setID(ID);
     mailbox->setMessageStore(msgstore);
     mailbox->setRoutingTable(table);
-    // mailbox->populateLocalNeighbors();
+    mailbox->populateLocalNeighbors();
 
     QStringList clargs = QCoreApplication::arguments();
     for(int i = 1; i < clargs.size(); i++)
