@@ -6,12 +6,14 @@
 #define CMD_PRINT_MSGSTORE ("PRINT_MSGSTORE")
 #define CMD_PRINT_STATUS ("PRINT_STATUS")
 #define CMD_PRINT_NEIGHBORS ("PRINT_NEIGHBORS")
+#define CMD_PRINT_TABLE ("PRINT_TABLE")
 
 #define CLOCK_RATE (5000) // in ms
 
 class Peerster;
-class Message;
 class MessageStore;
+class RoutingTable;
+class Message;
 class Peer;
 
 class Mailbox : public QObject
@@ -22,9 +24,10 @@ class Mailbox : public QObject
         Mailbox(Peerster*);
         ~Mailbox();
         void setMessageStore(MessageStore*);
+        void setRoutingTable(RoutingTable*);
         void setPortInfo(quint32,quint32,quint32);
         void setID(QString);
-        void populateNeighbors();
+        void populateLocalNeighbors();
         Peer pickRandomPeer();
 
     public slots:
@@ -46,11 +49,13 @@ class Mailbox : public QObject
         void postToInbox(Message,Peer);
         void monger(Message);
         void needHelpFromPeer(Peer);
+        void updateTable(Message,Peer);
 
     private:
         Peerster* peerster;
         QList<Peer>* neighbors;
         MessageStore* msgstore;
+        RoutingTable* table;
         QTimer* clock;
         QString ID;
         quint32 localSeqNo;

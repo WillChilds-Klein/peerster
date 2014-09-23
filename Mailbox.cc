@@ -29,6 +29,11 @@ void Mailbox::setMessageStore(MessageStore* m)
     msgstore = m;
 }
 
+void Mailbox::setRoutingTable(RoutingTable* r)
+{
+    table = r;
+}
+
 void Mailbox::setPortInfo(quint32 min, quint32 max, quint32 p)
 {
     myPortMin = min;
@@ -41,7 +46,7 @@ void Mailbox::setID(QString str)
     ID = str;
 }
 
-void Mailbox::populateNeighbors()
+void Mailbox::populateLocalNeighbors()
 {
     QString info;
     for(quint32 i = myPortMin; i <= myPortMax; i++)
@@ -68,6 +73,8 @@ void Mailbox::gotPostToInbox(Message msg, Peer peer)
             if(msgstore->isNextInSeq(msg))
             {
                 msgstore->addNewRumor(msg);
+                qDebug() << "NEW RUMOR FROM : " << peer.toString();
+                updateTable(msg, peer);
                 Q_EMIT(displayMessage(msg));
                 Q_EMIT(monger(msg));
             }
@@ -146,10 +153,7 @@ void Mailbox::gotPotentialNewNeighbor(Peer peer)
 void Mailbox::chime()
 {
     Message status = msgstore->getStatus();
-    if(!status.isEmptyStatus())
-    {
-        Q_EMIT(monger(status));
-    }
+    Q_EMIT(monger(status));
 }
 
 void Mailbox::gotSendStatusToPeer(Peer peer)
@@ -165,10 +169,12 @@ void Mailbox::processCommand(QString cmd)
 {
     if(cmd == CMD_PRINT_MSGSTORE)
     {
+        qDebug() << "\nMESSAGE STORE:";
         qDebug() << msgstore->toString();
     }
     else if(cmd == CMD_PRINT_STATUS)
     {
+        qDebug() << "\nOWN STATUS:";
         qDebug() << msgstore->getStatus().toString();
     }
     else if(cmd == CMD_PRINT_NEIGHBORS)
@@ -176,6 +182,13 @@ void Mailbox::processCommand(QString cmd)
         qDebug() << "\nNEIGHBORS:";
         foreach(Peer peer, *neighbors)
             qDebug() << "   " << peer.toString();
+    }
+    else if(cmd == CMD_PRINT_TABLE)
+    {
+        qDebug() << "\nROUTING TABLE:";
+        foreach(QString qstr, table->origins())
+            qDebug() << "   <ORIGIN: " << qstr <<  
+                            ", PEER: " << table->get(qstr).toString() << ">";
     }
 }
 

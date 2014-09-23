@@ -1,5 +1,8 @@
 #include "Peer.hh"
 
+Peer::Peer()
+{}
+
 Peer::Peer(QString qstr)
     : addresses(new QList<QHostAddress>())
     , wellFormed(false)
@@ -66,7 +69,8 @@ bool Peer::isWellFormed()
 
 QString Peer::toString()
 {
-    return getAddress().toString() + ":" + QString::number(port);
+    return (addresses->isEmpty() ? "NONE" : addresses->first().toString()) + ":" + QString::number(port);
+    // return getAddress().toString() + ":" + QString::number(port);
 }
 
 bool Peer::operator==(Peer other)
