@@ -8,6 +8,7 @@ class HostInfoHandler;
 class Peer
 {
     public:
+        Peer();
         Peer(QString);
         ~Peer();
         quint32 getPort();

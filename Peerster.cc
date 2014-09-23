@@ -4,6 +4,7 @@ Peerster::Peerster()
     : dialog(new ChatDialog(this))
     , socket(new NetSocket(this))
     , mailbox(new Mailbox(this))
+    , table(new RoutingTable(this))
     , msgstore(new MessageStore(this))
 {
     // inbound message signal chain
@@ -38,6 +39,10 @@ Peerster::Peerster()
     connect(this, SIGNAL(potentialNewNeighbor(Peer)),
         mailbox, SLOT(gotPotentialNewNeighbor(Peer)));
 
+    // routing table stuff
+    connect(mailbox, SIGNAL(updateTable(Message,Peer)),
+        table, SLOT(gotUpdateTable(Message,Peer)));
+
     qsrand(QTime(0,0,0).msecsTo(QTime::currentTime()));
     ID = QString::number((qrand() % ID_MAX) + 1);
     qDebug() << "Instance ID: "<< ID; 
@@ -59,7 +64,8 @@ Peerster::Peerster()
     mailbox->setPortInfo(myPortMin, myPortMax, port);
     mailbox->setID(ID);
     mailbox->setMessageStore(msgstore);
-    mailbox->populateNeighbors();
+    mailbox->setRoutingTable(table);
+    // mailbox->populateLocalNeighbors();
 
     QStringList clargs = QCoreApplication::arguments();
     for(int i = 1; i < clargs.size(); i++)

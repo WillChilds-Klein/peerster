@@ -27,11 +27,13 @@
 #include <QHostAddress>
 #include <QPushButton>
 #include <QCoreApplication>
+#include <QHash>
 
 #include "ChatDialog.hh"
 #include "NetSocket.hh"
 #include "Mailbox.hh"
 #include "MessageStore.hh"
+#include "RoutingTable.hh"
 #include "Message.hh"
 #include "Peer.hh"
 
@@ -70,6 +72,7 @@ class Peerster : public QObject
         ChatDialog* dialog;
         NetSocket* socket;
         Mailbox* mailbox;
+        RoutingTable* table;
         MessageStore* msgstore;
         QList<quint32> neighbors;
 };

@@ -7,9 +7,10 @@ TARGET =
 DEPENDPATH += .
 INCLUDEPATH += .
 QT += network
+QT += core
 
 # Input
-HEADERS += Message.hh Peer.hh MessageStore.hh Peerster.hh ChatDialog.hh NetSocket.hh  Mailbox.hh  
-SOURCES += Message.cc Peer.cc MessageStore.cc Peerster.cc ChatDialog.cc NetSocket.cc  Mailbox.cc main.cc
+HEADERS += Message.hh Peer.hh MessageStore.hh RoutingTable.hh ChatDialog.hh NetSocket.hh  Mailbox.hh Peerster.hh  
+SOURCES += Message.cc Peer.cc MessageStore.cc RoutingTable.cc ChatDialog.cc NetSocket.cc  Mailbox.cc Peerster.cc main.cc
 
 CONFIG-=app_bundle
