@@ -207,6 +207,8 @@ void Mailbox::gotPotentialNewNeighbor(Peer peer)
     if(peer.isWellFormed() && !neighbors->contains(peer))
     {
         neighbors->append(peer);
+        Message route = routeRumor();
+        Q_EMIT(sendMessage(route, peer));
         // qDebug() << "NEW NEIGHBOR:" << peer.toString();
     }
 }
