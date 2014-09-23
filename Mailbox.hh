@@ -9,7 +9,7 @@
 #define CMD_PRINT_TABLE ("PRINT_TABLE")
 
 #define STATUS_CLOCK_RATE (5000) // 5s in ms
-#define ROUTE_CLOCK_RATE (6000) // 6s in ms
+#define ROUTE_CLOCK_RATE (60000) // 60s in ms
 
 class Peerster;
 class MessageStore;
@@ -29,7 +29,8 @@ class Mailbox : public QObject
         void setPortInfo(quint32,quint32,quint32);
         void setID(QString);
         Message routeRumor();
-        void populateLocalNeighbors();
+        void populateNeighbors();
+        void broadcastRoute();
         Peer pickRandomPeer();
 
     public slots:

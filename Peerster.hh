@@ -61,10 +61,6 @@ class Peerster : public QObject
         Peerster();
         ~Peerster();
         void run();
-        QList<quint32> findNeighbors();
-
-    signals:
-        void potentialNewNeighbor(Peer);
 
     private:
         qint32 port;

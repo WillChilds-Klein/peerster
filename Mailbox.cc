@@ -60,8 +60,14 @@ Message Mailbox::routeRumor()
     return route;
 }
 
-void Mailbox::populateLocalNeighbors()
+void Mailbox::populateNeighbors()
 {
+    QStringList clargs = QCoreApplication::arguments();
+    for(int i = 1; i < clargs.size(); i++)
+    {
+        Peer peer = Peer(clargs.at(i));
+        gotPotentialNewNeighbor(peer);
+    }
     /** /
     QString info;
     for(quint32 i = myPortMin; i <= myPortMax; i++)
@@ -89,6 +95,15 @@ void Mailbox::populateLocalNeighbors()
     }
 }
 
+void Mailbox::broadcastRoute()
+{
+    Message route = routeRumor();
+    foreach(Peer peer, *neighbors)
+    {
+        sendMessage(route, peer);
+    }
+}
+
 Peer Mailbox::pickRandomPeer()
 {
     return neighbors->at(qrand() % neighbors->size());
@@ -102,8 +117,11 @@ void Mailbox::gotPostToInbox(Message msg, Peer peer)
         {
             if(msgstore->isNextInSeq(msg))
             {
-                updateTable(msg, peer);
-                Q_EMIT(monger(msg));
+                if(msg.getOriginID() != ID)
+                {
+                    updateTable(msg, peer);
+                    Q_EMIT(monger(msg));
+                }
                 if(msg.getType() == TYPE_RUMOR_CHAT)
                 {
                     Q_EMIT(displayMessage(msg));
