@@ -137,8 +137,11 @@ void Mailbox::gotInConsensusWithPeer()
 
 void Mailbox::gotMonger(Message msg)
 {
-    Peer peer = pickRandomPeer();
-    Q_EMIT(sendMessage(msg, peer));
+    if(!neighbors->isEmpty())
+    {
+        Peer peer = pickRandomPeer();
+        Q_EMIT(sendMessage(msg, peer));
+    }
 }
 
 void Mailbox::gotPotentialNewNeighbor(Peer peer)
@@ -159,10 +162,7 @@ void Mailbox::chime()
 void Mailbox::gotSendStatusToPeer(Peer peer)
 {
     Message status = msgstore->getStatus();
-    if(!status.isEmptyStatus())
-    {
-        Q_EMIT(sendMessage(status, peer));
-    }
+    Q_EMIT(sendMessage(status, peer));
 }
 
 void Mailbox::processCommand(QString cmd)
