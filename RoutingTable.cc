@@ -21,5 +21,10 @@ Peer RoutingTable::get(QString qstr)
 void RoutingTable::gotUpdateTable(Message msg, Peer peer)
 {
     QString msgOrigin = msg.getOriginID();
+    if(!origins().contains(msgOrigin))
+    {
+        Q_EMIT(updateGUIOriginsList(msgOrigin));
+    }
+    
     table->insert(msgOrigin, peer);
 }

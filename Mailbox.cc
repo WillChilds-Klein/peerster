@@ -143,6 +143,7 @@ void Mailbox::gotPostToInbox(Message msg, Peer peer)
         }
         else
         {
+            qDebug() << "GOT OLD RUMOR:" << msg.toString();
             // do nothing
         }
     }

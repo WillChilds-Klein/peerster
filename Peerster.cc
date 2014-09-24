@@ -32,12 +32,12 @@ Peerster::Peerster()
         mailbox, SLOT(gotPotentialNewNeighbor(Peer)));
     connect(dialog, SIGNAL(sendStatusToPeer(Peer)),
         mailbox, SLOT(gotSendStatusToPeer(Peer)));
-    connect(this, SIGNAL(potentialNewNeighbor(Peer)),
-        mailbox, SLOT(gotPotentialNewNeighbor(Peer)));
 
     // routing table stuff
     connect(mailbox, SIGNAL(updateTable(Message,Peer)),
         table, SLOT(gotUpdateTable(Message,Peer)));
+    connect(table, SIGNAL(updateGUIOriginsList(QString)),
+        dialog, SLOT(gotUpdateGUIOriginsList(QString)));
 
     qsrand(QTime(0,0,0).msecsTo(QTime::currentTime()));
     ID = QString::number((qrand() % ID_MAX) + 1);
@@ -55,7 +55,7 @@ Peerster::Peerster()
     }
 
     QString title = "Peerster Instance " + ID + " on port " + QString::number(port);
-    dialog->setTitle(title);
+    dialog->setWindowTitle(title);
 
     mailbox->setPortInfo(myPortMin, myPortMax, port);
     mailbox->setID(ID);

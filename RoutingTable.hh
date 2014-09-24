@@ -13,6 +13,9 @@ class RoutingTable : public QObject
         QStringList origins();
         Peer get(QString);
 
+    signals:
+        void updateGUIOriginsList(QString);
+
     public slots:
         void gotUpdateTable(Message,Peer);
 

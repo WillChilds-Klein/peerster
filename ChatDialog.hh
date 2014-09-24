@@ -1,6 +1,12 @@
 #ifndef PEERSTER_CHATDIALOG_HH
 #define PEERSTER_CHATDIALOG_HH
 
+#define TITLE_PEER ("Neighbor Peers")
+#define TITLE_CHAT ("Chat Messages")
+#define TITLE_DIRECT ("Origin ID's Available for DM")
+
+#define TITLE_ADDPEER ("Add Neighbor")
+
 #include "Peerster.hh"
 
 class Peerster;
@@ -15,12 +21,12 @@ class ChatDialog : public QDialog
     public:
         ChatDialog(Peerster*);
         ~ChatDialog();
-        void setTitle(QString);
 
     public slots:
         void gotReturnPressed();
         void gotDisplayMessage(Message);
         void gotNewPeerEntered();
+        void gotUpdateGUIOriginsList(QString);
 
     signals:
         void postToOutbox(Message);
@@ -29,11 +35,15 @@ class ChatDialog : public QDialog
 
     private:
         Peerster* peerster;
-        QTextEdit* textview;
-        EntryQTextEdit* textentry;
-        EntryQTextEdit* peerentry;
+        QGridLayout* mainlayout;
+        QVBoxLayout *chatlayout, *peerlayout, *directlayout;
+        QTextEdit* chatview;
+        EntryQTextEdit *chatentry, *peerentry;
         QPushButton* addbtn;
-        QString title;
+        QListWidget* originslist;
+        void createChatLayout();
+        void createPeerLayout();
+        void createDirectLayout();
 };
 
 class EntryQTextEdit : public QTextEdit 

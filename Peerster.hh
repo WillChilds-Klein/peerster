@@ -28,6 +28,9 @@
 #include <QPushButton>
 #include <QCoreApplication>
 #include <QHash>
+#include <QGridLayout>
+#include <QLabel>
+#include <QListWidget>
 
 #include "ChatDialog.hh"
 #include "NetSocket.hh"
