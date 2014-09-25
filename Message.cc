@@ -50,16 +50,8 @@ QString Message::toString()
 {
     QString str;
     QVariantMap::iterator i;
-    if(getType() == TYPE_RUMOR_CHAT || getType() == TYPE_RUMOR_ROUTE)
-    {
-        str += "[";
-        for(i = this->begin(); i != this->end(); ++i)
-        {
-            str += "<" + i.key() + ": " + i.value().toString() + ">,";
-        }
-        str += "]";
-    }
-    else if(getType() == TYPE_STATUS)
+
+    if(getType() == TYPE_STATUS) 
     {
         str += "[Want: ";
         QVariantMap wantMap = value(KEY_WANT).toMap();
@@ -69,6 +61,16 @@ QString Message::toString()
         }
         str += "]";
     }
+    else
+    {
+        str += "[";
+        for(i = this->begin(); i != this->end(); ++i)
+        {
+            str += "<" + i.key() + ": " + i.value().toString() + ">,";
+        }
+        str += "]";
+    }
+
 
     return str;
 }
@@ -152,6 +154,16 @@ void Message::setWantMap(QVariantMap qvm)
     insert(KEY_WANT, qvm);
 }
 
+void Message::setDest(QString qstr)
+{
+    insert(KEY_DEST, qstr);
+}
+
+void Message::setHopLimit(quint32 lim)
+{
+    insert(KEY_HOPLIMIT, lim);
+}
+
 QString Message::getType()
 {
     return value(KEY_TYPE).toString();
@@ -176,3 +188,14 @@ QVariantMap Message::getWantMap()
 {
     return value(KEY_WANT).toMap();
 }
+
+QString Message::getDest()
+{
+    return value(KEY_DEST).toString();
+}
+
+quint32 Message::getHopLimit()
+{
+    return value(KEY_HOPLIMIT).toInt();
+}
+

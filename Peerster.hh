@@ -31,6 +31,7 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QListWidget>
+#include <QListWidgetItem>
 
 #include "ChatDialog.hh"
 #include "NetSocket.hh"
@@ -42,14 +43,19 @@
 
 #define ID_MAX (1000)
 
+#define DCHAT_HOP_LIMIT (10)
+
 #define KEY_CHATTEXT ("ChatText")
 #define KEY_ORIGINID ("Origin")
 #define KEY_SEQNO ("SeqNo")
 #define KEY_WANT ("Want")
 #define KEY_TYPE ("Type")
+#define KEY_DEST ("Dest")
+#define KEY_HOPLIMIT ("HopLimit")
 #define TYPE_RUMOR_CHAT ("ChatRumor")
 #define TYPE_RUMOR_ROUTE ("RouteRumor")
 #define TYPE_STATUS ("Status")
+#define TYPE_DIRECT_CHAT ("DirectChat")
 #define TYPE_NONE ("None")
 
 class ChatDialog;

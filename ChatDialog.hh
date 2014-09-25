@@ -3,7 +3,8 @@
 
 #define TITLE_PEER ("Neighbor Peers")
 #define TITLE_CHAT ("Chat Messages")
-#define TITLE_DIRECT ("Origin ID's Available for DM")
+#define TITLE_DSELECT ("Origin ID's Available for DM")
+#define TITLE_DCHAT ("Direct Messages")
 
 #define TITLE_ADDPEER ("Add Neighbor")
 
@@ -27,6 +28,10 @@ class ChatDialog : public QDialog
         void gotDisplayMessage(Message);
         void gotNewPeerEntered();
         void gotUpdateGUIOriginsList(QString);
+        void gotNewDChatMsgEntered();
+
+    private slots:
+        void originSelected(QListWidgetItem*);
 
     signals:
         void postToOutbox(Message);
@@ -36,9 +41,10 @@ class ChatDialog : public QDialog
     private:
         Peerster* peerster;
         QGridLayout* mainlayout;
-        QVBoxLayout *chatlayout, *peerlayout, *directlayout;
-        QTextEdit* chatview;
-        EntryQTextEdit *chatentry, *peerentry;
+        QVBoxLayout *chatlayout, *peerlayout, *dselectlayout, *dchatlayout;
+        QHBoxLayout *directlayout;
+        QTextEdit *chatview, *dchatview;
+        EntryQTextEdit *chatentry, *peerentry, *dchatentry;
         QPushButton* addbtn;
         QListWidget* originslist;
         void createChatLayout();

@@ -19,10 +19,14 @@ class Message : public QVariantMap
         void setOriginID(QString);
         void setSeqNo(quint32);
         void setWantMap(QVariantMap);
+        void setDest(QString);
+        void setHopLimit(quint32);
         QString getType();
         QString getText();
         QString getOriginID();
         quint32 getSeqNo();
+        QString getDest();
+        quint32 getHopLimit();
         QVariantMap getWantMap();
 
     private:

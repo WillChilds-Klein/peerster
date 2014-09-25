@@ -5,10 +5,13 @@ ChatDialog::ChatDialog(Peerster* p)
     , mainlayout(new QGridLayout(this))
     , chatlayout(new QVBoxLayout(this))
     , peerlayout(new QVBoxLayout(this))
-    , directlayout(new QVBoxLayout(this))
+    , dselectlayout(new QVBoxLayout(this))
+    , dchatlayout(new QVBoxLayout(this))
     , chatview(new QTextEdit(this))
     , chatentry(new EntryQTextEdit())
     , peerentry(new EntryQTextEdit())
+    , dchatview(new QTextEdit(this))
+    , dchatentry(new EntryQTextEdit())
     , addbtn(new QPushButton())
     , originslist(new QListWidget(this))
 {
@@ -18,6 +21,10 @@ ChatDialog::ChatDialog(Peerster* p)
         this, SLOT(gotNewPeerEntered()));
     connect(addbtn, SIGNAL(clicked()),
         this, SLOT(gotNewPeerEntered()));
+    connect(dchatentry, SIGNAL(returnPressed()),
+        this, SLOT(gotNewDChatMsgEntered()));
+    connect(originslist, SIGNAL(itemClicked(QListWidgetItem*)),
+        this, SLOT(originSelected(QListWidgetItem*)));
     
     createPeerLayout();
     createChatLayout();
@@ -25,9 +32,12 @@ ChatDialog::ChatDialog(Peerster* p)
 
     mainlayout->addLayout(peerlayout, 0, 0);
     mainlayout->addLayout(chatlayout, 0, 1);
-    mainlayout->addLayout(directlayout, 0, 2);
+    mainlayout->addLayout(dselectlayout, 0, 2);
+    mainlayout->addLayout(dchatlayout, 0, 3);
 
     setLayout(mainlayout);
+
+    chatentry->setFocus();
 }
 
 ChatDialog::~ChatDialog()
@@ -67,8 +77,27 @@ void ChatDialog::gotUpdateGUIOriginsList(QString newOrigin)
 {
     qDebug() << "ADD NEW ORIGIN TO GUI LIST:" << newOrigin;
     new QListWidgetItem(newOrigin, originslist);
-    // newItem->setText(newOrigin);
-    // originslist->addItem(newItem);
+}
+
+void ChatDialog::gotNewDChatMsgEntered()
+{
+    Message dmsg;
+    
+    dmsg.setType(TYPE_DIRECT_CHAT);
+    dmsg.setDest(originslist->currentItem()->text());
+    dmsg.setHopLimit(DCHAT_HOP_LIMIT);
+    dmsg.setText(QString(dchatentry->toPlainText()));
+
+    Q_EMIT(postToOutbox(dmsg));    
+
+    dchatentry->clear();
+}
+
+void ChatDialog::originSelected(QListWidgetItem* item)
+{
+    // retrieve direct chat history from dmsgstore
+
+    dchatentry->setFocus();
 }
 
 void ChatDialog::createChatLayout()
@@ -79,7 +108,6 @@ void ChatDialog::createChatLayout()
 
     chatentry->setReadOnly(false);
     chatentry->setLineWrapMode(QTextEdit::WidgetWidth);
-    chatentry->setFocus();
 
     chatlayout->addWidget(chatlabel);
     chatlayout->addWidget(chatview);
@@ -102,10 +130,20 @@ void ChatDialog::createPeerLayout()
 
 void ChatDialog::createDirectLayout()
 {
-    QLabel* directlabel = new QLabel(TITLE_DIRECT, this, 0);
+    QLabel* dselectlabel = new QLabel(TITLE_DSELECT, this, 0);
 
-    directlayout->addWidget(directlabel);
-    directlayout->addWidget(originslist);
+    dselectlayout->addWidget(dselectlabel);
+    dselectlayout->addWidget(originslist);
+
+
+    QLabel* dchatlabel = new QLabel(TITLE_DCHAT, this, 0);
+    dchatview->setReadOnly(true);
+    dchatentry->setReadOnly(false);
+    dchatentry->setLineWrapMode(QTextEdit::WidgetWidth);
+
+    dchatlayout->addWidget(dchatlabel);
+    dchatlayout->addWidget(dchatview);
+    dchatlayout->addWidget(dchatentry);
 }
 
 // L1E2: subclass QTextEdit to get desired UI behavior.

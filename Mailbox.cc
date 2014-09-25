@@ -158,10 +158,19 @@ void Mailbox::gotPostToInbox(Message msg, Peer peer)
 void Mailbox::gotPostToOutbox(Message msg)
 {
     msg.setOriginID(ID);
-    msg.setSeqNo(localSeqNo);
-    localSeqNo++;
-    Peer peer = Peer("127.0.0.1:" + QString::number(port));
-    Q_EMIT(postToInbox(msg, peer));
+
+    if(msg.getType() == TYPE_RUMOR_CHAT)
+    {
+        msg.setSeqNo(localSeqNo);
+        localSeqNo++;
+        Peer peer = Peer("127.0.0.1:" + QString::number(port));
+        Q_EMIT(postToInbox(msg, peer));
+    }
+    else if(msg.getType() == TYPE_DIRECT_CHAT)
+    {
+        // direct send logic
+        qDebug() << "SIMULATE SEND " << msg.toString();
+    }
 }
 
 void Mailbox::gotCanHelpPeer(Peer peer, QList<Message> list)
