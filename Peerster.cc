@@ -43,6 +43,8 @@ Peerster::Peerster()
     // DChat stuff
     connect(dchatstore, SIGNAL(updateGUIDChatHistory(QString,QList<Message>)),
         dialog, SLOT(gotUpdateGUIDChatHistory(QString,QList<Message>)));
+    connect(dialog, SIGNAL(getDChatHistoryFromOrigin(QString)),
+        dchatstore, SLOT(gotGetDChatHistoryFromOrigin(QString)));
 
     qsrand(QTime(0,0,0).msecsTo(QTime::currentTime()));
     ID = QString::number((qrand() % ID_MAX) + 1);
@@ -69,6 +71,8 @@ Peerster::Peerster()
     mailbox->setRoutingTable(table);
     mailbox->populateNeighbors();
     mailbox->broadcastRoute();
+
+    dchatstore->setID(ID);
 }
 
 Peerster::~Peerster()

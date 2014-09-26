@@ -13,6 +13,7 @@
 
 class Peerster;
 class MessageStore;
+class DChatStore;
 class RoutingTable;
 class Message;
 class Peer;
@@ -25,6 +26,7 @@ class Mailbox : public QObject
         Mailbox(Peerster*);
         ~Mailbox();
         void setMessageStore(MessageStore*);
+        void setDChatStore(DChatStore*);
         void setRoutingTable(RoutingTable*);
         void setPortInfo(quint32,quint32,quint32);
         void setID(QString);

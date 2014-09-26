@@ -93,14 +93,17 @@ void ChatDialog::gotNewDChatMsgEntered()
     dchatentry->clear();
 }
 
-void ChatDialog::gotUpdateGUIOriginsList(QString origin, QList<Message> dchathistory)
+void ChatDialog::gotUpdateGUIDChatHistory(QString origin, QList<Message> history)
 {
-
+    if(originslist->currentItem()->text() == origin)
+    {
+        updateDChatView(history);
+    }
 }
 
 void ChatDialog::originSelected(QListWidgetItem* item)
 {
-    // retrieve direct chat history from dmsgstore
+    Q_EMIT(getDChatHistoryFromOrigin(item->text()));
 
     dchatentry->setFocus();
 }
@@ -149,6 +152,17 @@ void ChatDialog::createDirectLayout()
     dchatlayout->addWidget(dchatlabel);
     dchatlayout->addWidget(dchatview);
     dchatlayout->addWidget(dchatentry);
+}
+
+void ChatDialog::updateDChatView(QList<Message> history)
+{
+    dchatview->clear();
+
+    QList<Message>::iterator i;
+    for(i = history.begin(); i != history.end(); ++i)
+    {
+        dchatview->append(i->getOriginID() + ": " + i->getText());
+    }
 }
 
 // L1E2: subclass QTextEdit to get desired UI behavior.

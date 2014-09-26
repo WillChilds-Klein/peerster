@@ -33,6 +33,11 @@ void Mailbox::setMessageStore(MessageStore* m)
     msgstore = m;
 }
 
+void Mailbox::setDChatStore(DChatStore* d)
+{
+    dchatstore = d;
+}
+
 void Mailbox::setRoutingTable(RoutingTable* r)
 {
     table = r;
@@ -187,6 +192,8 @@ void Mailbox::gotPostToOutbox(Message msg)
     else if(msg.getType() == TYPE_DIRECT_CHAT)
     {
         // direct send logic
+        Peer nextHop = table->get(msg.getDest());
+        Q_EMIT(sendMessage(msg, nextHop));
 
         dchatstore->addDChat(msg);
         qDebug() << "SIMULATE SEND " << msg.toString();

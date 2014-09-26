@@ -38,6 +38,7 @@ class ChatDialog : public QDialog
         void postToOutbox(Message);
         void potentialNewNeighbor(Peer);
         void sendStatusToPeer(Peer);
+        void getDChatHistoryFromOrigin(QString qstr);
 
     private:
         Peerster* peerster;
@@ -51,6 +52,7 @@ class ChatDialog : public QDialog
         void createChatLayout();
         void createPeerLayout();
         void createDirectLayout();
+        void updateDChatView(QList<Message>);
 };
 
 class EntryQTextEdit : public QTextEdit 

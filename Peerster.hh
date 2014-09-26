@@ -37,6 +37,7 @@
 #include "NetSocket.hh"
 #include "Mailbox.hh"
 #include "MessageStore.hh"
+#include "DChatStore.hh"
 #include "RoutingTable.hh"
 #include "Message.hh"
 #include "Peer.hh"

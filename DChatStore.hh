@@ -3,21 +3,27 @@
 
 #include "Peerster.hh"
 
+class Peerster;
+
 class DChatStore : public QObject
 {
     Q_OBJECT
 
     public:
-        DChatStore();
+        DChatStore(Peerster*);
         ~DChatStore();
         void addDChat(Message);
-        void getDChatHistoryFromOrigin(QString);
+        void setID(QString);
 
     signals:
         void updateGUIDChatHistory(QString,QList<Message>);
 
+    public slots:
+        void gotGetDChatHistoryFromOrigin(QString);
+
     private:
         Peerster* peerster;
+        QString ID;
         QMap< QString, QList<Message> >* histories; 
 };
 
