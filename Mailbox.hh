@@ -59,6 +59,7 @@ class Mailbox : public QObject
         Peerster* peerster;
         QList<Peer>* neighbors;
         MessageStore* msgstore;
+        DChatStore* dchatstore;
         RoutingTable* table;
         QTimer *status_clock, *route_clock;
         QString ID;

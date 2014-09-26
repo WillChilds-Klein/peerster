@@ -29,6 +29,7 @@ class ChatDialog : public QDialog
         void gotNewPeerEntered();
         void gotUpdateGUIOriginsList(QString);
         void gotNewDChatMsgEntered();
+        void gotUpdateGUIDChatHistory(QString,QList<Message>);
 
     private slots:
         void originSelected(QListWidgetItem*);

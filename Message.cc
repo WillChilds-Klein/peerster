@@ -35,6 +35,11 @@ Message::Message(QByteArray* arr)
         {
             setType(TYPE_RUMOR_ROUTE);
         }
+        else if(contains(KEY_ORIGINID) && contains(KEY_CHATTEXT) && 
+               contains(KEY_HOPLIMIT) && contains(KEY_DEST))
+        {
+            setType(TYPE_DIRECT_CHAT);
+        }
     }
     else
     {
@@ -75,14 +80,14 @@ QString Message::toString()
     return str;
 }
 
-QByteArray Message::serialize()
-{
-    QByteArray msgArr;
-    QDataStream stream(&msgArr, QIODevice::WriteOnly);
-    stream << (*this);
+// QByteArray Message::serialize()
+// {
+//     QByteArray msgArr;
+//     QDataStream stream(&msgArr, QIODevice::WriteOnly);
+//     stream << (*this);
 
-    return msgArr;
-}
+//     return msgArr;
+// }
 
 QByteArray Message::toSerializedQVMap()
 {
@@ -105,6 +110,13 @@ QByteArray Message::toSerializedQVMap()
     {
         map.insert(KEY_WANT, value(KEY_WANT));
     }
+    else if(getType() == TYPE_DIRECT_CHAT)
+    {
+        map.insert(KEY_CHATTEXT, value(KEY_CHATTEXT));
+        map.insert(KEY_ORIGINID, value(KEY_ORIGINID));
+        map.insert(KEY_DEST, value(KEY_DEST));
+        map.insert(KEY_HOPLIMIT, value(KEY_HOPLIMIT));
+    }
 
     stream << map;
 
@@ -113,10 +125,12 @@ QByteArray Message::toSerializedQVMap()
 
 bool Message::isWellFormed()
 {
-    bool isStatus, isRumor;
+    bool isStatus, isRumor, isDChat;
     isStatus = contains(KEY_WANT);
     isRumor = (contains(KEY_ORIGINID) && contains(KEY_SEQNO));
-    if(isStatus || isRumor)
+    isDChat = (contains(KEY_ORIGINID) && contains(KEY_CHATTEXT) && 
+               contains(KEY_HOPLIMIT) && contains(KEY_DEST));
+    if(isStatus || isRumor || isDChat)
     {
         return true;
     }

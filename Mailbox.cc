@@ -147,6 +147,24 @@ void Mailbox::gotPostToInbox(Message msg, Peer peer)
             // do nothing
         }
     }
+    else if(msg.getType() == TYPE_DIRECT_CHAT)
+    {
+        // double check to make sure this logic is complete + robust
+        if(msg.getDest() == ID)
+        {
+            dchatstore->addDChat(msg);
+        }
+        else if(msg.getHopLimit() <= 0)
+        {
+            // drop
+        }
+        else // relay via routing table lookup
+        {
+            Peer forwardPeer = table->get(msg.getDest());
+            msg.setHopLimit(msg.getHopLimit() - 1); // decrement HopLimit
+            Q_EMIT(sendMessage(msg, forwardPeer));
+        }
+    }
     else if(msg.getType() == TYPE_STATUS)
     {
         msgstore->processIncomingStatus(msg, peer);
@@ -169,6 +187,8 @@ void Mailbox::gotPostToOutbox(Message msg)
     else if(msg.getType() == TYPE_DIRECT_CHAT)
     {
         // direct send logic
+
+        dchatstore->addDChat(msg);
         qDebug() << "SIMULATE SEND " << msg.toString();
     }
 }

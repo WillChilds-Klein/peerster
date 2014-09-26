@@ -6,6 +6,7 @@ Peerster::Peerster()
     , mailbox(new Mailbox(this))
     , table(new RoutingTable(this))
     , msgstore(new MessageStore(this))
+    , dchatstore(new DChatStore(this))
 {
     // inbound message signal chain
     connect(socket, SIGNAL(postToInbox(Message,Peer)), 
@@ -39,6 +40,10 @@ Peerster::Peerster()
     connect(table, SIGNAL(updateGUIOriginsList(QString)),
         dialog, SLOT(gotUpdateGUIOriginsList(QString)));
 
+    // DChat stuff
+    connect(dchatstore, SIGNAL(updateGUIDChatHistory(QString,QList<Message>)),
+        dialog, SLOT(gotUpdateGUIDChatHistory(QString,QList<Message>)));
+
     qsrand(QTime(0,0,0).msecsTo(QTime::currentTime()));
     ID = QString::number((qrand() % ID_MAX) + 1);
     qDebug() << "Instance ID: "<< ID; 
@@ -60,6 +65,7 @@ Peerster::Peerster()
     mailbox->setPortInfo(myPortMin, myPortMax, port);
     mailbox->setID(ID);
     mailbox->setMessageStore(msgstore);
+    mailbox->setDChatStore(dchatstore);
     mailbox->setRoutingTable(table);
     mailbox->populateNeighbors();
     mailbox->broadcastRoute();

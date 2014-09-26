@@ -80,6 +80,7 @@ class Peerster : public QObject
         Mailbox* mailbox;
         RoutingTable* table;
         MessageStore* msgstore;
+        DChatStore* dchatstore;
         QList<quint32> neighbors;
 };
 

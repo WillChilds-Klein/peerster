@@ -82,7 +82,7 @@ void ChatDialog::gotUpdateGUIOriginsList(QString newOrigin)
 void ChatDialog::gotNewDChatMsgEntered()
 {
     Message dmsg;
-    
+
     dmsg.setType(TYPE_DIRECT_CHAT);
     dmsg.setDest(originslist->currentItem()->text());
     dmsg.setHopLimit(DCHAT_HOP_LIMIT);
@@ -91,6 +91,11 @@ void ChatDialog::gotNewDChatMsgEntered()
     Q_EMIT(postToOutbox(dmsg));    
 
     dchatentry->clear();
+}
+
+void ChatDialog::gotUpdateGUIOriginsList(QString origin, QList<Message> dchathistory)
+{
+
 }
 
 void ChatDialog::originSelected(QListWidgetItem* item)
