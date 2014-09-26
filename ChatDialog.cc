@@ -95,10 +95,8 @@ void ChatDialog::gotNewDChatMsgEntered()
 
 void ChatDialog::gotUpdateGUIDChatHistory(QString origin, QList<Message> history)
 {  
-    // issue is that no item is selected for GUI's who have
-    // no peers yet.
     QListWidgetItem* itm = originslist->currentItem();
-    qDebug() << "yo";
+
     if(itm == NULL || originslist->currentItem()->text() != origin)
     {
         QList<QListWidgetItem*> originItems = 
@@ -110,7 +108,6 @@ void ChatDialog::gotUpdateGUIDChatHistory(QString origin, QList<Message> history
         originslist->setCurrentItem(originItems.at(0));
     }
         
-    qDebug() << "hey now";
     updateDChatView(history);
 
     dchatentry->setReadOnly(false);

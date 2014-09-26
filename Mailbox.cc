@@ -116,34 +116,24 @@ Peer Mailbox::pickRandomPeer()
 
 void Mailbox::gotPostToInbox(Message msg, Peer peer)
 {
-    if(msg.getType() == TYPE_RUMOR_CHAT || msg.getType() == TYPE_RUMOR_ROUTE)
+    if(msg.getType() == TYPE_RUMOR_CHAT)
     {
+        if(msg.getOriginID() != ID)
+        {
+            Q_EMIT(updateTable(msg, peer));
+        }
+        
         if(msgstore->isNewRumor(msg))
         {
             if(msgstore->isNextInSeq(msg))
             {
-                if(msg.getOriginID() != ID)
-                {
-                    updateTable(msg, peer);
-                    Q_EMIT(monger(msg));
-                }
-                if(msg.getType() == TYPE_RUMOR_CHAT)
-                {
-                    Q_EMIT(displayMessage(msg));
-                    msgstore->addNewRumor(msg);
-                }
+                Q_EMIT(monger(msg));
+                msgstore->addNewRumor(msg);
+                Q_EMIT(displayMessage(msg));
             }
-            else if(msg.getOriginID() != ID)
+            else
             {
-                if(msg.getType() == TYPE_RUMOR_ROUTE)
-                {
-                    updateTable(msg, peer);
-                    Q_EMIT(monger(msg));
-                }
-                else if(msg.getType() == TYPE_RUMOR_CHAT)
-                {
-                    Q_EMIT(needHelpFromPeer(peer));
-                }
+                Q_EMIT(needHelpFromPeer(peer));
             }
         }
         else
@@ -152,13 +142,17 @@ void Mailbox::gotPostToInbox(Message msg, Peer peer)
             // do nothing
         }
     }
+    else if(msg.getType() == TYPE_RUMOR_ROUTE && msg.getOriginID() != ID)
+    {
+        Q_EMIT(updateTable(msg, peer));
+    }
     else if(msg.getType() == TYPE_DIRECT_CHAT)
     {
         // double check to make sure this logic is complete + robust
         if(msg.getDest() == ID)
-        {
-            updateTable(msg, peer);
-            dchatstore->addDChat(msg);
+        {  
+            // Q_EMIT(updateTable(msg, peer));
+            dchatstore->newDChat(msg);
         }
         else if(msg.getHopLimit() <= 0)
         {
@@ -192,12 +186,10 @@ void Mailbox::gotPostToOutbox(Message msg)
     }
     else if(msg.getType() == TYPE_DIRECT_CHAT)
     {
-        // direct send logic
         Peer nextHop = table->get(msg.getDest());
         Q_EMIT(sendMessage(msg, nextHop));
 
-        dchatstore->addDChat(msg);
-        qDebug() << "SIMULATE SEND " << msg.toString();
+        dchatstore->newDChat(msg);
     }
 }
 

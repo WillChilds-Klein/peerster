@@ -39,6 +39,8 @@ Peerster::Peerster()
         table, SLOT(gotUpdateTable(Message,Peer)));
     connect(table, SIGNAL(updateGUIOriginsList(QString)),
         dialog, SLOT(gotUpdateGUIOriginsList(QString)));
+    connect(table, SIGNAL(monger(Message)),
+        mailbox, SLOT(gotMonger(Message)));
 
     // DChat stuff
     connect(dchatstore, SIGNAL(updateGUIDChatHistory(QString,QList<Message>)),

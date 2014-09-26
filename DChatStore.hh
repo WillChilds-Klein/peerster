@@ -12,7 +12,7 @@ class DChatStore : public QObject
     public:
         DChatStore(Peerster*);
         ~DChatStore();
-        void addDChat(Message);
+        void newDChat(Message);
         void setID(QString);
 
     signals:

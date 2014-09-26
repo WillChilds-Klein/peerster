@@ -8,7 +8,7 @@ DChatStore::DChatStore(Peerster* p)
 DChatStore::~DChatStore()
 {}
 
-void DChatStore::addDChat(Message dmsg)
+void DChatStore::newDChat(Message dmsg)
 {
     QString origin = (dmsg.getOriginID() != ID) ? dmsg.getOriginID() 
                                                 : dmsg.getDest(); 
@@ -21,7 +21,7 @@ void DChatStore::addDChat(Message dmsg)
     {
         history = QList<Message>();
     }
-    
+
     history.append(dmsg);  
     histories->insert(origin, history); 
 
