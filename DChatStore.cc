@@ -16,14 +16,14 @@ void DChatStore::addDChat(Message dmsg)
     if(histories->contains(origin))
     {
         history = histories->value(origin);
-        history.append(dmsg);  
-        histories->insert(origin, history); 
     }
     else
     {
         history = QList<Message>();
-        history.append(dmsg);
     }
+    
+    history.append(dmsg);  
+    histories->insert(origin, history); 
 
     Q_EMIT(updateGUIDChatHistory(origin, histories->value(origin)));
 }

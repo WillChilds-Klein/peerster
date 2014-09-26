@@ -94,17 +94,34 @@ void ChatDialog::gotNewDChatMsgEntered()
 }
 
 void ChatDialog::gotUpdateGUIDChatHistory(QString origin, QList<Message> history)
-{
-    if(originslist->currentItem()->text() == origin)
+{  
+    // issue is that no item is selected for GUI's who have
+    // no peers yet.
+    QListWidgetItem* itm = originslist->currentItem();
+    qDebug() << "yo";
+    if(itm == NULL || originslist->currentItem()->text() != origin)
     {
-        updateDChatView(history);
+        QList<QListWidgetItem*> originItems = 
+                                originslist->findItems(origin, Qt::MatchExactly);
+        if(originItems.size() != 1)
+        {
+            qDebug() << "Whoops! Multiple copies of orign: " << origin;
+        }
+        originslist->setCurrentItem(originItems.at(0));
     }
+        
+    qDebug() << "hey now";
+    updateDChatView(history);
+
+    dchatentry->setReadOnly(false);
+    dchatentry->setFocus();
 }
 
 void ChatDialog::originSelected(QListWidgetItem* item)
 {
     Q_EMIT(getDChatHistoryFromOrigin(item->text()));
 
+    dchatentry->setReadOnly(false);
     dchatentry->setFocus();
 }
 
@@ -146,7 +163,7 @@ void ChatDialog::createDirectLayout()
 
     QLabel* dchatlabel = new QLabel(TITLE_DCHAT, this, 0);
     dchatview->setReadOnly(true);
-    dchatentry->setReadOnly(false);
+    dchatentry->setReadOnly(true);
     dchatentry->setLineWrapMode(QTextEdit::WidgetWidth);
 
     dchatlayout->addWidget(dchatlabel);
