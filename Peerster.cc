@@ -74,6 +74,18 @@ Peerster::Peerster()
     mailbox->populateNeighbors();
     mailbox->broadcastRoute();
 
+    // noforward stuff
+    noforward = false;
+    QStringList clargs = QCoreApplication::arguments();
+    for(int i = 1; i < clargs.size(); i++)
+    {
+        if(clargs.at(i) == SWITCH_NOFORWARD)
+        {
+            noforward = true;
+        }
+    }
+    socket->setNoForward(noforward);
+
     dchatstore->setID(ID);
 }
 

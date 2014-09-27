@@ -10,7 +10,6 @@ class Message : public QVariantMap
         Message(QByteArray*);
         ~Message();
         QString toString();
-        // QByteArray serialize();
         QByteArray toSerializedQVMap();
         bool isWellFormed();
         bool isEmptyStatus();

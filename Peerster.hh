@@ -58,6 +58,7 @@
 #define TYPE_STATUS ("Status")
 #define TYPE_DIRECT_CHAT ("DirectChat")
 #define TYPE_NONE ("None")
+#define SWITCH_NOFORWARD ("-noforward")
 
 class ChatDialog;
 class NetSocket;
@@ -83,6 +84,7 @@ class Peerster : public QObject
         MessageStore* msgstore;
         DChatStore* dchatstore;
         QList<quint32> neighbors;
+        bool noforward;
 };
 
 #endif // PEERSTER_PEERSTER_HH

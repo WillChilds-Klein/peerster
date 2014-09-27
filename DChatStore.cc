@@ -25,7 +25,7 @@ void DChatStore::newDChat(Message dmsg)
     history.append(dmsg);  
     histories->insert(origin, history); 
 
-    Q_EMIT(updateGUIDChatHistory(origin, histories->value(origin)));
+    Q_EMIT(updateGUIDChatHistory(origin, history));
 }
 
 void DChatStore::gotGetDChatHistoryFromOrigin(QString origin)

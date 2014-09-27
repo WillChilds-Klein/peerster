@@ -13,6 +13,7 @@ class RoutingTable : public QObject
         QStringList origins();
         Peer get(QString);
         bool isNewRumor(Message);
+        bool isNewOrigin(QString);
 
     signals:
         void updateGUIOriginsList(QString);
@@ -25,7 +26,6 @@ class RoutingTable : public QObject
         Peerster* peerster;
         QHash<QString,Peer>* table;
         QHash<QString,quint32>* latest;
-        bool isNewOrigin(QString);
 };
 
 #endif // PEERSTER_ROUTINGTABLE_HH

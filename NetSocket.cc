@@ -20,6 +20,11 @@ void NetSocket::setPortRange(quint32 min, quint32 max)
     myPortMax = max;
 }
 
+void NetSocket::setNoForward(bool b)
+{
+    noforward = b;
+}
+
 qint32 NetSocket::bind()
 {
     for (quint32 p = myPortMin; p <= myPortMax; p++)
@@ -73,13 +78,17 @@ void NetSocket::gotReadyRead()
 
 void NetSocket::gotSendMessage(Message msg, Peer peer)
 {
-    // serialize map
-    QByteArray msgArr = msg.toSerializedQVMap();
+    QString type = msg.getType();
+    if(!noforward || (type == TYPE_RUMOR_ROUTE))
+    {
+        // serialize map
+        QByteArray msgArr = msg.toSerializedQVMap();
 
-    // qDebug() << "SEND MSG" << msg.toString() << "TO:" << peer.toString();
+        // qDebug() << "SEND MSG" << msg.toString() << "TO:" << peer.toString();
 
-    // Send message via UDP
-    writeDatagram(msgArr, peer.getAddress(), peer.getPort());
+        // Send message via UDP
+        writeDatagram(msgArr, peer.getAddress(), peer.getPort());
+    }
 }
 
 

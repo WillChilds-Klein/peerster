@@ -15,6 +15,7 @@ class NetSocket : public QUdpSocket
         NetSocket(Peerster* p);
         ~NetSocket();
         void setPortRange(quint32,quint32);
+        void setNoForward(bool);
         quint32 getPort();
         quint32 getMyPortMin();
         quint32 getMyPortMax();
@@ -31,6 +32,7 @@ class NetSocket : public QUdpSocket
     private:
         Peerster* peerster;
         quint32 port, myPortMin, myPortMax;
+        bool noforward;
 };
 
 #endif // PEERSTER_NETSOCKET_HH
