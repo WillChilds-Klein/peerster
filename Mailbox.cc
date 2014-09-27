@@ -151,7 +151,6 @@ void Mailbox::gotPostToInbox(Message msg, Peer peer)
         // double check to make sure this logic is complete + robust
         if(msg.getDest() == ID)
         {  
-            // Q_EMIT(updateTable(msg, peer));
             dchatstore->newDChat(msg);
         }
         else if(msg.getHopLimit() <= 0)
