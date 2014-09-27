@@ -56,6 +56,7 @@ class Mailbox : public QObject
         void monger(Message);
         void needHelpFromPeer(Peer);
         void updateTable(Message,Peer);
+        void updateGUINeighbors(QList<Peer>);
 
     private:
         Peerster* peerster;
@@ -67,6 +68,7 @@ class Mailbox : public QObject
         QString ID;
         quint32 localSeqNo;
         quint32 port, myPortMin, myPortMax;
+        Peer *self, *invalid;
         void processCommand(QString);
 };
 

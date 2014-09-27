@@ -9,6 +9,7 @@ ChatDialog::ChatDialog(Peerster* p)
     , dchatlayout(new QVBoxLayout(this))
     , chatview(new QTextEdit(this))
     , chatentry(new EntryQTextEdit())
+    , peerview(new QTextEdit(this))
     , peerentry(new EntryQTextEdit())
     , dchatview(new QTextEdit(this))
     , dchatentry(new EntryQTextEdit())
@@ -114,6 +115,17 @@ void ChatDialog::gotUpdateGUIDChatHistory(QString origin, QList<Message> history
     dchatentry->setFocus();
 }
 
+void ChatDialog::gotUpdateGUINeighbors(QList<Peer> neighbors)
+{
+    peerview->clear();
+
+    QList<Peer>::iterator i;
+    for(i = neighbors.begin(); i != neighbors.end(); ++i)
+    {
+        peerview->append(i->toString());
+    }
+}
+
 void ChatDialog::originSelected(QListWidgetItem* item)
 {
     Q_EMIT(getDChatHistoryFromOrigin(item->text()));
@@ -140,12 +152,15 @@ void ChatDialog::createPeerLayout()
 {
     QLabel* peerlabel = new QLabel(TITLE_PEER, this, 0);
 
+    peerview->setReadOnly(true);
+
     peerentry->setReadOnly(false);
     peerentry->setLineWrapMode(QTextEdit::WidgetWidth);
 
     addbtn->setText(TITLE_ADDPEER);
 
     peerlayout->addWidget(peerlabel);
+    peerlayout->addWidget(peerview);
     peerlayout->addWidget(peerentry);
     peerlayout->addWidget(addbtn);
 }

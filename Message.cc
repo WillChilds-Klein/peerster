@@ -95,16 +95,19 @@ QByteArray Message::toSerializedQVMap()
     QDataStream stream(&msgArr, QIODevice::WriteOnly);
 
     QVariantMap map;
-    if(getType() == TYPE_RUMOR_CHAT)
-    {
-        map.insert(KEY_CHATTEXT, value(KEY_CHATTEXT));
-        map.insert(KEY_ORIGINID, value(KEY_ORIGINID));
-        map.insert(KEY_SEQNO, value(KEY_SEQNO));
-    }
-    else if(getType() == TYPE_RUMOR_ROUTE)
+    if(getType() == TYPE_RUMOR_CHAT || getType() == TYPE_RUMOR_ROUTE)
     {
         map.insert(KEY_ORIGINID, value(KEY_ORIGINID));
         map.insert(KEY_SEQNO, value(KEY_SEQNO));
+        if(getType() == TYPE_RUMOR_CHAT)
+        {
+            map.insert(KEY_CHATTEXT, value(KEY_CHATTEXT));
+        }
+        if(contains(KEY_LASTIP) && contains(KEY_LASTPORT))
+        {
+            map.insert(KEY_LASTIP, value(KEY_LASTIP));
+            map.insert(KEY_LASTPORT, value(KEY_LASTPORT));
+        }
     }
     else if(getType() == TYPE_STATUS)
     {
@@ -178,6 +181,16 @@ void Message::setHopLimit(quint32 lim)
     insert(KEY_HOPLIMIT, lim);
 }
 
+void Message::setLastIP(quint32 IP)
+{
+    insert(KEY_LASTIP, IP);
+}
+
+void Message::setLastPort(quint16 port)
+{
+    insert(KEY_LASTPORT, port);
+}
+
 QString Message::getType()
 {
     return value(KEY_TYPE).toString();
@@ -211,5 +224,15 @@ QString Message::getDest()
 quint32 Message::getHopLimit()
 {
     return value(KEY_HOPLIMIT).toInt();
+}
+
+quint32 Message::getLastIP()
+{
+    return value(KEY_LASTIP).toInt();
+}
+
+quint16 Message::getLastPort()
+{
+    return value(KEY_LASTPORT).toInt();
 }
 

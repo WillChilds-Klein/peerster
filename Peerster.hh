@@ -53,6 +53,8 @@
 #define KEY_TYPE ("Type")
 #define KEY_DEST ("Dest")
 #define KEY_HOPLIMIT ("HopLimit")
+#define KEY_LASTIP ("LastIP")
+#define KEY_LASTPORT ("LastPort")
 #define TYPE_RUMOR_CHAT ("ChatRumor")
 #define TYPE_RUMOR_ROUTE ("RouteRumor")
 #define TYPE_STATUS ("Status")
