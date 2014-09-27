@@ -6,6 +6,7 @@ Mailbox::Mailbox(Peerster* p)
     , status_clock(new QTimer(this))
     , route_clock(new QTimer(this))
     , localSeqNo(1)
+    , invalid(new Peer("0.0.0.0:0"))
 {
     // parts incoming/outgoing message pipeline
     connect(this, SIGNAL(postToInbox(Message,Peer)), 
@@ -48,6 +49,7 @@ void Mailbox::setPortInfo(quint32 min, quint32 max, quint32 p)
     myPortMin = min;
     myPortMax = max;
     port = p;
+    self = new Peer("127.0.0.1:"+QString::number(port));
 }
 
 void Mailbox::setID(QString str)
@@ -73,24 +75,14 @@ void Mailbox::populateNeighbors()
         Peer peer = Peer(clargs.at(i));
         gotPotentialNewNeighbor(peer);
     }
-    /** /
-    QString info;
-    for(quint32 i = myPortMin; i <= myPortMax; i++)
-      {
-        if(i != port)
-        {
-            info = "127.0.0.1:" + QString::number(i);
-            neighbors->append(Peer(info));
-        }
-    }
-    /**/
+
     if(port != myPortMin)
     {
-        neighbors->append(Peer("127.0.0.1:" + QString::number(port-1)));
+        gotPotentialNewNeighbor(Peer("127.0.0.1:" + QString::number(port-1)));
     }
     if(port != myPortMax)
     {
-        neighbors->append(Peer("127.0.0.1:" + QString::number(port+1)));
+        gotPotentialNewNeighbor(Peer("127.0.0.1:" + QString::number(port+1)));
     }
 
     qDebug() << "NEIGHBORS:";
@@ -116,14 +108,29 @@ Peer Mailbox::pickRandomPeer()
 
 void Mailbox::gotPostToInbox(Message msg, Peer peer)
 {
-    if(msg.getType() == TYPE_RUMOR_CHAT)
+    if(msg.getType() == TYPE_RUMOR_CHAT || msg.getType() == TYPE_RUMOR_ROUTE)
     {
+
+        if(msg.getOriginID() != ID && peer != *self && peer != *invalid)
+        {
+            QString lastPeer = QString::number(msg.getLastIP()) + ":" 
+                             + QString::number(msg.getLastPort());
+            Q_EMIT(gotPotentialNewNeighbor(Peer(lastPeer)));
+
+            qDebug() << "PREVIOUS MSG: " << msg.toString();
+
+            msg.setLastIP(peer.getAddress().toIPv4Address());
+            msg.setLastPort(peer.getPort());
+
+            qDebug() << "MSG WITH LASTPEER INFO UPDATED: " << msg.toString();
+        }
+
         if(msg.getOriginID() != ID)
         {
             Q_EMIT(updateTable(msg, peer));
         }
         
-        if(msgstore->isNewRumor(msg))
+        if(msgstore->isNewRumor(msg) && msg.getType() == TYPE_RUMOR_CHAT)
         {
             if(msgstore->isNextInSeq(msg))
             {
@@ -141,10 +148,6 @@ void Mailbox::gotPostToInbox(Message msg, Peer peer)
             qDebug() << "GOT OLD RUMOR:" << msg.toString();
             // do nothing
         }
-    }
-    else if(msg.getType() == TYPE_RUMOR_ROUTE && msg.getOriginID() != ID)
-    {
-        Q_EMIT(updateTable(msg, peer));
     }
     else if(msg.getType() == TYPE_DIRECT_CHAT)
     {
@@ -220,10 +223,6 @@ void Mailbox::gotInConsensusWithPeer()
     {
         Q_EMIT(monger(msgstore->getStatus()));
     }
-    else
-    {
-        // halt
-    }
 }
 
 void Mailbox::gotMonger(Message msg)
@@ -237,11 +236,13 @@ void Mailbox::gotMonger(Message msg)
 
 void Mailbox::gotPotentialNewNeighbor(Peer peer)
 {
-    if(peer.isWellFormed() && !neighbors->contains(peer))
+    if(peer.isWellFormed() && !neighbors->contains(peer) && 
+       peer != *invalid && peer != *self)
     {
         neighbors->append(peer);
         Message route = routeRumor();
         Q_EMIT(sendMessage(route, peer));
+        Q_EMIT(updateGUINeighbors(*neighbors));
         // qDebug() << "NEW NEIGHBOR:" << peer.toString();
     }
 }

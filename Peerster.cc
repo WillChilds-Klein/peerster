@@ -33,6 +33,8 @@ Peerster::Peerster()
         mailbox, SLOT(gotPotentialNewNeighbor(Peer)));
     connect(dialog, SIGNAL(sendStatusToPeer(Peer)),
         mailbox, SLOT(gotSendStatusToPeer(Peer)));
+    connect(mailbox, SIGNAL(updateGUINeighbors(QList<Peer>)),
+        dialog, SLOT(gotUpdateGUINeighbors(QList<Peer>)));
 
     // routing table stuff
     connect(mailbox, SIGNAL(updateTable(Message,Peer)),

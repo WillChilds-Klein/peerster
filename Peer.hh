@@ -11,15 +11,16 @@ class Peer
         Peer();
         Peer(QString);
         ~Peer();
-        quint32 getPort();
+        quint16 getPort();
         QHostAddress getAddress();
         bool isWellFormed();
         QString toString();
         bool operator==(Peer);
+        bool operator!=(Peer);
 
     private:
         QList<QHostAddress>* addresses;
-        quint32 port;
+        quint16 port;
         bool wellFormed;
 };
 

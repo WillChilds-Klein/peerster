@@ -30,6 +30,7 @@ class ChatDialog : public QDialog
         void gotUpdateGUIOriginsList(QString);
         void gotNewDChatMsgEntered();
         void gotUpdateGUIDChatHistory(QString,QList<Message>);
+        void gotUpdateGUINeighbors(QList<Peer>);
 
     private slots:
         void originSelected(QListWidgetItem*);
@@ -45,7 +46,7 @@ class ChatDialog : public QDialog
         QGridLayout* mainlayout;
         QVBoxLayout *chatlayout, *peerlayout, *dselectlayout, *dchatlayout;
         QHBoxLayout *directlayout;
-        QTextEdit *chatview, *dchatview;
+        QTextEdit *peerview, *chatview, *dchatview;
         EntryQTextEdit *chatentry, *peerentry, *dchatentry;
         QPushButton* addbtn;
         QListWidget* originslist;

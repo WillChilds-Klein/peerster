@@ -20,6 +20,8 @@ class Message : public QVariantMap
         void setWantMap(QVariantMap);
         void setDest(QString);
         void setHopLimit(quint32);
+        void setLastIP(quint32);
+        void setLastPort(quint16);
         QString getType();
         QString getText();
         QString getOriginID();
@@ -27,6 +29,8 @@ class Message : public QVariantMap
         QString getDest();
         quint32 getHopLimit();
         QVariantMap getWantMap();
+        quint32 getLastIP();
+        quint16 getLastPort();
 
     private:
         bool wellFormed;

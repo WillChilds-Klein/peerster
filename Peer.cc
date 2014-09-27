@@ -47,7 +47,7 @@ Peer::Peer(QString qstr)
 Peer::~Peer()
 {}
 
-quint32 Peer::getPort()
+quint16 Peer::getPort()
 {
     return port;
 }
@@ -78,3 +78,8 @@ bool Peer::operator==(Peer other)
     return (this->getAddress().toString() == other.getAddress().toString()) &&
             (this->getPort() == other.getPort());
 } 
+
+bool Peer::operator!=(Peer other)
+{
+    return !(*this == other);
+}

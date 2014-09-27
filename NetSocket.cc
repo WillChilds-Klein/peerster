@@ -60,11 +60,11 @@ void NetSocket::gotReadyRead()
 
         senderInfo = senderAddr.toString() + ":" 
                                            + QString::number(senderPort);
-        Peer sender = Peer(senderInfo);
         Message msg = Message(&datagram);
         
         if(msg.isWellFormed()) 
         {
+            Peer sender = Peer(senderInfo);
             Q_EMIT(potentialNewNeighbor(sender));
             Q_EMIT(postToInbox(msg, sender));
             qDebug() << "GOT MSG: " << msg.toString() << " FROM: " << sender.toString();
