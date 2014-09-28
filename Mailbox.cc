@@ -85,19 +85,12 @@ void Mailbox::populateNeighbors()
         gotPotentialNewNeighbor(Peer("127.0.0.1:" + QString::number(port+1)));
     }
 
+    gotBroadcastRoute();
+
     qDebug() << "NEIGHBORS:";
     foreach(Peer peer, *neighbors)
     {
         qDebug() << "   " << peer.toString();
-    }
-}
-
-void Mailbox::broadcastRoute()
-{
-    Message route = routeRumor();
-    foreach(Peer peer, *neighbors)
-    {
-        sendMessage(route, peer);
     }
 }
 
@@ -244,6 +237,15 @@ void Mailbox::gotPotentialNewNeighbor(Peer peer)
         Q_EMIT(sendMessage(route, peer));
         Q_EMIT(updateGUINeighbors(*neighbors));
         // qDebug() << "NEW NEIGHBOR:" << peer.toString();
+    }
+}
+
+void Mailbox::gotBroadcastRoute()
+{
+    Message route = routeRumor();
+    foreach(Peer peer, *neighbors)
+    {
+        sendMessage(route, peer);
     }
 }
 

@@ -27,6 +27,7 @@ void RoutingTable::gotUpdateTable(Message msg, Peer peer)
     if(isNewOrigin(msgOrigin))
     {
         Q_EMIT(monger(msg));
+        Q_EMIT(broadcastRoute());
         Q_EMIT(updateGUIOriginsList(msgOrigin));
     }
     else if(msgSeqno >= latest->value(msgOrigin))

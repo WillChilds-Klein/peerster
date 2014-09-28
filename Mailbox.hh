@@ -32,7 +32,6 @@ class Mailbox : public QObject
         void setID(QString);
         Message routeRumor();
         void populateNeighbors();
-        void broadcastRoute();
         Peer pickRandomPeer();
 
     public slots:
@@ -43,6 +42,7 @@ class Mailbox : public QObject
         void gotInConsensusWithPeer();
         void gotMonger(Message);
         void gotPotentialNewNeighbor(Peer);
+        void gotBroadcastRoute();
 
     private slots:
         void status_chime();

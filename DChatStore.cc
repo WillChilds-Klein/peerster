@@ -25,6 +25,8 @@ void DChatStore::newDChat(Message dmsg)
     history.append(dmsg);  
     histories->insert(origin, history); 
 
+    qDebug() << "HISTORY FOR " << origin << " LENGTH = " << history.size();
+
     Q_EMIT(updateGUIDChatHistory(origin, history));
 }
 

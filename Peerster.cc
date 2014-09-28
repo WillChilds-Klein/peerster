@@ -43,6 +43,8 @@ Peerster::Peerster()
         dialog, SLOT(gotUpdateGUIOriginsList(QString)));
     connect(table, SIGNAL(monger(Message)),
         mailbox, SLOT(gotMonger(Message)));
+    connect(table, SIGNAL(broadcastRoute()),
+        mailbox, SLOT(gotBroadcastRoute()));
 
     // DChat stuff
     connect(dchatstore, SIGNAL(updateGUIDChatHistory(QString,QList<Message>)),
@@ -74,7 +76,6 @@ Peerster::Peerster()
     mailbox->setDChatStore(dchatstore);
     mailbox->setRoutingTable(table);
     mailbox->populateNeighbors();
-    mailbox->broadcastRoute();
 
     // noforward stuff
     noforward = false;

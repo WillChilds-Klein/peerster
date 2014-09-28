@@ -17,6 +17,7 @@ class RoutingTable : public QObject
 
     signals:
         void updateGUIOriginsList(QString);
+        void broadcastRoute();
         void monger(Message);
 
     public slots:
