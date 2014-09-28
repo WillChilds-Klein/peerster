@@ -194,7 +194,6 @@ void ChatDialog::updateDChatView(QList<Message> history)
     }
 }
 
-// L1E2: subclass QTextEdit to get desired UI behavior.
 EntryQTextEdit::EntryQTextEdit()
 {}
 

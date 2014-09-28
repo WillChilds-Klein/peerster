@@ -44,6 +44,14 @@ Peer::Peer(QString qstr)
     }
 }
 
+Peer::Peer(quint32 IPv4, quint16 p)
+    : addresses(new QList<QHostAddress>())
+    , wellFormed(true)
+{
+    addresses->append(QHostAddress(IPv4));
+    port = p;
+}
+
 Peer::~Peer()
 {}
 

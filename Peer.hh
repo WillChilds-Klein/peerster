@@ -10,6 +10,7 @@ class Peer
     public:
         Peer();
         Peer(QString);
+        Peer(quint32,quint16);
         ~Peer();
         quint16 getPort();
         QHostAddress getAddress();

@@ -27,6 +27,7 @@ class RoutingTable : public QObject
         Peerster* peerster;
         QHash<QString,Peer>* table;
         QHash<QString,quint32>* latest;
+        QHash<QString,bool>* directness;
 };
 
 #endif // PEERSTER_ROUTINGTABLE_HH

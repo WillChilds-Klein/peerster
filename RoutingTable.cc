@@ -4,6 +4,7 @@ RoutingTable::RoutingTable(Peerster* p)
     : peerster(p)
     , table(new QHash<QString,Peer>)
     , latest(new QHash<QString,quint32>)
+    , directness(new QHash<QString,bool>)
 {}
 
 RoutingTable::~RoutingTable()
@@ -30,16 +31,25 @@ void RoutingTable::gotUpdateTable(Message msg, Peer peer)
         Q_EMIT(broadcastRoute());
         Q_EMIT(updateGUIOriginsList(msgOrigin));
     }
-    else if(msgSeqno >= latest->value(msgOrigin))
+
+    if(msg.isDirectRumor())
     {
-        Q_EMIT(monger(msg));
+        table->insert(msgOrigin, peer);
+        directness->insert(msgOrigin, true);
     }
 
     if(isNewRumor(msg))
     {
         Q_EMIT(monger(msg));
-        table->insert(msgOrigin, peer);
         latest->insert(msgOrigin, msgSeqno);
+        if(!directness->contains(msgOrigin) || directness->value(msgOrigin) == false)
+        {
+            table->insert(msgOrigin, peer);
+            if(!msg.isDirectRumor())
+            {
+                directness->insert(msgOrigin, false);
+            }
+        }
     }
 }
 

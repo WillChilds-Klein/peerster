@@ -106,16 +106,13 @@ void Mailbox::gotPostToInbox(Message msg, Peer peer)
 
         if(msg.getOriginID() != ID && peer != *self && peer != *invalid)
         {
-            QString lastPeer = QString::number(msg.getLastIP()) + ":" 
-                             + QString::number(msg.getLastPort());
-            Q_EMIT(gotPotentialNewNeighbor(Peer(lastPeer)));
-
-            qDebug() << "PREVIOUS MSG: " << msg.toString();
+            if(!msg.isDirectRumor())
+            {
+                Q_EMIT(gotPotentialNewNeighbor(Peer(msg.getLastIP(), msg.getLastPort())));
+            }
 
             msg.setLastIP(peer.getAddress().toIPv4Address());
             msg.setLastPort(peer.getPort());
-
-            qDebug() << "MSG WITH LASTPEER INFO UPDATED: " << msg.toString();
         }
 
         if(msg.getOriginID() != ID)
@@ -233,9 +230,10 @@ void Mailbox::gotPotentialNewNeighbor(Peer peer)
        peer != *invalid && peer != *self)
     {
         neighbors->append(peer);
-        Message route = routeRumor();
-        Q_EMIT(sendMessage(route, peer));
+        // Message route = routeRumor();
+        // Q_EMIT(sendMessage(route, peer));
         Q_EMIT(updateGUINeighbors(*neighbors));
+        gotBroadcastRoute();
         // qDebug() << "NEW NEIGHBOR:" << peer.toString();
     }
 }
@@ -257,9 +255,10 @@ void Mailbox::status_chime()
 
 void Mailbox::route_chime()
 {
-    Message route = routeRumor();
-    Q_EMIT(monger(route));
-    qDebug() << "MONGER ROUTE: " << route.toString();
+    // Message route = routeRumor();
+    // Q_EMIT(monger(route));
+    gotBroadcastRoute();
+    qDebug() << "BROADCAST ROUTE: " << routeRumor().toString();
 }
 
 void Mailbox::gotSendStatusToPeer(Peer peer)

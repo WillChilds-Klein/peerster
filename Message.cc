@@ -146,6 +146,12 @@ bool Message::isEmptyStatus()
     return value(KEY_WANT).toMap().size() == 0;
 }
 
+bool Message::isDirectRumor()
+{
+    return (getType() == TYPE_RUMOR_CHAT || getType() == TYPE_RUMOR_ROUTE) && 
+           (!contains(KEY_LASTIP) && !contains(KEY_LASTPORT));
+}
+
 void Message::setType(QString str)
 {
     insert(KEY_TYPE, str);
