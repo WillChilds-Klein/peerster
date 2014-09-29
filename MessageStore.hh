@@ -14,10 +14,12 @@ class MessageStore : public QObject
         MessageStore(Peerster*);
         ~MessageStore();
         bool isNewRumor(Message);
-        void addNewRumor(Message);
+        bool isNewOrigin(QString);
+        bool isNextRumorInSeq(Message);
+        void addNewOrigin(QString);
+        void addNewChatRumor(Message);
         QList<Message> getMessagesInRange(QString,quint32,quint32);
         Message getStatus();
-        bool isNextInSeq(Message msg);
         void processIncomingStatus(Message,Peer);
         QString toString();
 
@@ -25,6 +27,8 @@ class MessageStore : public QObject
         void canHelpPeer(Peer,QList<Message>);
         void needHelpFromPeer(Peer);
         void inConsensusWithPeer();
+        void updateGUIOriginsList(QString);
+        void broadcastRoute();
 
     private:
         Peerster* peerster;

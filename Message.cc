@@ -80,15 +80,6 @@ QString Message::toString()
     return str;
 }
 
-// QByteArray Message::serialize()
-// {
-//     QByteArray msgArr;
-//     QDataStream stream(&msgArr, QIODevice::WriteOnly);
-//     stream << (*this);
-
-//     return msgArr;
-// }
-
 QByteArray Message::toSerializedQVMap()
 {
     QByteArray msgArr;

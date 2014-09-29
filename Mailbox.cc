@@ -2,7 +2,8 @@
 
 Mailbox::Mailbox(Peerster* p)
     : peerster(p)
-    , neighbors(new QList<Peer>())
+    , neighbors(new QList<Peer>)
+    , routingTable(new QHash< QString,QPair<Peer,bool> >)
     , status_clock(new QTimer(this))
     , route_clock(new QTimer(this))
     , localSeqNo(1)
@@ -22,6 +23,11 @@ Mailbox::Mailbox(Peerster* p)
     connect(route_clock, SIGNAL(timeout()),
         this, SLOT(route_chime()));
 
+    connect(this, SIGNAL(broadcast(Message)),
+        this, SLOT(gotBroadcast(Message)));
+    connect(this, SIGNAL(broadcastRoute()),
+        this, SLOT(gotBroadcastRoute()));
+
     status_clock->start(STATUS_CLOCK_RATE);
     route_clock->start(ROUTE_CLOCK_RATE);
 }
@@ -37,11 +43,6 @@ void Mailbox::setMessageStore(MessageStore* m)
 void Mailbox::setDChatStore(DChatStore* d)
 {
     dchatstore = d;
-}
-
-void Mailbox::setRoutingTable(RoutingTable* r)
-{
-    table = r;
 }
 
 void Mailbox::setPortInfo(quint32 min, quint32 max, quint32 p)
@@ -63,6 +64,7 @@ Message Mailbox::routeRumor()
     route.setType(TYPE_RUMOR_ROUTE);
     route.setOriginID(ID);
     route.setSeqNo(localSeqNo);
+    // localSeqNo++;
 
     return route;
 }
@@ -76,6 +78,7 @@ void Mailbox::populateNeighbors()
         gotPotentialNewNeighbor(peer);
     }
 
+    /**/
     if(port != myPortMin)
     {
         gotPotentialNewNeighbor(Peer("127.0.0.1:" + QString::number(port-1)));
@@ -84,14 +87,9 @@ void Mailbox::populateNeighbors()
     {
         gotPotentialNewNeighbor(Peer("127.0.0.1:" + QString::number(port+1)));
     }
+    /**/
 
-    gotBroadcastRoute();
-
-    qDebug() << "NEIGHBORS:";
-    foreach(Peer peer, *neighbors)
-    {
-        qDebug() << "   " << peer.toString();
-    }
+    Q_EMIT(broadcastRoute());
 }
 
 Peer Mailbox::pickRandomPeer()
@@ -101,32 +99,35 @@ Peer Mailbox::pickRandomPeer()
 
 void Mailbox::gotPostToInbox(Message msg, Peer peer)
 {
+    QString msgOrigin = msg.getOriginID();
+
     if(msg.getType() == TYPE_RUMOR_CHAT || msg.getType() == TYPE_RUMOR_ROUTE)
     {
+        processRumorRouteInfo(msg, peer);
 
-        if(msg.getOriginID() != ID && peer != *self && peer != *invalid)
+        if(msgOrigin != ID && peer != *self && peer != *invalid)
         {
+            // handle potential new neighbors
             if(!msg.isDirectRumor())
             {
-                Q_EMIT(gotPotentialNewNeighbor(Peer(msg.getLastIP(), msg.getLastPort())));
+                Peer neighbor = Peer(msg.getLastIP(), msg.getLastPort());
+                Q_EMIT(gotPotentialNewNeighbor(neighbor));
             }
 
             msg.setLastIP(peer.getAddress().toIPv4Address());
             msg.setLastPort(peer.getPort());
         }
-
-        if(msg.getOriginID() != ID)
-        {
-            Q_EMIT(updateTable(msg, peer));
-        }
         
-        if(msgstore->isNewRumor(msg) && msg.getType() == TYPE_RUMOR_CHAT)
+        if(msgstore->isNewRumor(msg))
         {
-            if(msgstore->isNextInSeq(msg))
+            if(msgstore->isNextRumorInSeq(msg))
             {
-                Q_EMIT(monger(msg));
-                msgstore->addNewRumor(msg);
-                Q_EMIT(displayMessage(msg));
+                Q_EMIT(monger(msg)); // <-- this causes a lot of network overhead.
+                if(msg.getType() == TYPE_RUMOR_CHAT)
+                {
+                    msgstore->addNewChatRumor(msg);
+                    Q_EMIT(displayMessage(msg));
+                }
             }
             else
             {
@@ -143,20 +144,16 @@ void Mailbox::gotPostToInbox(Message msg, Peer peer)
     {
         // double check to make sure this logic is complete + robust
         if(msg.getDest() == ID)
-        {  
-            if(table->isNewOrigin(msg.getOriginID()))
-            {
-                Q_EMIT(updateTable(msg, peer));
-            }
+        {
             dchatstore->newDChat(msg);
         }
         else if(msg.getHopLimit() <= 0)
         {
             // drop
         }
-        else // relay via routing table lookup
+        else if(!msgstore->isNewOrigin(msgOrigin)) // relay via routing table lookup
         {
-            Peer forwardPeer = table->get(msg.getDest());
+            Peer forwardPeer = routingTable->value(msgOrigin).first;
             msg.setHopLimit(msg.getHopLimit() - 1); // decrement HopLimit
             Q_EMIT(sendMessage(msg, forwardPeer));
         }
@@ -182,8 +179,8 @@ void Mailbox::gotPostToOutbox(Message msg)
     }
     else if(msg.getType() == TYPE_DIRECT_CHAT)
     {
-        Peer nextHop = table->get(msg.getDest());
-        Q_EMIT(sendMessage(msg, nextHop));
+        Peer nextPeer = nextHop(msg.getDest());
+        Q_EMIT(sendMessage(msg, nextPeer));
 
         dchatstore->newDChat(msg);
     }
@@ -196,15 +193,17 @@ void Mailbox::gotCanHelpPeer(Peer peer, QList<Message> list)
     {
         Q_EMIT(sendMessage(*i, peer));
     }
-    // qDebug() << "Peer" << peer.toString() << "needs help with " 
-    //                                       << list.size() << "messages!";
+
+    qDebug() << "HELPING PEER " << peer.toString() << " WITH " 
+             << list.size() << " MESSAGES";
 }
 
 void Mailbox::gotNeedHelpFromPeer(Peer peer)
 {
-    // qDebug() << "Need Help from Peer" << peer.toString();
     Message status = msgstore->getStatus();
     Q_EMIT(sendMessage(status, peer));
+
+    qDebug() << "NEED HELP FROM PEER " << peer.toString();
 }
 
 void Mailbox::gotInConsensusWithPeer()
@@ -213,6 +212,8 @@ void Mailbox::gotInConsensusWithPeer()
     {
         Q_EMIT(monger(msgstore->getStatus()));
     }
+
+    qDebug() << "IN CONSENSUS WITH PEER ";
 }
 
 void Mailbox::gotMonger(Message msg)
@@ -224,27 +225,32 @@ void Mailbox::gotMonger(Message msg)
     }
 }
 
+void Mailbox::gotBroadcast(Message msg)
+{
+    if(neighbors != NULL && !neighbors->isEmpty())
+    {
+        foreach(Peer peer, *neighbors)
+        {
+            sendMessage(msg, peer);
+        }
+    }
+}
+
 void Mailbox::gotPotentialNewNeighbor(Peer peer)
 {
     if(peer.isWellFormed() && !neighbors->contains(peer) && 
        peer != *invalid && peer != *self)
     {
         neighbors->append(peer);
-        // Message route = routeRumor();
-        // Q_EMIT(sendMessage(route, peer));
         Q_EMIT(updateGUINeighbors(*neighbors));
         gotBroadcastRoute();
-        // qDebug() << "NEW NEIGHBOR:" << peer.toString();
     }
 }
 
 void Mailbox::gotBroadcastRoute()
 {
     Message route = routeRumor();
-    foreach(Peer peer, *neighbors)
-    {
-        sendMessage(route, peer);
-    }
+    Q_EMIT(broadcast(route));
 }
 
 void Mailbox::status_chime()
@@ -255,10 +261,8 @@ void Mailbox::status_chime()
 
 void Mailbox::route_chime()
 {
-    // Message route = routeRumor();
-    // Q_EMIT(monger(route));
-    gotBroadcastRoute();
-    qDebug() << "BROADCAST ROUTE: " << routeRumor().toString();
+    Q_EMIT(broadcastRoute());
+    qDebug() << "PERIODIC ROUTE BROADCAST: " << routeRumor().toString();
 }
 
 void Mailbox::gotSendStatusToPeer(Peer peer)
@@ -283,15 +287,78 @@ void Mailbox::processCommand(QString cmd)
     {
         qDebug() << "\nNEIGHBORS:";
         foreach(Peer peer, *neighbors)
+        {
             qDebug() << "   " << peer.toString();
+        }
     }
     else if(cmd == CMD_PRINT_TABLE)
     {
         qDebug() << "\nROUTING TABLE:";
-        foreach(QString qstr, table->origins())
+        foreach(QString qstr, routingTable->keys())
+        {
             qDebug() << "   <ORIGIN: " << qstr <<  
-                            ", PEER: " << table->get(qstr).toString() << ">";
+                            ", PEER: " << nextHop(qstr).toString() << 
+                            ", DIRECT: " << nextHopIsDirect(qstr) << ">";
+        }
     }
 }
+
+void Mailbox::processRumorRouteInfo(Message msg, Peer peer)
+{
+    QString msgOrigin = msg.getOriginID();
+    QPair<Peer,bool> tableEntry;
+
+    tableEntry.first = peer;
+
+    if(msgOrigin == ID)
+    {
+        return;
+    }
+    else if(msg.isDirectRumor())
+    {
+        tableEntry.second = true;
+        routingTable->insert(msgOrigin, tableEntry);
+        if(msgstore->isNewOrigin(msgOrigin))
+        {
+            Q_EMIT(updateGUIOriginsList(msgOrigin));
+            Q_EMIT(broadcastRoute());
+        }
+    }
+    else if(msgstore->isNewOrigin(msgOrigin))
+    {
+        tableEntry.second = false;
+        routingTable->insert(msgOrigin, tableEntry);
+        Q_EMIT(updateGUIOriginsList(msgOrigin));
+        Q_EMIT(broadcastRoute());
+
+    }
+    else if(msgstore->isNewRumor(msg) && !nextHopIsDirect(msgOrigin))
+    {
+        tableEntry.second = false;
+        routingTable->insert(msgOrigin, tableEntry);
+    }
+}
+
+Peer Mailbox::nextHop(QString origin)
+{
+    if(routingTable->keys().contains(origin))
+    {
+        return routingTable->value(origin).first;
+    }
+    else
+    {
+        return *invalid;
+    }
+}
+
+bool Mailbox::nextHopIsDirect(QString origin)
+{
+    if(msgstore->isNewOrigin(origin))
+    {
+        return false;
+    }
+    return routingTable->value(origin).second == true;
+}
+
 
 

@@ -10,13 +10,14 @@ MessageStore::~MessageStore()
 
 bool MessageStore::isNewRumor(Message msg)
 {
-    if(!(msg.getType() == TYPE_RUMOR_CHAT) && !(msg.getType() == TYPE_RUMOR_ROUTE))
+    if(!(msg.getType() == TYPE_RUMOR_CHAT || msg.getType() == TYPE_RUMOR_ROUTE))
     {
         return false;
     }
     
-    if(msg.getType() == TYPE_RUMOR_CHAT && !store->contains(msg.getOriginID()))
+    if(isNewOrigin(msg.getOriginID()))
     {
+        addNewOrigin(msg.getOriginID());
         return true;
     }
 
@@ -31,19 +32,45 @@ bool MessageStore::isNewRumor(Message msg)
     return false;
 }
 
-void MessageStore::addNewRumor(Message msg)
+bool MessageStore::isNewOrigin(QString origin)
 {
-    QString origin = msg.getOriginID();
-    QList<Message> originHistory;
-    if(store->contains(origin))
+    return !store->keys().contains(origin);
+}
+
+bool MessageStore::isNextRumorInSeq(Message msg)
+{
+    QMap<QString, quint32> latest = getLatest();
+    if(store->contains(msg.getOriginID()))
     {
-        originHistory = store->value(origin);
+        if(msg.getSeqNo() == latest.value(msg.getOriginID())+1)
+            return true;
+        else
+            return false;
+    }
+    else if(msg.getSeqNo() == 1)
+    {
+        return true;
     }
     else
     {
-        originHistory = QList<Message>();
+        return false;
     }
+} 
 
+void MessageStore::addNewOrigin(QString origin)
+{
+    if(isNewOrigin(origin))
+    {
+        store->insert(origin, QList<Message>());
+    }
+}
+
+void MessageStore::addNewChatRumor(Message msg)
+{
+    QString origin = msg.getOriginID();
+    QList<Message> originHistory;
+    
+    originHistory = store->value(origin);
     originHistory.append(msg);
 
     store->insert(origin, originHistory);
@@ -94,40 +121,7 @@ Message MessageStore::getStatus()
     status.setType(TYPE_STATUS);
 
     return status;
-}
-
-QMap<QString, quint32> MessageStore::getLatest()
-{
-    QMap<QString, quint32> latest;
-
-    QMap<QString, QList<Message> >::iterator i;
-    for(i = store->begin(); i != store->end(); ++i)
-    {
-        latest.insert(i.key(), i.value().back().getSeqNo());
-    }
-
-    return latest;
-}
-
-bool MessageStore::isNextInSeq(Message msg)
-{
-    QMap<QString, quint32> latest = getLatest();
-    if(store->contains(msg.getOriginID()))
-    {
-        if(msg.getSeqNo() == latest.value(msg.getOriginID())+1)
-            return true;
-        else
-            return false;
-    }
-    else if(msg.getSeqNo() == 1)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}   
+} 
 
 void MessageStore::processIncomingStatus(Message status, Peer peer)
 {
@@ -138,6 +132,9 @@ void MessageStore::processIncomingStatus(Message status, Peer peer)
     QList<QString> inOwnButNotIncoming;
     QList<Message> toSend;
     bool needHelp = false;
+
+    qDebug() << "OWN STATUS: " << getStatus().toString();
+    qDebug() << peer.toString() << "'s STATUS" << status.toString();
 
     QVariantMap::iterator i;
     QList<Message>::iterator j;
@@ -152,16 +149,22 @@ void MessageStore::processIncomingStatus(Message status, Peer peer)
             {
                 needHelp = true;
             }
-            else if(ownWantSeqNo > incomingWantSeqNo)
+            else if(ownWantSeqNo > incomingWantSeqNo && 
+                    !store->value(i.key()).isEmpty())
             {   // prepare list
                 toSend = getMessagesInRange(i.key(), 
                     incomingWantSeqNo-1, ownWantSeqNo-1);
                 Q_EMIT(canHelpPeer(peer, toSend));
             }
+            else
+            {
+                // in consensus for current origin
+            }
         }   
         else
         {
             needHelp = true;
+            addNewOrigin(i.key());
         }
     }
 
@@ -169,7 +172,9 @@ void MessageStore::processIncomingStatus(Message status, Peer peer)
     for(i = ownWant.begin(); i != ownWant.end(); ++i)
     {
         if(!incomingWant.contains(i.key()))
+        {
             inOwnButNotIncoming.append(i.key());
+        }
     }
 
     if(!inOwnButNotIncoming.isEmpty())
@@ -186,8 +191,7 @@ void MessageStore::processIncomingStatus(Message status, Peer peer)
     {
         Q_EMIT(needHelpFromPeer(peer));
     }
-
-    if(!needHelp && inOwnButNotIncoming.isEmpty())
+    else if(inOwnButNotIncoming.isEmpty())
     {
         Q_EMIT(inConsensusWithPeer());
     }
@@ -213,3 +217,25 @@ QString MessageStore::toString()
 
     return qstr;
 }
+
+QMap<QString, quint32> MessageStore::getLatest()
+{
+    QMap<QString, quint32> latest;
+
+    QMap<QString, QList<Message> >::iterator i;
+    for(i = store->begin(); i != store->end(); ++i)
+    {
+        if(i.value().isEmpty())
+        {
+            latest.insert(i.key(), 0);
+        }
+        else
+        {
+            latest.insert(i.key(), i.value().back().getSeqNo());
+        }
+    }
+
+    return latest;
+}
+
+

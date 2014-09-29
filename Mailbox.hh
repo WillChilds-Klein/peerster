@@ -42,6 +42,7 @@ class Mailbox : public QObject
         void gotInConsensusWithPeer();
         void gotMonger(Message);
         void gotPotentialNewNeighbor(Peer);
+        void gotBroadcast(Message);
         void gotBroadcastRoute();
 
     private slots:
@@ -57,19 +58,25 @@ class Mailbox : public QObject
         void needHelpFromPeer(Peer);
         void updateTable(Message,Peer);
         void updateGUINeighbors(QList<Peer>);
+        void broadcast(Message);
+        void broadcastRoute();
+        void updateGUIOriginsList(QString);
 
     private:
         Peerster* peerster;
         QList<Peer>* neighbors;
         MessageStore* msgstore;
         DChatStore* dchatstore;
-        RoutingTable* table;
+        QHash< QString,QPair<Peer,bool> >* routingTable;
         QTimer *status_clock, *route_clock;
         QString ID;
         quint32 localSeqNo;
         quint32 port, myPortMin, myPortMax;
         Peer *self, *invalid;
         void processCommand(QString);
+        void processRumorRouteInfo(Message,Peer);
+        Peer nextHop(QString);
+        bool nextHopIsDirect(QString);
 };
 
 #endif // PEERSTER_MAILBOX_HH

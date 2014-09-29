@@ -10,7 +10,7 @@ QT += network
 QT += core
 
 # Input
-HEADERS += Message.hh Peer.hh MessageStore.hh DChatStore.hh RoutingTable.hh ChatDialog.hh NetSocket.hh  Mailbox.hh Peerster.hh  
-SOURCES += Message.cc Peer.cc MessageStore.cc DChatStore.cc RoutingTable.cc ChatDialog.cc NetSocket.cc  Mailbox.cc Peerster.cc main.cc
+HEADERS += Message.hh Peer.hh MessageStore.hh DChatStore.hh ChatDialog.hh NetSocket.hh  Mailbox.hh Peerster.hh  
+SOURCES += Message.cc Peer.cc MessageStore.cc DChatStore.cc ChatDialog.cc NetSocket.cc  Mailbox.cc Peerster.cc main.cc
 
 CONFIG-=app_bundle

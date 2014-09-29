@@ -4,7 +4,6 @@ Peerster::Peerster()
     : dialog(new ChatDialog(this))
     , socket(new NetSocket(this))
     , mailbox(new Mailbox(this))
-    , table(new RoutingTable(this))
     , msgstore(new MessageStore(this))
     , dchatstore(new DChatStore(this))
 {
@@ -27,6 +26,10 @@ Peerster::Peerster()
         mailbox, SLOT(gotNeedHelpFromPeer(Peer)));
     connect(msgstore, SIGNAL(inConsensusWithPeer()),
         mailbox, SLOT(gotInConsensusWithPeer()));
+    connect(msgstore, SIGNAL(updateGUIOriginsList(QString)),
+        dialog, SLOT(gotUpdateGUIOriginsList(QString)));
+    connect(mailbox, SIGNAL(updateGUIOriginsList(QString)),
+        dialog, SLOT(gotUpdateGUIOriginsList(QString)));
 
     // add peers manually
     connect(dialog, SIGNAL(potentialNewNeighbor(Peer)),
@@ -36,14 +39,7 @@ Peerster::Peerster()
     connect(mailbox, SIGNAL(updateGUINeighbors(QList<Peer>)),
         dialog, SLOT(gotUpdateGUINeighbors(QList<Peer>)));
 
-    // routing table stuff
-    connect(mailbox, SIGNAL(updateTable(Message,Peer)),
-        table, SLOT(gotUpdateTable(Message,Peer)));
-    connect(table, SIGNAL(updateGUIOriginsList(QString)),
-        dialog, SLOT(gotUpdateGUIOriginsList(QString)));
-    connect(table, SIGNAL(monger(Message)),
-        mailbox, SLOT(gotMonger(Message)));
-    connect(table, SIGNAL(broadcastRoute()),
+    connect(msgstore, SIGNAL(broadcastRoute()),
         mailbox, SLOT(gotBroadcastRoute()));
 
     // DChat stuff
@@ -70,11 +66,12 @@ Peerster::Peerster()
     QString title = "Peerster Instance " + ID + " on port " + QString::number(port);
     dialog->setWindowTitle(title);
 
+    dchatstore->setID(ID);
+
     mailbox->setPortInfo(myPortMin, myPortMax, port);
     mailbox->setID(ID);
     mailbox->setMessageStore(msgstore);
     mailbox->setDChatStore(dchatstore);
-    mailbox->setRoutingTable(table);
     mailbox->populateNeighbors();
 
     // noforward stuff
@@ -88,8 +85,6 @@ Peerster::Peerster()
         }
     }
     socket->setNoForward(noforward);
-
-    dchatstore->setID(ID);
 }
 
 Peerster::~Peerster()

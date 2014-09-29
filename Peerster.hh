@@ -32,6 +32,7 @@
 #include <QLabel>
 #include <QListWidget>
 #include <QListWidgetItem>
+#include <QPair>
 
 #include "ChatDialog.hh"
 #include "NetSocket.hh"
@@ -82,7 +83,6 @@ class Peerster : public QObject
         ChatDialog* dialog;
         NetSocket* socket;
         Mailbox* mailbox;
-        RoutingTable* table;
         MessageStore* msgstore;
         DChatStore* dchatstore;
         QList<quint32> neighbors;

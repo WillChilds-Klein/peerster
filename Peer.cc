@@ -66,7 +66,7 @@ QHostAddress Peer::getAddress()
         return addresses->first();
     }
 
-    // qDebug() << "Oh Noes! address list is empty for this Peer!";
+    qDebug() << "Oh Noes! address list is empty for this Peer!";
     return QHostAddress::LocalHost;
 }
 
