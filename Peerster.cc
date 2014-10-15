@@ -5,7 +5,6 @@ Peerster::Peerster()
     , socket(new NetSocket(this))
     , mailbox(new Mailbox(this))
     , msgstore(new MessageStore(this))
-    , dchatstore(new DChatStore(this))
 {
     // inbound message signal chain
     connect(socket, SIGNAL(postToInbox(Message,Peer)), 
@@ -43,10 +42,10 @@ Peerster::Peerster()
         mailbox, SLOT(gotBroadcastRoute()));
 
     // DChat stuff
-    connect(dchatstore, SIGNAL(updateGUIDChatHistory(QString,QList<Message>)),
+    connect(msgstore, SIGNAL(updateGUIDChatHistory(QString,QList<Message>)),
         dialog, SLOT(gotUpdateGUIDChatHistory(QString,QList<Message>)));
     connect(dialog, SIGNAL(getDChatHistoryFromOrigin(QString)),
-        dchatstore, SLOT(gotGetDChatHistoryFromOrigin(QString)));
+        msgstore, SLOT(gotGetDChatHistoryFromOrigin(QString)));
 
     qsrand(QTime(0,0,0).msecsTo(QTime::currentTime()));
     ID = QString::number((qrand() % ID_MAX) + 1);
@@ -66,12 +65,11 @@ Peerster::Peerster()
     QString title = "Peerster Instance " + ID + " on port " + QString::number(port);
     dialog->setWindowTitle(title);
 
-    dchatstore->setID(ID);
+    msgstore->setID(ID);
 
     mailbox->setPortInfo(myPortMin, myPortMax, port);
     mailbox->setID(ID);
     mailbox->setMessageStore(msgstore);
-    mailbox->setDChatStore(dchatstore);
     mailbox->populateNeighbors();
 
     // noforward stuff

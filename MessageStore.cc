@@ -3,6 +3,7 @@
 MessageStore::MessageStore(Peerster* p)
     : peerster(p)
     , store(new QMap< QString, QList<Message> >())
+    , histories(new QMap< QString, QList<Message> >())
 {}
 
 MessageStore::~MessageStore()
@@ -236,6 +237,48 @@ QMap<QString, quint32> MessageStore::getLatest()
     }
 
     return latest;
+}
+
+void MessageStore::newDChat(Message dmsg)
+{
+    QString origin = (dmsg.getOriginID() != ID) ? dmsg.getOriginID() 
+                                                : dmsg.getDest(); 
+    QList<Message> history;
+    if(histories->contains(origin))
+    {
+        history = histories->value(origin);
+    }
+    else
+    {
+        history = QList<Message>();
+    }
+
+    history.append(dmsg);  
+    histories->insert(origin, history); 
+
+    qDebug() << "HISTORY FOR " << origin << " LENGTH = " << history.size();
+
+    Q_EMIT(updateGUIDChatHistory(origin, history));
+}
+
+void MessageStore::gotGetDChatHistoryFromOrigin(QString origin)
+{
+    QList<Message> history;
+    if(histories->contains(origin))
+    {
+        history = histories->value(origin);
+    }
+    else
+    {
+        history = QList<Message>();
+    }
+
+    Q_EMIT(updateGUIDChatHistory(origin, history));
+}
+
+void MessageStore::setID(QString qstr)
+{
+    ID = qstr;
 }
 
 

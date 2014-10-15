@@ -38,7 +38,6 @@
 #include "NetSocket.hh"
 #include "Mailbox.hh"
 #include "MessageStore.hh"
-#include "DChatStore.hh"
 #include "RoutingTable.hh"
 #include "Message.hh"
 #include "Peer.hh"
@@ -84,7 +83,6 @@ class Peerster : public QObject
         NetSocket* socket;
         Mailbox* mailbox;
         MessageStore* msgstore;
-        DChatStore* dchatstore;
         QList<quint32> neighbors;
         bool noforward;
 };

@@ -22,6 +22,9 @@ class MessageStore : public QObject
         Message getStatus();
         void processIncomingStatus(Message,Peer);
         QString toString();
+        
+        void newDChat(Message);
+        void setID(QString);
 
     signals:
         void canHelpPeer(Peer,QList<Message>);
@@ -30,10 +33,19 @@ class MessageStore : public QObject
         void updateGUIOriginsList(QString);
         void broadcastRoute();
 
+        void updateGUIDChatHistory(QString,QList<Message>);
+
+    public slots:
+
+        void gotGetDChatHistoryFromOrigin(QString);
+
     private:
         Peerster* peerster;
         QMap< QString, QList<Message> >* store; 
         QMap<QString, quint32> getLatest();
+
+        QString ID;
+        QMap< QString, QList<Message> >* histories; 
 };
 
 #endif // PEERSTER_MESSAGESTORE_HH

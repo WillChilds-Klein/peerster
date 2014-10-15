@@ -40,11 +40,6 @@ void Mailbox::setMessageStore(MessageStore* m)
     msgstore = m;
 }
 
-void Mailbox::setDChatStore(DChatStore* d)
-{
-    dchatstore = d;
-}
-
 void Mailbox::setPortInfo(quint32 min, quint32 max, quint32 p)
 {
     myPortMin = min;
@@ -145,7 +140,7 @@ void Mailbox::gotPostToInbox(Message msg, Peer peer)
         // double check to make sure this logic is complete + robust
         if(msg.getDest() == ID)
         {
-            dchatstore->newDChat(msg);
+            msgstore->newDChat(msg);
         }
         else if(msg.getHopLimit() <= 0)
         {
@@ -182,7 +177,7 @@ void Mailbox::gotPostToOutbox(Message msg)
         Peer nextPeer = nextHop(msg.getDest());
         Q_EMIT(sendMessage(msg, nextPeer));
 
-        dchatstore->newDChat(msg);
+        msgstore->newDChat(msg);
     }
 }
 
