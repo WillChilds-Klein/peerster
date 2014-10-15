@@ -291,7 +291,7 @@ void MessageStore::gotProcessIncomingStatus(Message msg, Peer peer)
             {   // prepare list
                 toSend = getMessagesInRange(i.key(), 
                     incomingWantSeqNo-1, ownWantSeqNo-1);
-                Q_EMIT(canHelpPeer(peer, toSend));
+                Q_EMIT(helpPeer(peer, toSend));
             }
             else
             {
@@ -320,7 +320,7 @@ void MessageStore::gotProcessIncomingStatus(Message msg, Peer peer)
         for(k = inOwnButNotIncoming.begin(); k != inOwnButNotIncoming.end(); ++k)
         {
             toSend = getMessagesInRange(*k, 1, getLatest().value(*k));
-            Q_EMIT(canHelpPeer(peer, toSend));
+            Q_EMIT(helpPeer(peer, toSend));
         }
     }
 

@@ -10,8 +10,6 @@ Peerster::Peerster()
     // inbound message signal chain
     connect(socket, SIGNAL(postToInbox(Message,Peer)), 
         mailbox, SLOT(gotPostToInbox(Message,Peer)));
-    connect(mailbox, SIGNAL(displayMessage(Message)), 
-        gui, SLOT(gotDisplayMessage(Message)));
 
     // outbound message signal chain
     connect(gui, SIGNAL(postToOutbox(Message)), 
@@ -20,54 +18,45 @@ Peerster::Peerster()
         socket, SLOT(gotSendMessage(Message,Peer)));
 
     // message processing logic
-    connect(messagestore, SIGNAL(canHelpPeer(Peer,QList<Message>)),
-        mailbox, SLOT(gotCanHelpPeer(Peer,QList<Message>)));
+    connect(messagestore, SIGNAL(helpPeer(Peer,QList<Message>)),
+        mailbox, SLOT(gotHelpPeer(Peer,QList<Message>)));
     connect(messagestore, SIGNAL(needHelpFromPeer(Peer)),
         mailbox, SLOT(gotNeedHelpFromPeer(Peer)));
     connect(messagestore, SIGNAL(inConsensusWithPeer()),
         mailbox, SLOT(gotInConsensusWithPeer()));
-    connect(messagestore, SIGNAL(updateGUIOriginsList(QString)),
-        gui, SLOT(gotUpdateGUIOriginsList(QString)));
-    connect(mailbox, SIGNAL(updateGUIOriginsList(QString)),
-        gui, SLOT(gotUpdateGUIOriginsList(QString)));
 
-    // add peers manually
-    connect(gui, SIGNAL(potentialNewNeighbor(Peer)),
-        mailbox, SLOT(gotPotentialNewNeighbor(Peer)));
-    connect(gui, SIGNAL(sendStatusToPeer(Peer)),
-        mailbox, SLOT(gotSendStatusToPeer(Peer)));
-    connect(mailbox, SIGNAL(updateGUINeighbors(QList<Peer>)),
-        gui, SLOT(gotUpdateGUINeighbors(QList<Peer>)));
-
-    connect(messagestore, SIGNAL(broadcastRoute()),
-        mailbox, SLOT(gotBroadcastRoute()));
-    connect(table, SIGNAL(broadcast(Message)),
-        this, SLOT(gotBroadcast(Message)));
-    connect(table, SIGNAL(broadcastRoute()),
-        this, SLOT(gotBroadcastRoute()));
-
-    // DChat stuff
-    connect(messagestore, SIGNAL(updateGUIDChatHistory(QString,QList<Message>)),
-        gui, SLOT(gotUpdateGUIDChatHistory(QString,QList<Message>)));
-    connect(gui, SIGNAL(getDChatHistoryFromOrigin(QString)),
-        messagestore, SLOT(gotGetDChatHistoryFromOrigin(QString)));
-
-    ///\\\
-    connect(messagestore, SIGNAL(processRumorRoute(Message)),
-        table, SLOT(gotProcessRumorRoute(Message)));
+    // GUI
     connect(messagestore, SIGNAL(refreshGroupConvo()),
         gui, SLOT(gotRefreshGroupConvo()));
-    connect(messagestore, SIGNAL(sendDirect(Message)),
-        table, SLOT(gotSendDirect(Message)));
-    connect(messagestore, SIGNAL(updateStatus(Message)),
-        mailbox, SLOT(gotUpdateStatus(Message)));
+    connect(messagestore, SIGNAL(refreshDirectConvo(QString)),
+        gui, SLOT(gotRefreshDirectConvo(QString)));
+    connect(messagestore, SIGNAL(refreshOrigins(QString)),
+        gui, SLOT(gotRefreshOrigins(QString)));
+    connect(mailbox, SIGNAL(refreshNeighbors(QList<Peer>)),
+        gui, SLOT(gotRefreshNeighbors(QList<Peer>)));
 
-    connect(messagestore, SIGNAL(monger(Message)),
-        mailbox, SLOT(gotMonger(Message)));
+    // adding neighbors
+    connect(gui, SIGNAL(processNeighbor(Peer)),
+        mailbox, SLOT(processNeighbor(Peer)));
+
+    // mongering & broadcasting
+    connect(mailbox, SIGNAL(broadcastRoute()),
+        messagestore, SLOT(gotBroadcastRoute()));
     connect(messagestore, SIGNAL(broadcast(Message)),
         mailbox, SLOT(gotBroadcast(Message)));
-    connect(messagestore, SIGNAL(needHelpFromPeer(Peer)),
-        mailbox, SLOT(gotNeedHelpFromPeer(Peer)));
+    connect(messagestore, SIGNAL(monger(Message)),
+        mailbox, SLOT(gotMonger(Message)));
+
+    ///\\\ new
+    connect(messagestore, SIGNAL(sendDirect(Message)),
+        table, SLOT(gotSendDirect(Message)));
+    // connect(messagestore, SIGNAL(sendMessage(Message,Peer)),
+    //     socket, SLOT(gotSendMessage(Message,Peer)));
+    connect(messagestore, SIGNAL(processRumorRoute(Message)),
+        table, SLOT(gotProcessRumorRoute(Message)));
+
+    connect(messagestore, SIGNAL(updateStatus(Message)),
+        mailbox, SLOT(gotUpdateStatus(Message)));
     ///\\\
 
     qsrand(QTime(0,0,0).msecsTo(QTime::currentTime()));

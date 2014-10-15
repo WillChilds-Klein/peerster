@@ -32,15 +32,13 @@ class Mailbox : public QObject
     public slots:
         void gotPostToOutbox(Message);
         void gotPostToInbox(Message,Peer);
-        void gotCanHelpPeer(Peer,QList<Message>);
+        void gotProcessNeighbor(Peer);
+        void gotHelpPeer(Peer,QList<Message>);
         void gotNeedHelpFromPeer(Peer);
         void gotInConsensusWithPeer();
-        void gotMonger(Message);
-        void gotPotentialNewNeighbor(Peer);
-        void gotBroadcast(Message);
-
-        // to implement
         void gotUpdateStatus(Message);
+        void gotMonger(Message);
+        void gotBroadcast(Message);
 
     private slots:
         void status_chime();
@@ -48,20 +46,12 @@ class Mailbox : public QObject
         void gotSendStatusToPeer(Peer);
 
     signals:
-        void refreshGroupConvo(Message);
-        void sendMessage(Message,Peer);
         void postToInbox(Message,Peer);
+        void sendMessage(Message,Peer);
+        void refreshNeighbors(QList<Peer>);
         void monger(Message);
-        void needHelpFromPeer(Peer);
-        void updateTable(Message,Peer);
-        void updateGUINeighbors(QList<Peer>);
         void broadcast(Message);
         void broadcastRoute();
-        void updateGUIOriginsList(QString);
-
-        // signals to use, still need to implement slots
-        void processRumorRoute(Message);
-        void refreshNeighbors(QStringList);
 
     private:
         Peerster* peerster;

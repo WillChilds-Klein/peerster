@@ -107,7 +107,20 @@ void Mailbox::gotPostToOutbox(Message msg)
     }
 }
 
-void Mailbox::gotCanHelpPeer(Peer peer, QList<Message> list)
+void Mailbox::gotProcessNeighbor(Peer peer)
+{
+    if(peer.isWellFormed() && !neighbors->contains(peer) && 
+       peer != *invalid && peer != *self)
+    {
+        neighbors->append(peer);
+        Q_EMIT(refreshNeighbors(*neighbors));
+        Q_EMIT(sendMessage(status, peer));
+        // Q_EMIT(sendMessage(status, rumorRoute())) // <--?
+        Q_EMIT(broadcastRoute());
+    }
+}
+
+void Mailbox::gotHelpPeer(Peer peer, QList<Message> list)
 {
     QList<Message>::iterator i;
     for(i = list.begin(); i != list.end(); ++i)
@@ -136,6 +149,11 @@ void Mailbox::gotInConsensusWithPeer()
     qDebug() << "IN CONSENSUS WITH PEER ";
 }
 
+void Mailbox::gotUpdateStatus(Message msg)
+{
+    status = msg;
+}
+
 void Mailbox::gotMonger(Message msg)
 {
     if(!neighbors->isEmpty())
@@ -156,22 +174,6 @@ void Mailbox::gotBroadcast(Message msg)
     }
 }
 
-void Mailbox::gotPotentialNewNeighbor(Peer peer)
-{
-    if(peer.isWellFormed() && !neighbors->contains(peer) && 
-       peer != *invalid && peer != *self)
-    {
-        neighbors->append(peer);
-        Q_EMIT(updateGUINeighbors(*neighbors));
-        gotBroadcastRoute();
-    }
-}
-
-void Mailbox::gotUpdateStatus(Message msg)
-{
-    status = msg;
-}
-
 void Mailbox::status_chime()
 {
     Q_EMIT(monger(status));
@@ -183,10 +185,10 @@ void Mailbox::route_chime()
     qDebug() << "PERIODIC ROUTE BROADCAST: " << routeRumor().toString();
 }
 
-void Mailbox::gotSendStatusToPeer(Peer peer)
-{
-    Q_EMIT(sendMessage(status, peer));
-}
+// void Mailbox::gotSendStatusToPeer(Peer peer)
+// {
+//     Q_EMIT(sendMessage(status, peer));
+// }
 
 void Mailbox::processCommand(QString cmd)
 {

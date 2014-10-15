@@ -27,7 +27,7 @@ class Socket : public QUdpSocket
 
     signals:
         void postToInbox(Message,Peer);
-        void potentialNewNeighbor(Peer);
+        void processNeighbor(Peer);
 
     private:
         Peerster* peerster;

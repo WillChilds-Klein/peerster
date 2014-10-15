@@ -28,19 +28,20 @@ class MessageStore : public QObject
         void setID(QString);
 
     signals:
-        void canHelpPeer(Peer,QList<Message>);
+        void helpPeer(Peer,QList<Message>);
         void needHelpFromPeer(Peer);
         void inConsensusWithPeer();
-        void updateGUIOriginsList(QString);
-        void broadcastRoute();
 
-        void updateGUIDChatHistory(QString,QList<Message>);
+        void processRumorRoute(Message);
 
-        // signals to use, still need to implement slots
+        void broadcast(Message);
+        void monger(Message);
+
         void refreshOrigins(QStringList);
-        // void refreshSharedFiles(QStringList);
         void refreshDirectConvo(QString);
         void refreshGroupConvo();
+        // void refreshSharedFiles(QStringList);
+
         void updateStatus(Message);
 
     public slots:
@@ -48,6 +49,7 @@ class MessageStore : public QObject
         void gotProcessRumor(Message);
         void gotProcessDirectChat(Message);
         void gotProcessIncomingStatus(Message);
+        void gotBroadcastRoute();
 
     private:
         Peerster* peerster;

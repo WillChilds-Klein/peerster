@@ -17,13 +17,14 @@ GUI::GUI(Peerster* p)
     , originslist(new QListWidget(this))
 {
     connect(chatentry, SIGNAL(returnPressed()), 
-        this, SLOT(gotReturnPressed()));
+        this, SLOT(gotGroupChatEntered()));
     connect(peerentry, SIGNAL(returnPressed()),
-        this, SLOT(gotNewPeerEntered()));
+        this, SLOT(gotNeighborEntered()));
     connect(addbtn, SIGNAL(clicked()),
-        this, SLOT(gotNewPeerEntered()));
+        this, SLOT(gotNeighborEntered()));
     connect(dchatentry, SIGNAL(returnPressed()),
-        this, SLOT(gotNewDChatMsgEntered()));
+        this, SLOT(gotDirectMessageEntered()));
+
     connect(originslist, SIGNAL(itemClicked(QListWidgetItem*)),
         this, SLOT(originSelected(QListWidgetItem*)));
     
@@ -54,7 +55,7 @@ void GUI::setDirectStore(QMap< QString,QList<Message> >* ds)
     directStore = ds;
 }
 
-void GUI::gotReturnPressed()
+void GUI::gotGroupChatEntered()
 {
     // create Message
     Message msg;
@@ -66,31 +67,6 @@ void GUI::gotReturnPressed()
 
     // Clear the chatentry to get ready for the next input message.
     chatentry->clear();
-}
-
-void GUI::gotRefreshGroupConvo()
-{
-    foreach(Message msg, groupConvo)
-    {
-        chatview->append(msg.getOriginID() + 
-            "<" + QString::number(msg.getSeqNo()) + ">: " + msg.getText());
-    }
-}
-
-void GUI::gotNewPeerEntered()
-{
-    Peer peer = Peer(QString(peerentry->toPlainText()));
-
-    Q_EMIT(potentialNewNeighbor(peer));
-    Q_EMIT(sendStatusToPeer(peer));
-
-    peerentry->clear();
-}
-
-void GUI::gotRefreshOrigins(QString newOrigin)
-{   // change to full-list updates.
-    qDebug() << "ADD NEW ORIGIN TO GUI LIST:" << newOrigin;
-    new QListWidgetItem(newOrigin, originslist);
 }
 
 void GUI::gotDirectChatEntered()
@@ -105,6 +81,24 @@ void GUI::gotDirectChatEntered()
     Q_EMIT(postToOutbox(dmsg));    
 
     dchatentry->clear();
+}
+
+void GUI::gotNeighborEntered()
+{
+    Peer peer = Peer(QString(peerentry->toPlainText()));
+
+    Q_EMIT(processNeighbor(peer));
+
+    peerentry->clear();
+}
+
+void GUI::gotRefreshGroupConvo()
+{
+    foreach(Message msg, groupConvo)
+    {
+        chatview->append(msg.getOriginID() + 
+            "<" + QString::number(msg.getSeqNo()) + ">: " + msg.getText());
+    }
 }
 
 void GUI::gotRefreshDirectConvo(QString origin)
@@ -127,10 +121,9 @@ void GUI::gotRefreshDirectConvo(QString origin)
     
     QList<Message> convo = directStore->value(origin);
 
-    QList<Message>::iterator i;
-    for(i = history.begin(); i != history.end(); ++i)
+    foreach(Message msg, convo)
     {
-        dchatview->append(i->getOriginID() + ": " + i->getText());
+        dchatview->append(msg.getOriginID() + ": " + msg.getText());
     }
 
     dchatentry->setReadOnly(false);
@@ -138,14 +131,19 @@ void GUI::gotRefreshDirectConvo(QString origin)
 }
 
 void GUI::gotRefreshNeighbors(QList<Peer> neighbors)
-{
+{ // TODO: change input to QStringList
     peerview->clear();
 
-    QList<Peer>::iterator i;
-    for(i = neighbors.begin(); i != neighbors.end(); ++i)
+    foreach(Peer neighbor, neighbors)
     {
-        peerview->append(i->toString());
+        peerview->append(neighbor.toString());
     }
+}
+
+void GUI::gotRefreshOrigins(QString newOrigin)
+{   // TODO: change to full-list updates.
+    qDebug() << "ADD NEW ORIGIN TO GUI LIST:" << newOrigin;
+    new QListWidgetItem(newOrigin, originslist);
 }
 
 void GUI::originSelected(QListWidgetItem* item)

@@ -26,27 +26,21 @@ class GUI : public QDialog
         void setDirectStore(QMap<QString,QList<Message> >*);
 
     public slots:
-        void gotReturnPressed();
-        void gotNewPeerEntered();
-        void gotUpdateGUIOriginsList(QString);
-
+        void gotGroupChatEntered();
         void gotDirectChatEntered();
-        void gotRefresheighbors(QList<Peer>);
-        void gotRefreshGroupConvo();
-        void gotRefrshOrigins(QString);
+        void gotNeighborEntered();
 
-        // to implement.
+        void gotRefreshGroupConvo();
         void gotRefreshDirectConvo(QString);
-        void gotRefreshNeighbors(QStringList);
+        void gotRefreshNeighbors(QList<Peer>);
+        void gotRefreshOrigins(QString);
 
     private slots:
         void originSelected(QListWidgetItem*);
 
     signals:
         void postToOutbox(Message);
-        void potentialNewNeighbor(Peer);
-        void sendStatusToPeer(Peer);
-        void getDChatHistoryFromOrigin(QString qstr);
+        void processNeighbor(Peer);
 
     private:
         Peerster* peerster;
