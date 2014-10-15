@@ -3,10 +3,8 @@
 Mailbox::Mailbox(Peerster* p)
     : peerster(p)
     , neighbors(new QList<Peer>)
-    , routingTable(new QHash< QString,QPair<Peer,bool> >)
     , status_clock(new QTimer(this))
     , route_clock(new QTimer(this))
-    , localSeqNo(1)
     , invalid(new Peer("0.0.0.0:0"))
 {
     // parts incoming/outgoing message pipeline
@@ -14,8 +12,8 @@ Mailbox::Mailbox(Peerster* p)
         this, SLOT(gotPostToInbox(Message,Peer)));
     connect(this, SIGNAL(monger(Message)),
         this, SLOT(gotMonger(Message)));
-    connect(this, SIGNAL(needHelpFromPeer(Peer)),
-        this, SLOT(gotNeedHelpFromPeer(Peer)));
+    connect(this, SIGNAL(broadcast(Message)),
+        this, SLOT(gotBroadcast(Message)));
 
     // periodic mongering
     connect(status_clock, SIGNAL(timeout()), 
@@ -23,10 +21,6 @@ Mailbox::Mailbox(Peerster* p)
     connect(route_clock, SIGNAL(timeout()),
         this, SLOT(route_chime()));
 
-    connect(this, SIGNAL(broadcast(Message)),
-        this, SLOT(gotBroadcast(Message)));
-    connect(this, SIGNAL(broadcastRoute()),
-        this, SLOT(gotBroadcastRoute()));
 
     status_clock->start(STATUS_CLOCK_RATE);
     route_clock->start(ROUTE_CLOCK_RATE);
@@ -34,11 +28,6 @@ Mailbox::Mailbox(Peerster* p)
 
 Mailbox::~Mailbox()
 {}
-
-void Mailbox::setMessageStore(MessageStore* m)
-{
-    msgstore = m;
-}
 
 void Mailbox::setPortInfo(quint32 min, quint32 max, quint32 p)
 {
@@ -51,17 +40,6 @@ void Mailbox::setPortInfo(quint32 min, quint32 max, quint32 p)
 void Mailbox::setID(QString str)
 {
     ID = str;
-}
-
-Message Mailbox::routeRumor()
-{
-    Message route = Message();
-    route.setType(TYPE_RUMOR_ROUTE);
-    route.setOriginID(ID);
-    route.setSeqNo(localSeqNo);
-    // localSeqNo++;
-
-    return route;
 }
 
 void Mailbox::populateNeighbors()
@@ -98,64 +76,15 @@ void Mailbox::gotPostToInbox(Message msg, Peer peer)
 
     if(msg.getType() == TYPE_RUMOR_CHAT || msg.getType() == TYPE_RUMOR_ROUTE)
     {
-        processRumorRouteInfo(msg, peer);
-
-        if(msgOrigin != ID && peer != *self && peer != *invalid)
-        {
-            // handle potential new neighbors
-            if(!msg.isDirectRumor())
-            {
-                Peer neighbor = Peer(msg.getLastIP(), msg.getLastPort());
-                Q_EMIT(gotPotentialNewNeighbor(neighbor));
-            }
-
-            msg.setLastIP(peer.getAddress().toIPv4Address());
-            msg.setLastPort(peer.getPort());
-        }
-        
-        if(msgstore->isNewRumor(msg))
-        {
-            if(msgstore->isNextRumorInSeq(msg))
-            {
-                Q_EMIT(monger(msg)); // <-- this causes a lot of network overhead.
-                if(msg.getType() == TYPE_RUMOR_CHAT)
-                {
-                    msgstore->addNewChatRumor(msg);
-                    Q_EMIT(displayMessage(msg));
-                }
-            }
-            else
-            {
-                Q_EMIT(needHelpFromPeer(peer));
-            }
-        }
-        else
-        {
-            qDebug() << "GOT OLD RUMOR:" << msg.toString();
-            // do nothing
-        }
+        Q_EMIT(processRumor(msg, peer));
     }
     else if(msg.getType() == TYPE_DIRECT_CHAT)
     {
-        // double check to make sure this logic is complete + robust
-        if(msg.getDest() == ID)
-        {
-            msgstore->newDChat(msg);
-        }
-        else if(msg.getHopLimit() <= 0)
-        {
-            // drop
-        }
-        else if(!msgstore->isNewOrigin(msgOrigin)) // relay via routing table lookup
-        {
-            Peer forwardPeer = routingTable->value(msgOrigin).first;
-            msg.setHopLimit(msg.getHopLimit() - 1); // decrement HopLimit
-            Q_EMIT(sendMessage(msg, forwardPeer));
-        }
+        Q_EMIT(processDirectChat(msg));
     }
     else if(msg.getType() == TYPE_STATUS)
     {
-        msgstore->processIncomingStatus(msg, peer);
+        Q_EMITE(processIncomingStatus(msg, peer));
     }
 
     processCommand(msg.getText());
@@ -174,10 +103,7 @@ void Mailbox::gotPostToOutbox(Message msg)
     }
     else if(msg.getType() == TYPE_DIRECT_CHAT)
     {
-        Peer nextPeer = nextHop(msg.getDest());
-        Q_EMIT(sendMessage(msg, nextPeer));
-
-        msgstore->newDChat(msg);
+        Q_EMIT(processDirectChat(msg));
     }
 }
 
@@ -195,7 +121,6 @@ void Mailbox::gotCanHelpPeer(Peer peer, QList<Message> list)
 
 void Mailbox::gotNeedHelpFromPeer(Peer peer)
 {
-    Message status = msgstore->getStatus();
     Q_EMIT(sendMessage(status, peer));
 
     qDebug() << "NEED HELP FROM PEER " << peer.toString();
@@ -205,7 +130,7 @@ void Mailbox::gotInConsensusWithPeer()
 {
     if(qrand() % 2 == 0)
     {
-        Q_EMIT(monger(msgstore->getStatus()));
+        Q_EMIT(monger(status));
     }
 
     qDebug() << "IN CONSENSUS WITH PEER ";
@@ -242,15 +167,13 @@ void Mailbox::gotPotentialNewNeighbor(Peer peer)
     }
 }
 
-void Mailbox::gotBroadcastRoute()
+void Mailbox::gotUpdateStatus(Message msg)
 {
-    Message route = routeRumor();
-    Q_EMIT(broadcast(route));
+    status = msg;
 }
 
 void Mailbox::status_chime()
 {
-    Message status = msgstore->getStatus();
     Q_EMIT(monger(status));
 }
 
@@ -262,21 +185,20 @@ void Mailbox::route_chime()
 
 void Mailbox::gotSendStatusToPeer(Peer peer)
 {
-    Message status = msgstore->getStatus();
     Q_EMIT(sendMessage(status, peer));
 }
 
 void Mailbox::processCommand(QString cmd)
 {
-    if(cmd == CMD_PRINT_MSGSTORE)
+    /*if(cmd == CMD_PRINT_MSGSTORE)
     {
         qDebug() << "\nMESSAGE STORE:";
         qDebug() << msgstore->toString();
     }
-    else if(cmd == CMD_PRINT_STATUS)
+    else*/ if(cmd == CMD_PRINT_STATUS)
     {
         qDebug() << "\nOWN STATUS:";
-        qDebug() << msgstore->getStatus().toString();
+        qDebug() << status.toString();
     }
     else if(cmd == CMD_PRINT_NEIGHBORS)
     {
@@ -286,73 +208,16 @@ void Mailbox::processCommand(QString cmd)
             qDebug() << "   " << peer.toString();
         }
     }
-    else if(cmd == CMD_PRINT_TABLE)
-    {
-        qDebug() << "\nROUTING TABLE:";
-        foreach(QString qstr, routingTable->keys())
-        {
-            qDebug() << "   <ORIGIN: " << qstr <<  
-                            ", PEER: " << nextHop(qstr).toString() << 
-                            ", DIRECT: " << nextHopIsDirect(qstr) << ">";
-        }
-    }
-}
-
-void Mailbox::processRumorRouteInfo(Message msg, Peer peer)
-{
-    QString msgOrigin = msg.getOriginID();
-    QPair<Peer,bool> tableEntry;
-
-    tableEntry.first = peer;
-
-    if(msgOrigin == ID)
-    {
-        return;
-    }
-    else if(msg.isDirectRumor())
-    {
-        tableEntry.second = true;
-        routingTable->insert(msgOrigin, tableEntry);
-        if(msgstore->isNewOrigin(msgOrigin))
-        {
-            Q_EMIT(updateGUIOriginsList(msgOrigin));
-            Q_EMIT(broadcastRoute());
-        }
-    }
-    else if(msgstore->isNewOrigin(msgOrigin))
-    {
-        tableEntry.second = false;
-        routingTable->insert(msgOrigin, tableEntry);
-        Q_EMIT(updateGUIOriginsList(msgOrigin));
-        Q_EMIT(broadcastRoute());
-
-    }
-    else if(msgstore->isNewRumor(msg) && !nextHopIsDirect(msgOrigin))
-    {
-        tableEntry.second = false;
-        routingTable->insert(msgOrigin, tableEntry);
-    }
-}
-
-Peer Mailbox::nextHop(QString origin)
-{
-    if(routingTable->keys().contains(origin))
-    {
-        return routingTable->value(origin).first;
-    }
-    else
-    {
-        return *invalid;
-    }
-}
-
-bool Mailbox::nextHopIsDirect(QString origin)
-{
-    if(msgstore->isNewOrigin(origin))
-    {
-        return false;
-    }
-    return routingTable->value(origin).second == true;
+    // else if(cmd == CMD_PRINT_TABLE)
+    // {
+    //     qDebug() << "\nROUTING TABLE:";
+    //     foreach(QString qstr, routingTable->keys())
+    //     {
+    //         qDebug() << "   <ORIGIN: " << qstr <<  
+    //                         ", PEER: " << nextHop(qstr).toString() << 
+    //                         ", DIRECT: " << nextHopIsDirect(qstr) << ">";
+    //     }
+    // }
 }
 
 

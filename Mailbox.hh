@@ -13,7 +13,6 @@
 
 class Peerster;
 class MessageStore;
-class DChatStore;
 class RoutingTable;
 class Message;
 class Peer;
@@ -25,11 +24,8 @@ class Mailbox : public QObject
     public:
         Mailbox(Peerster*);
         ~Mailbox();
-        void setMessageStore(MessageStore*);
-        void setRoutingTable(RoutingTable*);
         void setPortInfo(quint32,quint32,quint32);
         void setID(QString);
-        Message routeRumor();
         void populateNeighbors();
         Peer pickRandomPeer();
 
@@ -42,7 +38,9 @@ class Mailbox : public QObject
         void gotMonger(Message);
         void gotPotentialNewNeighbor(Peer);
         void gotBroadcast(Message);
-        void gotBroadcastRoute();
+
+        // to implement
+        void gotUpdateStatus(Message);
 
     private slots:
         void status_chime();
@@ -50,7 +48,7 @@ class Mailbox : public QObject
         void gotSendStatusToPeer(Peer);
 
     signals:
-        void displayMessage(Message);
+        void refreshGroupConvo(Message);
         void sendMessage(Message,Peer);
         void postToInbox(Message,Peer);
         void monger(Message);
@@ -61,21 +59,19 @@ class Mailbox : public QObject
         void broadcastRoute();
         void updateGUIOriginsList(QString);
 
+        // signals to use, still need to implement slots
+        void processRumorRoute(Message);
+        void refreshNeighbors(QStringList);
+
     private:
         Peerster* peerster;
         QList<Peer>* neighbors;
-        MessageStore* msgstore;
-        DChatStore* dchatstore;
-        QHash< QString,QPair<Peer,bool> >* routingTable;
         QTimer *status_clock, *route_clock;
         QString ID;
-        quint32 localSeqNo;
         quint32 port, myPortMin, myPortMax;
         Peer *self, *invalid;
+        Message status;
         void processCommand(QString);
-        void processRumorRouteInfo(Message,Peer);
-        Peer nextHop(QString);
-        bool nextHopIsDirect(QString);
 };
 
 #endif // PEERSTER_MAILBOX_HH

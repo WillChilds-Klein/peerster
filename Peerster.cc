@@ -3,6 +3,7 @@
 Peerster::Peerster()
     : gui(new GUI(this))
     , socket(new Socket(this))
+    , table(new RoutingTable(this))
     , mailbox(new Mailbox(this))
     , messagestore(new MessageStore(this))
 {
@@ -40,12 +41,34 @@ Peerster::Peerster()
 
     connect(messagestore, SIGNAL(broadcastRoute()),
         mailbox, SLOT(gotBroadcastRoute()));
+    connect(table, SIGNAL(broadcast(Message)),
+        this, SLOT(gotBroadcast(Message)));
+    connect(table, SIGNAL(broadcastRoute()),
+        this, SLOT(gotBroadcastRoute()));
 
     // DChat stuff
     connect(messagestore, SIGNAL(updateGUIDChatHistory(QString,QList<Message>)),
         gui, SLOT(gotUpdateGUIDChatHistory(QString,QList<Message>)));
     connect(gui, SIGNAL(getDChatHistoryFromOrigin(QString)),
         messagestore, SLOT(gotGetDChatHistoryFromOrigin(QString)));
+
+    ///\\\
+    connect(messagestore, SIGNAL(processRumorRoute(Message)),
+        table, SLOT(gotProcessRumorRoute(Message)));
+    connect(messagestore, SIGNAL(refreshGroupConvo()),
+        gui, SLOT(gotRefreshGroupConvo()));
+    connect(messagestore, SIGNAL(sendDirect(Message)),
+        table, SLOT(gotSendDirect(Message)));
+    connect(messagestore, SIGNAL(updateStatus(Message)),
+        mailbox, SLOT(gotUpdateStatus(Message)));
+
+    connect(messagestore, SIGNAL(monger(Message)),
+        mailbox, SLOT(gotMonger(Message)));
+    connect(messagestore, SIGNAL(broadcast(Message)),
+        mailbox, SLOT(gotBroadcast(Message)));
+    connect(messagestore, SIGNAL(needHelpFromPeer(Peer)),
+        mailbox, SLOT(gotNeedHelpFromPeer(Peer)));
+    ///\\\
 
     qsrand(QTime(0,0,0).msecsTo(QTime::currentTime()));
     ID = QString::number((qrand() % ID_MAX) + 1);
@@ -62,14 +85,23 @@ Peerster::Peerster()
         exit(1);
     }
 
+    QMap< QString, QList<Message> >* directStore = 
+        new QMap< QString, QList<Message> >();
+    QList<Message>* groupConvo = new QList<Message>();
+
     QString title = "Peerster Instance " + ID + " on port " + QString::number(port);
     gui->setWindowTitle(title);
+    gui->setGroupConvo(groupConvo);
+    gui->setDirectStore(directStore);
 
     messagestore->setID(ID);
+    messagestore->setGroupConvo(groupConvo);
+    messagestore->setDirectStore(directStore);
+
+    table->setMessageStore(messagestore);
 
     mailbox->setPortInfo(myPortMin, myPortMax, port);
     mailbox->setID(ID);
-    mailbox->setMessageStore(messagestore);
     mailbox->populateNeighbors();
 
     // noforward stuff
