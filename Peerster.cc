@@ -1,7 +1,7 @@
 #include "Peerster.hh"
 
 Peerster::Peerster()
-    : dialog(new ChatDialog(this))
+    : gui(new GUI(this))
     , socket(new NetSocket(this))
     , mailbox(new Mailbox(this))
     , msgstore(new MessageStore(this))
@@ -10,10 +10,10 @@ Peerster::Peerster()
     connect(socket, SIGNAL(postToInbox(Message,Peer)), 
         mailbox, SLOT(gotPostToInbox(Message,Peer)));
     connect(mailbox, SIGNAL(displayMessage(Message)), 
-        dialog, SLOT(gotDisplayMessage(Message)));
+        gui, SLOT(gotDisplayMessage(Message)));
 
     // outbound message signal chain
-    connect(dialog, SIGNAL(postToOutbox(Message)), 
+    connect(gui, SIGNAL(postToOutbox(Message)), 
         mailbox, SLOT(gotPostToOutbox(Message)));
     connect(mailbox, SIGNAL(sendMessage(Message,Peer)), 
         socket, SLOT(gotSendMessage(Message,Peer)));
@@ -26,25 +26,25 @@ Peerster::Peerster()
     connect(msgstore, SIGNAL(inConsensusWithPeer()),
         mailbox, SLOT(gotInConsensusWithPeer()));
     connect(msgstore, SIGNAL(updateGUIOriginsList(QString)),
-        dialog, SLOT(gotUpdateGUIOriginsList(QString)));
+        gui, SLOT(gotUpdateGUIOriginsList(QString)));
     connect(mailbox, SIGNAL(updateGUIOriginsList(QString)),
-        dialog, SLOT(gotUpdateGUIOriginsList(QString)));
+        gui, SLOT(gotUpdateGUIOriginsList(QString)));
 
     // add peers manually
-    connect(dialog, SIGNAL(potentialNewNeighbor(Peer)),
+    connect(gui, SIGNAL(potentialNewNeighbor(Peer)),
         mailbox, SLOT(gotPotentialNewNeighbor(Peer)));
-    connect(dialog, SIGNAL(sendStatusToPeer(Peer)),
+    connect(gui, SIGNAL(sendStatusToPeer(Peer)),
         mailbox, SLOT(gotSendStatusToPeer(Peer)));
     connect(mailbox, SIGNAL(updateGUINeighbors(QList<Peer>)),
-        dialog, SLOT(gotUpdateGUINeighbors(QList<Peer>)));
+        gui, SLOT(gotUpdateGUINeighbors(QList<Peer>)));
 
     connect(msgstore, SIGNAL(broadcastRoute()),
         mailbox, SLOT(gotBroadcastRoute()));
 
     // DChat stuff
     connect(msgstore, SIGNAL(updateGUIDChatHistory(QString,QList<Message>)),
-        dialog, SLOT(gotUpdateGUIDChatHistory(QString,QList<Message>)));
-    connect(dialog, SIGNAL(getDChatHistoryFromOrigin(QString)),
+        gui, SLOT(gotUpdateGUIDChatHistory(QString,QList<Message>)));
+    connect(gui, SIGNAL(getDChatHistoryFromOrigin(QString)),
         msgstore, SLOT(gotGetDChatHistoryFromOrigin(QString)));
 
     qsrand(QTime(0,0,0).msecsTo(QTime::currentTime()));
@@ -63,7 +63,7 @@ Peerster::Peerster()
     }
 
     QString title = "Peerster Instance " + ID + " on port " + QString::number(port);
-    dialog->setWindowTitle(title);
+    gui->setWindowTitle(title);
 
     msgstore->setID(ID);
 
@@ -90,7 +90,7 @@ Peerster::~Peerster()
 
 void Peerster::run()
 {   
-    // Create an initial chat dialog window
-    dialog->show();
+    // Create an initial chat gui window
+    gui->show();
 }
 

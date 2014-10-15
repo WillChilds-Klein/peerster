@@ -34,7 +34,7 @@
 #include <QListWidgetItem>
 #include <QPair>
 
-#include "ChatDialog.hh"
+#include "GUI.hh"
 #include "NetSocket.hh"
 #include "Mailbox.hh"
 #include "MessageStore.hh"
@@ -62,7 +62,7 @@
 #define TYPE_NONE ("None")
 #define SWITCH_NOFORWARD ("-noforward")
 
-class ChatDialog;
+class GUI;
 class NetSocket;
 class Mailbox;
 
@@ -79,7 +79,7 @@ class Peerster : public QObject
         qint32 port;
         quint32 myPortMin, myPortMax;
         QString ID;
-        ChatDialog* dialog;
+        GUI* gui;
         NetSocket* socket;
         Mailbox* mailbox;
         MessageStore* msgstore;
