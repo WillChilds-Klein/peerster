@@ -3,15 +3,24 @@
 MessageStore::MessageStore(Peerster* p)
     : peerster(p)
     , localSeqNo(1)
-    , rumorStore(new QMap< QString, QList<Message> >())
 {}
 
 MessageStore::~MessageStore()
 {}
 
+void MessageStore::setID(QString id)
+{
+    ID = id;
+}
+
 void MessageStore::setGroupConvo(QList<Message>* gc)
 {
     groupConvo = gc;
+}
+
+void MessageStore::setRumorStore(QMap< QString,QList<Message> >* rs)
+{
+    rumorStore = rs;
 }
 
 void MessageStore::setDirectStore(QMap< QString,QList<Message> >* ds)
@@ -25,22 +34,22 @@ bool MessageStore::isNewRumor(Message msg)
     {
         return false;
     }
-    
-    if(isNewOrigin(msg.getOriginID()))
+    else if(isNewOrigin(msg.getOriginID()))
     {
-        addNewOrigin(msg.getOriginID());
         return true;
     }
 
     quint32 msgSeqNo = msg.getSeqNo();
-    QMap<QString, quint32> latest = getLatest();
+    QMap<QString, quint32> latest = latest();
     
     if(msgSeqNo > latest.value(msg.getOriginID()))
     {
         return true;
     }
-    
-    return false;
+    else
+    {
+        return false;
+    }
 }
 
 bool MessageStore::isNewOrigin(QString origin)
@@ -50,13 +59,17 @@ bool MessageStore::isNewOrigin(QString origin)
 
 bool MessageStore::isNextRumorInSeq(Message msg)
 {
-    QMap<QString, quint32> latest = getLatest();
+    QMap<QString, quint32> latest = latest();
     if(rumorStore->contains(msg.getOriginID()))
     {
         if(msg.getSeqNo() == latest.value(msg.getOriginID())+1)
+        {
             return true;
+        }
         else
+        {
             return false;
+        }
     }
     else if(msg.getSeqNo() == 1)
     {
@@ -66,27 +79,54 @@ bool MessageStore::isNextRumorInSeq(Message msg)
     {
         return false;
     }
-} 
+}
 
-void MessageStore::addNewOrigin(QString origin)
+void MessageStore::addRumor(Message msg)
 {
-    if(isNewOrigin(origin))
+    QString origin = msg.getOriginID();
+
+    if(isNewOrigin(origin)) // add new origin
     {
-        rumorStore->insert(origin, QList<Message>());
+        rumorStore.insert(origin, QList<Message>());
+        Q_EMIT(refreshOrigins());
+        Q_EMIT(broadcastRoute());
+    }
+
+    QList<Message> originRumors = rumorStore.value(origin);
+    originRumors.append(msg);
+
+    rumorStore->insert(origin, originRumors);
+
+    Q_EMIT(updateStatus(status()));
+
+    if(msg.getType == TYPE_RUMOR_CHAT)
+    {
+        groupConvo->append(msg);
+        Q_EMIT(refreshGroupConvo());
     }
 }
 
-void MessageStore::addNewChatRumor(Message msg)
+void MessageStore::addDirectChat(Message msg)
 {
-    QString origin = msg.getOriginID();
-    QList<Message> originHistory;
-    
-    originHistory = rumorStore->value(origin);
-    originHistory.append(msg);
+    QString origin = (dmsg.getOriginID() != ID) ? dmsg.getOriginID() 
+                                                    : dmsg.getDest(); 
+    QList<Message> directConvo;
+    if(directStore->contains(origin))
+    {
+        directConvo = directStore->value(origin);
+    }
+    else
+    {
+        directConvo = QList<Message>();
+    }
+    directConvo.append(dmsg);
 
-    rumorStore->insert(origin, originHistory);
+    directStore->insert(origin, directConvo); 
+
+    qDebug() << "DIRECT CONVO FOR " << origin << " LENGTH = " << directConvo.size();
+
+    Q_EMIT(refreshDirectConvo(origin));
 }
-
 
 QList<Message> MessageStore::getMessagesInRange(QString origin, 
     quint32 firstSeqNo, quint32 lastSeqNo)
@@ -98,7 +138,7 @@ QList<Message> MessageStore::getMessagesInRange(QString origin,
     originHistory = rumorStore->value(origin);
     ret = QList<Message>();
 
-    if(firstSeqNo > getLatest().value(origin))
+    if(firstSeqNo > latest().value(origin))
         return ret;
 
     QList<Message>::iterator i;
@@ -116,46 +156,7 @@ QList<Message> MessageStore::getMessagesInRange(QString origin,
     return ret;
 }
 
-Message MessageStore::getStatus()
-{
-    Message status;
-    QVariantMap want;
-
-    QMap<QString, quint32> latest = getLatest();
-
-    QMap<QString, QList<Message> >::iterator i;
-    for(i = rumorStore->begin(); i != rumorStore->end(); ++i)
-    {
-        want.insert(i.key(), latest.value(i.key())+1);
-    }
-    status.setWantMap(want);
-    status.setType(TYPE_STATUS);
-
-    return status;
-}
-
-QString MessageStore::toString()
-{
-    QString qstr;
-    QList<Message> senderHistory;
-    QMap<QString, QList<Message> >::iterator i;
-    QList<Message>::iterator j;
-
-    for(i = rumorStore->begin(); i != rumorStore->end(); ++i)
-    {
-        qstr += "<ID: " + i.key() + ">, <";
-        senderHistory = i.value();
-        for(j = senderHistory.begin(); j != senderHistory.end(); ++j)
-        {
-            qstr += QString::number(j->getSeqNo()) + ", ";
-        }
-        qstr += ">\n";
-    }
-
-    return qstr;
-}
-
-QMap<QString, quint32> MessageStore::getLatest()
+QMap<QString, quint32> MessageStore::latest()
 {
     QMap<QString, quint32> latest;
 
@@ -175,55 +176,70 @@ QMap<QString, quint32> MessageStore::getLatest()
     return latest;
 }
 
-void MessageStore::newDChat(Message dmsg)
+Message MessageStore::status()
 {
-    QString origin = (dmsg.getOriginID() != ID) ? dmsg.getOriginID() 
-                                                : dmsg.getDest(); 
-    QList<Message> directConvo;
-    if(directStore->contains(origin))
+    Message status;
+    status.setType(TYPE_STATUS);
+
+    QVariantMap want;
+    QMap<QString, quint32> latest = latest();
+
+    foreach(QString origin, rumorStore.keys())
     {
-        directConvo = directStore->value(origin);
+        want.insert(origin, latest.value(origin)+1);
     }
-    else
-    {
-        directConvo = QList<Message>();
-    }
+    status.setWantMap(want);
 
-    directConvo.append(dmsg);  
-    directStore->insert(origin, directConvo); 
-
-    qDebug() << "DIRECT CONVO FOR " << origin << " LENGTH = " << directConvo.size();
-
-    Q_EMIT(updateGUIDChatHistory(origin, directConvo));
+    return status;
 }
 
-void MessageStore::gotProcessRumor(Message msg)
+Message MessageStore::routeRumor()
+{
+    Message route = Message();
+
+    route.setType(TYPE_RUMOR_ROUTE);
+    route.setOriginID(ID);
+    route.setSeqNo(localSeqNo);
+    localSeqNo++;
+
+    return route;
+}
+
+void MessageStore::gotCreateChatRumor(QString text)
+{
+    Message msg = Message();
+
+    msg.setType(TYPE_RUMOR_CHAT);
+    msg.setChatText(text);
+    msg.setOriginID(ID);
+    msg.setSeqNo(localSeqNo);
+    localSeqNo++;
+
+    Q_EMIT(processRumor(msg));
+}
+
+void MessageStore::gotCreateDirectChat(QString text, QString dest)
+{
+    Message dmsg = Message();
+
+    dmsg.setType(TYPE_DIRECT_CHAT);
+    dmsg.setDest(dest);
+    dmsg.setHopLimit(DCHAT_HOP_LIMIT);
+    dmsg.setText(text);
+
+    Q_EMIT(processDirectChat(dmsg));
+}
+
+void MessageStore::gotProcessRumor(Message msg, Peer peer)
 {
     Q_EMIT(processRumorRoute(msg, peer));
-
-    if(msgOrigin != ID && peer != *self && peer != *invalid)
-    {
-        // handle potential new neighbors
-        if(!msg.isDirectRumor())
-        {
-            Peer neighbor = Peer(msg.getLastIP(), msg.getLastPort());
-            Q_EMIT(gotPotentialNewNeighbor(neighbor));
-        }
-
-        msg.setLastIP(peer.getAddress().toIPv4Address());
-        msg.setLastPort(peer.getPort());
-    }
     
     if(isNewRumor(msg))
     {
         if(isNextRumorInSeq(msg))
         {
-            Q_EMIT(monger(msg)); // <-- this causes a lot of network overhead.
-            if(msg.getType() == TYPE_RUMOR_CHAT)
-            {
-                addNewChatRumor(msg);
-                Q_EMIT(refreshGroupConvo());
-            }
+            Q_EMIT(monger(msg)); // <-- this could cause a lot of network overhead.
+            addRumor(msg);
         }
         else
         {
@@ -242,17 +258,23 @@ void MessageStore::gotProcessDirectChat(Message msg)
     // double check to make sure this logic is complete + robust
     if(msg.getDest() == ID)
     {
-        newDChat(msg);
+        addDirectChat(msg);
     }
-    else if(msg.getOriginID() == ID)
+    else if(msg.getOriginID == ID)
     {
-        newDChat(msg);
+        addDirectChat(msg);
         sendDirect(msg, msg.getDest());
     }
-    else if(isNewOrigin(msgOrigin))
-    {
-        // what to do with new origin?
-    }
+    // else if(isNewOrigin(msg.getOriginID()))
+    // {
+    //     // TODO: what to do with new origin?
+    //     // probably nothing, because
+    //     // we only construct the routing
+    //     // table using rumors, not DirectChat's
+
+    //     // if we do build table from DC's,
+    //     // we can use this to improve table.
+    // }
     else if(msg.getHopLimit() > 0)
     {
         msg.setHopLimit(msg.getHopLimit() - 1); // decrement HopLimit
@@ -262,7 +284,7 @@ void MessageStore::gotProcessDirectChat(Message msg)
 
 void MessageStore::gotProcessIncomingStatus(Message msg, Peer peer)
 {
-    QVariantMap ownWant = getStatus().getWantMap();
+    QVariantMap ownWant = status().getWantMap();
     QVariantMap incomingWant = status.getWantMap();
     quint32 ownWantSeqNo, incomingWantSeqNo;
     Message curr;
@@ -270,7 +292,7 @@ void MessageStore::gotProcessIncomingStatus(Message msg, Peer peer)
     QList<Message> toSend;
     bool needHelp = false;
 
-    qDebug() << "OWN STATUS: " << getStatus().toString();
+    qDebug() << "OWN STATUS: " << status().toString();
     qDebug() << peer.toString() << "'s STATUS" << status.toString();
 
     QVariantMap::iterator i;
@@ -301,7 +323,6 @@ void MessageStore::gotProcessIncomingStatus(Message msg, Peer peer)
         else
         {
             needHelp = true;
-            addNewOrigin(i.key());
         }
     }
 
@@ -319,7 +340,7 @@ void MessageStore::gotProcessIncomingStatus(Message msg, Peer peer)
         QList<QString>::iterator k;
         for(k = inOwnButNotIncoming.begin(); k != inOwnButNotIncoming.end(); ++k)
         {
-            toSend = getMessagesInRange(*k, 1, getLatest().value(*k));
+            toSend = getMessagesInRange(*k, 1, latest().value(*k));
             Q_EMIT(helpPeer(peer, toSend));
         }
     }
@@ -334,35 +355,22 @@ void MessageStore::gotProcessIncomingStatus(Message msg, Peer peer)
     }
 }
 
-void MessageStore::gotGetDChatHistoryFromOrigin(QString origin)
+QString MessageStore::toString()
 {
-    QList<Message> directConvo;
-    if(directStore->contains(origin))
+    QString qstr;
+    QList<Message> senderHistory;
+    
+    QMap<QString, QList<Message> >::iterator i;
+    for(i = rumorStore->begin(); i != rumorStore->end(); ++i)
     {
-        directConvo = directStore->value(origin);
+        qstr += "<ID: " + i.key() + ">, <";
+        senderHistory = i.value();
+        foreach(Message msg, senderHistory)
+        {
+            qstr += QString::number(msg.getSeqNo()) + ", ";
+        }
+        qstr += ">\n";
     }
-    else
-    {
-        directConvo = QList<Message>();
-    }
 
-    Q_EMIT(updateGUIDChatHistory(origin, directConvo));
+    return qstr;
 }
-
-void MessageStore::setID(QString qstr)
-{
-    ID = qstr;
-}
-
-Message MessageStore::routeRumor()
-{
-    Message route = Message();
-    route.setType(TYPE_RUMOR_ROUTE);
-    route.setOriginID(ID);
-    route.setSeqNo(localSeqNo);
-    // localSeqNo++;
-
-    return route;
-}
-
-

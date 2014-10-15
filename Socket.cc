@@ -9,11 +9,6 @@ Socket::Socket(Peerster* p)
 Socket::~Socket() 
 {}
 
-quint32 Socket::getPort()
-{
-    return port;
-}
-
 void Socket::setPortRange(quint32 min, quint32 max)
 {
     myPortMin = min;

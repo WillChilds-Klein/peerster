@@ -10,23 +10,23 @@ class RoutingTable : public QObject
     public:
         RoutingTable(Peerster*);
         ~RoutingTable();
-        Peer nextHop(QString);
-        bool nextHopIsDirect(QString);
 
     signals:
-        void updateGUIOriginsList(QStringList);
+        void sendMessage(Message, Peer);
         void broadcast(Message);
-        void monger(Message);
 
     public slots:
         void gotProcessRumorRoute(Message,Peer);
         void gotSendDirect(Message,QString);
-        void gotBroadcastRoute();
+        void broadcastRoute();
 
     private:
         Peerster* peerster;
-        MessageStore* messagestore;
+        QMap< QString, QList<Message> >* rumorStore;
         QHash< QString,QPair<Peer,bool> >* table;
+        Peer *invalid;
+        Peer nextHop(QString);
+        bool nextHopIsDirect(QString);
 };
 
 #endif // PEERSTER_ROUTINGTABLE_HH

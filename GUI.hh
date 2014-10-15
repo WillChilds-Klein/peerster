@@ -25,22 +25,22 @@ class GUI : public QDialog
         void setGroupConvo(QList<Message>*);
         void setDirectStore(QMap<QString,QList<Message> >*);
 
-    public slots:
-        void gotGroupChatEntered();
-        void gotDirectChatEntered();
-        void gotNeighborEntered();
+    signals:
+        void processNeighbor(Peer);
+        void createChatRumor(QString);
+        void createDirectChat(QString,QString);
 
+    public slots:
         void gotRefreshGroupConvo();
         void gotRefreshDirectConvo(QString);
-        void gotRefreshNeighbors(QList<Peer>);
         void gotRefreshOrigins(QString);
+        void gotRefreshNeighbors(QList<Peer>);
 
     private slots:
         void originSelected(QListWidgetItem*);
-
-    signals:
-        void postToOutbox(Message);
-        void processNeighbor(Peer);
+        void gotGroupChatEntered();
+        void gotDirectChatEntered();
+        void gotNeighborEntered();
 
     private:
         Peerster* peerster;
@@ -53,6 +53,7 @@ class GUI : public QDialog
         EntryQTextEdit *chatentry, *peerentry, *dchatentry;
         QPushButton* addbtn;
         QListWidget* originslist;
+        void clearOriginsList();
         void createChatLayout();
         void createPeerLayout();
         void createDirectLayout();

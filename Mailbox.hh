@@ -27,10 +27,19 @@ class Mailbox : public QObject
         void setPortInfo(quint32,quint32,quint32);
         void setID(QString);
         void populateNeighbors();
-        Peer pickRandomPeer();
+
+    signals:
+        void sendMessage(Message,Peer);
+        void refreshNeighbors(QList<Peer>);
+        void processRumor(Message);
+        void processDirectChat(Message);
+        void processIncomingStatus(Message);
+        void broadcastRoute();
+        void processNeighbor(Peer);
+        void monger(Message);
+        void broadcast(Message);
 
     public slots:
-        void gotPostToOutbox(Message);
         void gotPostToInbox(Message,Peer);
         void gotProcessNeighbor(Peer);
         void gotHelpPeer(Peer,QList<Message>);
@@ -43,15 +52,6 @@ class Mailbox : public QObject
     private slots:
         void status_chime();
         void route_chime();
-        void gotSendStatusToPeer(Peer);
-
-    signals:
-        void postToInbox(Message,Peer);
-        void sendMessage(Message,Peer);
-        void refreshNeighbors(QList<Peer>);
-        void monger(Message);
-        void broadcast(Message);
-        void broadcastRoute();
 
     private:
         Peerster* peerster;
@@ -61,6 +61,7 @@ class Mailbox : public QObject
         quint32 port, myPortMin, myPortMax;
         Peer *self, *invalid;
         Message status;
+        Peer pickRandomPeer();
         void processCommand(QString);
 };
 

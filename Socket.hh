@@ -16,18 +16,17 @@ class Socket : public QUdpSocket
         ~Socket();
         void setPortRange(quint32,quint32);
         void setNoForward(bool);
-        quint32 getPort();
-        quint32 getMyPortMin();
-        quint32 getMyPortMax();
         qint32 bind();
-
-    public slots:
-        void gotReadyRead();
-        void gotSendMessage(Message,Peer);
 
     signals:
         void postToInbox(Message,Peer);
         void processNeighbor(Peer);
+
+    public slots:
+        void gotSendMessage(Message,Peer);
+
+    private slots:
+        void gotReadyRead();
 
     private:
         Peerster* peerster;

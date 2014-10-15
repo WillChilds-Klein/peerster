@@ -2,25 +2,26 @@
 
 Mailbox::Mailbox(Peerster* p)
     : peerster(p)
-    , neighbors(new QList<Peer>)
+    , neighbors(new QList<Peer>())
     , status_clock(new QTimer(this))
     , route_clock(new QTimer(this))
     , invalid(new Peer("0.0.0.0:0"))
 {
-    // parts incoming/outgoing message pipeline
-    connect(this, SIGNAL(postToInbox(Message,Peer)), 
-        this, SLOT(gotPostToInbox(Message,Peer)));
+    // incoming/outgoing message pipeline
     connect(this, SIGNAL(monger(Message)),
         this, SLOT(gotMonger(Message)));
     connect(this, SIGNAL(broadcast(Message)),
         this, SLOT(gotBroadcast(Message)));
+
+    // neighbor processing
+    connect(this, SIGNAL(processNeighbor(Peer)),
+        this, SLOT(processNeighbor(Peer)));
 
     // periodic mongering
     connect(status_clock, SIGNAL(timeout()), 
         this, SLOT(status_chime()));
     connect(route_clock, SIGNAL(timeout()),
         this, SLOT(route_chime()));
-
 
     status_clock->start(STATUS_CLOCK_RATE);
     route_clock->start(ROUTE_CLOCK_RATE);
@@ -34,7 +35,7 @@ void Mailbox::setPortInfo(quint32 min, quint32 max, quint32 p)
     myPortMin = min;
     myPortMax = max;
     port = p;
-    self = new Peer("127.0.0.1:"+QString::number(port));
+    self = new Peer("127.0.0.1:" + QString::number(port));
 }
 
 void Mailbox::setID(QString str)
@@ -48,17 +49,17 @@ void Mailbox::populateNeighbors()
     for(int i = 1; i < clargs.size(); i++)
     {
         Peer peer = Peer(clargs.at(i));
-        gotPotentialNewNeighbor(peer);
+        Q_EMIT(processNeighbor(peer));
     }
 
     /**/
     if(port != myPortMin)
     {
-        gotPotentialNewNeighbor(Peer("127.0.0.1:" + QString::number(port-1)));
+        Q_EMIT(processNeighbor(Peer("127.0.0.1:" + QString::number(port-1))));
     }
     if(port != myPortMax)
     {
-        gotPotentialNewNeighbor(Peer("127.0.0.1:" + QString::number(port+1)));
+        Q_EMIT(processNeighbor(Peer("127.0.0.1:" + QString::number(port+1))));
     }
     /**/
 
@@ -76,6 +77,18 @@ void Mailbox::gotPostToInbox(Message msg, Peer peer)
 
     if(msg.getType() == TYPE_RUMOR_CHAT || msg.getType() == TYPE_RUMOR_ROUTE)
     {
+        if(msgOrigin != ID && peer != *self && peer != *invalid)
+        {   // handle potential new neighbors
+            if(!msg.isDirectRumor())
+            {
+                Peer neighbor = Peer(msg.getLastIP(), msg.getLastPort());
+                Q_EMIT(processNeighbor(neighbor));
+            }
+
+            msg.setLastIP(peer.getAddress().toIPv4Address());
+            msg.setLastPort(peer.getPort());
+        }
+
         Q_EMIT(processRumor(msg, peer));
     }
     else if(msg.getType() == TYPE_DIRECT_CHAT)
@@ -90,23 +103,6 @@ void Mailbox::gotPostToInbox(Message msg, Peer peer)
     processCommand(msg.getText());
 }
 
-void Mailbox::gotPostToOutbox(Message msg)
-{
-    msg.setOriginID(ID);
-
-    if(msg.getType() == TYPE_RUMOR_CHAT)
-    {
-        msg.setSeqNo(localSeqNo);
-        localSeqNo++;
-        Peer peer = Peer("127.0.0.1:" + QString::number(port));
-        Q_EMIT(postToInbox(msg, peer));
-    }
-    else if(msg.getType() == TYPE_DIRECT_CHAT)
-    {
-        Q_EMIT(processDirectChat(msg));
-    }
-}
-
 void Mailbox::gotProcessNeighbor(Peer peer)
 {
     if(peer.isWellFormed() && !neighbors->contains(peer) && 
@@ -115,7 +111,6 @@ void Mailbox::gotProcessNeighbor(Peer peer)
         neighbors->append(peer);
         Q_EMIT(refreshNeighbors(*neighbors));
         Q_EMIT(sendMessage(status, peer));
-        // Q_EMIT(sendMessage(status, rumorRoute())) // <--?
         Q_EMIT(broadcastRoute());
     }
 }
@@ -182,13 +177,8 @@ void Mailbox::status_chime()
 void Mailbox::route_chime()
 {
     Q_EMIT(broadcastRoute());
-    qDebug() << "PERIODIC ROUTE BROADCAST: " << routeRumor().toString();
+    qDebug() << "PERIODIC ROUTE BROADCAST";
 }
-
-// void Mailbox::gotSendStatusToPeer(Peer peer)
-// {
-//     Q_EMIT(sendMessage(status, peer));
-// }
 
 void Mailbox::processCommand(QString cmd)
 {

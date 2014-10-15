@@ -55,43 +55,6 @@ void GUI::setDirectStore(QMap< QString,QList<Message> >* ds)
     directStore = ds;
 }
 
-void GUI::gotGroupChatEntered()
-{
-    // create Message
-    Message msg;
-    msg.setType(TYPE_RUMOR_CHAT);
-    msg.setText(QString(chatentry->toPlainText()));
-
-    // send to outbox
-    Q_EMIT(postToOutbox(msg));
-
-    // Clear the chatentry to get ready for the next input message.
-    chatentry->clear();
-}
-
-void GUI::gotDirectChatEntered()
-{
-    Message dmsg;
-
-    dmsg.setType(TYPE_DIRECT_CHAT);
-    dmsg.setDest(originslist->currentItem()->text());
-    dmsg.setHopLimit(DCHAT_HOP_LIMIT);
-    dmsg.setText(QString(dchatentry->toPlainText()));
-
-    Q_EMIT(postToOutbox(dmsg));    
-
-    dchatentry->clear();
-}
-
-void GUI::gotNeighborEntered()
-{
-    Peer peer = Peer(QString(peerentry->toPlainText()));
-
-    Q_EMIT(processNeighbor(peer));
-
-    peerentry->clear();
-}
-
 void GUI::gotRefreshGroupConvo()
 {
     foreach(Message msg, groupConvo)
@@ -108,8 +71,7 @@ void GUI::gotRefreshDirectConvo(QString origin)
     QListWidgetItem* itm = originslist->currentItem();
 
     if(itm == NULL || originslist->currentItem()->text() != origin)
-    // switch focus to updated convo
-    {
+    {   // switch focus to updated convo
         QList<QListWidgetItem*> originItems = 
                                 originslist->findItems(origin, Qt::MatchExactly);
         if(originItems.size() != 1)
@@ -130,6 +92,31 @@ void GUI::gotRefreshDirectConvo(QString origin)
     dchatentry->setFocus();
 }
 
+void GUI::gotRefreshOrigins(QStringList origins)
+{
+    QStringList originsListContents = QStringList();
+
+    foreach(QListWidgetItem* i, originslist)
+    {
+        if(!origins.contains(i->text))
+        {
+            removeItemWidget(i);
+        }
+        else
+        {
+            originsListContents.append(i->text);
+        }
+    }
+    foreach(QString origin, origins)
+    {
+        if(!originsListContents.contains(i->text))
+        {
+            new QListWidgetItem(origin, originslist);
+            qDebug() << "ADD NEW ORIGIN TO GUI LIST:" << origins.last();
+        }
+    }
+}
+
 void GUI::gotRefreshNeighbors(QList<Peer> neighbors)
 { // TODO: change input to QStringList
     peerview->clear();
@@ -140,18 +127,42 @@ void GUI::gotRefreshNeighbors(QList<Peer> neighbors)
     }
 }
 
-void GUI::gotRefreshOrigins(QString newOrigin)
-{   // TODO: change to full-list updates.
-    qDebug() << "ADD NEW ORIGIN TO GUI LIST:" << newOrigin;
-    new QListWidgetItem(newOrigin, originslist);
-}
-
 void GUI::originSelected(QListWidgetItem* item)
 {
     Q_EMIT(getDChatHistoryFromOrigin(item->text()));
 
     dchatentry->setReadOnly(false);
     dchatentry->setFocus();
+}
+
+void GUI::gotGroupChatEntered()
+{
+    Q_EMIT(createChatRumor(chatentry->toPlainText()));
+    chatentry->clear();
+}
+
+void GUI::gotDirectChatEntered()
+{
+    Q_EMIT(createDirectChat(originslist->currentItem()->text(),
+                            dchatentry->toPlainText()));    
+    dchatentry->clear();
+}
+
+void GUI::gotNeighborEntered()
+{
+    Peer peer = Peer(QString(peerentry->toPlainText()));
+
+    Q_EMIT(processNeighbor(peer));
+
+    peerentry->clear();
+}
+
+void GUI::clearOriginsList()
+{
+    while(originslist->count() > 0)
+    {
+      delete(originslist->takeItem(0));
+    }
 }
 
 void GUI::createChatLayout()
