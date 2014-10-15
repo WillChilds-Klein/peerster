@@ -24,6 +24,8 @@ GUI::GUI(Peerster* p)
         this, SLOT(gotNeighborEntered()));
     connect(dchatentry, SIGNAL(returnPressed()),
         this, SLOT(gotDirectMessageEntered()));
+    connect(this, SIGNAL(refreshDirectConvo(QString)),
+        this, SLOT(gotRefreshDirectConvo(QString)));
 
     connect(originslist, SIGNAL(itemClicked(QListWidgetItem*)),
         this, SLOT(originSelected(QListWidgetItem*)));
@@ -57,7 +59,7 @@ void GUI::setDirectStore(QMap< QString,QList<Message> >* ds)
 
 void GUI::gotRefreshGroupConvo()
 {
-    foreach(Message msg, groupConvo)
+    foreach(Message msg, *groupConvo)
     {
         chatview->append(msg.getOriginID() + 
             "<" + QString::number(msg.getSeqNo()) + ">: " + msg.getText());
@@ -96,20 +98,20 @@ void GUI::gotRefreshOrigins(QStringList origins)
 {
     QStringList originsListContents = QStringList();
 
-    foreach(QListWidgetItem* i, originslist)
+    for(int i = 0; i < originslist->count(); i++)
     {
-        if(!origins.contains(i->text))
+        if(!origins.contains(originslist->item(i)->text()))
         {
-            removeItemWidget(i);
+            delete(originslist->takeItem(i));
         }
         else
         {
-            originsListContents.append(i->text);
+            originsListContents.append(originslist->item(i)->text());
         }
     }
     foreach(QString origin, origins)
     {
-        if(!originsListContents.contains(i->text))
+        if(!originsListContents.contains(origin))
         {
             new QListWidgetItem(origin, originslist);
             qDebug() << "ADD NEW ORIGIN TO GUI LIST:" << origins.last();
@@ -129,10 +131,7 @@ void GUI::gotRefreshNeighbors(QList<Peer> neighbors)
 
 void GUI::originSelected(QListWidgetItem* item)
 {
-    Q_EMIT(getDChatHistoryFromOrigin(item->text()));
-
-    dchatentry->setReadOnly(false);
-    dchatentry->setFocus();
+    Q_EMIT(refreshDirectConvo(item->text()));
 }
 
 void GUI::gotGroupChatEntered()

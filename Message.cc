@@ -148,7 +148,7 @@ void Message::setType(QString str)
     insert(KEY_TYPE, str);
 }
 
-void Message::setText(QString qstr)
+void Message::setChatText(QString qstr)
 {
     insert(KEY_CHATTEXT, qstr);
 }

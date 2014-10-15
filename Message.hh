@@ -15,7 +15,7 @@ class Message : public QVariantMap
         bool isEmptyStatus();
         bool isDirectRumor();
         void setType(QString);
-        void setText(QString);
+        void setChatText(QString);
         void setOriginID(QString);
         void setSeqNo(quint32);
         void setWantMap(QVariantMap);

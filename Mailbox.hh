@@ -31,9 +31,9 @@ class Mailbox : public QObject
     signals:
         void sendMessage(Message,Peer);
         void refreshNeighbors(QList<Peer>);
-        void processRumor(Message);
+        void processRumor(Message,Peer);
         void processDirectChat(Message);
-        void processIncomingStatus(Message);
+        void processIncomingStatus(Message,Peer);
         void broadcastRoute();
         void processNeighbor(Peer);
         void monger(Message);
@@ -60,7 +60,7 @@ class Mailbox : public QObject
         QString ID;
         quint32 port, myPortMin, myPortMax;
         Peer *self, *invalid;
-        Message status;
+        Message* status;
         Peer pickRandomPeer();
         void processCommand(QString);
 };

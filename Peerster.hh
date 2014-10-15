@@ -65,6 +65,8 @@
 class GUI;
 class Socket;
 class Mailbox;
+class MessageStore;
+class RoutingTable;
 
 class Peerster : public QObject
 {
@@ -83,6 +85,7 @@ class Peerster : public QObject
         Socket* socket;
         Mailbox* mailbox;
         MessageStore* messagestore;
+        RoutingTable* table;
         QList<quint32> neighbors;
         bool noforward;
 };

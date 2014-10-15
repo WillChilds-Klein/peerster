@@ -3,6 +3,8 @@
 
 #include "Peerster.hh"
 
+class Message;
+
 class RoutingTable : public QObject
 {
     Q_OBJECT
@@ -10,6 +12,7 @@ class RoutingTable : public QObject
     public:
         RoutingTable(Peerster*);
         ~RoutingTable();
+        void setRumorStore(QMap< QString,QList<Message> >*);
 
     signals:
         void sendMessage(Message, Peer);
@@ -18,7 +21,7 @@ class RoutingTable : public QObject
     public slots:
         void gotProcessRumorRoute(Message,Peer);
         void gotSendDirect(Message,QString);
-        void broadcastRoute();
+        void gotBroadcastRoute();
 
     private:
         Peerster* peerster;

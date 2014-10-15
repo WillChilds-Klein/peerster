@@ -9,6 +9,11 @@ RoutingTable::RoutingTable(Peerster* p)
 RoutingTable::~RoutingTable()
 {}
 
+void RoutingTable::setRumorStore(QMap< QString,QList<Message> >* rs)
+{
+    rumorStore = rs;
+}
+
 void RoutingTable::gotProcessRumorRoute(Message msg, Peer peer)
 {
     QString msgOrigin = msg.getOriginID();

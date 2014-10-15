@@ -29,11 +29,12 @@ class GUI : public QDialog
         void processNeighbor(Peer);
         void createChatRumor(QString);
         void createDirectChat(QString,QString);
+        void refreshDirectConvo(QString);
 
     public slots:
         void gotRefreshGroupConvo();
         void gotRefreshDirectConvo(QString);
-        void gotRefreshOrigins(QString);
+        void gotRefreshOrigins(QStringList);
         void gotRefreshNeighbors(QList<Peer>);
 
     private slots:

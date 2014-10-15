@@ -10,7 +10,7 @@ QT += network
 QT += core
 
 # Input
-HEADERS += Message.hh Peer.hh MessageStore.hh GUI.hh Socket.hh  Mailbox.hh Peerster.hh  
-SOURCES += Message.cc Peer.cc MessageStore.cc GUI.cc Socket.cc  Mailbox.cc Peerster.cc main.cc
+HEADERS += RoutingTable.cc Message.hh Peer.hh MessageStore.hh GUI.hh Socket.hh  Mailbox.hh Peerster.hh
+SOURCES += main.cc RoutingTable.hh Message.cc Peer.cc MessageStore.cc GUI.cc Socket.cc  Mailbox.cc Peerster.cc 
 
 CONFIG-=app_bundle

@@ -6,6 +6,7 @@ Mailbox::Mailbox(Peerster* p)
     , status_clock(new QTimer(this))
     , route_clock(new QTimer(this))
     , invalid(new Peer("0.0.0.0:0"))
+    , status(new Message())
 {
     // incoming/outgoing message pipeline
     connect(this, SIGNAL(monger(Message)),
@@ -97,7 +98,7 @@ void Mailbox::gotPostToInbox(Message msg, Peer peer)
     }
     else if(msg.getType() == TYPE_STATUS)
     {
-        Q_EMITE(processIncomingStatus(msg, peer));
+        Q_EMIT(processIncomingStatus(msg, peer));
     }
 
     processCommand(msg.getText());
@@ -110,7 +111,7 @@ void Mailbox::gotProcessNeighbor(Peer peer)
     {
         neighbors->append(peer);
         Q_EMIT(refreshNeighbors(*neighbors));
-        Q_EMIT(sendMessage(status, peer));
+        Q_EMIT(sendMessage(*status, peer));
         Q_EMIT(broadcastRoute());
     }
 }
@@ -129,7 +130,7 @@ void Mailbox::gotHelpPeer(Peer peer, QList<Message> list)
 
 void Mailbox::gotNeedHelpFromPeer(Peer peer)
 {
-    Q_EMIT(sendMessage(status, peer));
+    Q_EMIT(sendMessage(*status, peer));
 
     qDebug() << "NEED HELP FROM PEER " << peer.toString();
 }
@@ -138,7 +139,7 @@ void Mailbox::gotInConsensusWithPeer()
 {
     if(qrand() % 2 == 0)
     {
-        Q_EMIT(monger(status));
+        Q_EMIT(monger(*status));
     }
 
     qDebug() << "IN CONSENSUS WITH PEER ";
@@ -146,7 +147,7 @@ void Mailbox::gotInConsensusWithPeer()
 
 void Mailbox::gotUpdateStatus(Message msg)
 {
-    status = msg;
+    *status = msg;
 }
 
 void Mailbox::gotMonger(Message msg)
@@ -171,7 +172,7 @@ void Mailbox::gotBroadcast(Message msg)
 
 void Mailbox::status_chime()
 {
-    Q_EMIT(monger(status));
+    Q_EMIT(monger(*status));
 }
 
 void Mailbox::route_chime()
@@ -190,7 +191,7 @@ void Mailbox::processCommand(QString cmd)
     else*/ if(cmd == CMD_PRINT_STATUS)
     {
         qDebug() << "\nOWN STATUS:";
-        qDebug() << status.toString();
+        qDebug() << status->toString();
     }
     else if(cmd == CMD_PRINT_NEIGHBORS)
     {

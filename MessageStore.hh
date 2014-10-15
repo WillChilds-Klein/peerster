@@ -5,7 +5,6 @@
 
 class Message;
 
-// TODO: make MessageStore inherit from type of store
 class MessageStore : public QObject
 {
     Q_OBJECT
@@ -26,7 +25,7 @@ class MessageStore : public QObject
         void monger(Message);
         void updateStatus(Message);
         void sendDirect(Message,QString);
-        void processRumorRoute(Message);
+        void processRumorRoute(Message,Peer);
         void broadcastRoute();
         void refreshGroupConvo();
         void refreshDirectConvo(QString);
@@ -37,10 +36,9 @@ class MessageStore : public QObject
     public slots:
         void gotCreateChatRumor(QString);
         void gotCreateDirectChat(QString,QString);
-        void gotProcessRumor(Message);
+        void gotProcessRumor(Message,Peer);
         void gotProcessDirectChat(Message);
-        void gotProcessIncomingStatus(Message);
-        void gotBroadcastRoute();
+        void gotProcessIncomingStatus(Message,Peer);
 
     private:
         Peerster* peerster;
