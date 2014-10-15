@@ -2,9 +2,9 @@
 
 Peerster::Peerster()
     : gui(new GUI(this))
-    , socket(new NetSocket(this))
+    , socket(new Socket(this))
     , mailbox(new Mailbox(this))
-    , msgstore(new MessageStore(this))
+    , messagestore(new MessageStore(this))
 {
     // inbound message signal chain
     connect(socket, SIGNAL(postToInbox(Message,Peer)), 
@@ -19,13 +19,13 @@ Peerster::Peerster()
         socket, SLOT(gotSendMessage(Message,Peer)));
 
     // message processing logic
-    connect(msgstore, SIGNAL(canHelpPeer(Peer,QList<Message>)),
+    connect(messagestore, SIGNAL(canHelpPeer(Peer,QList<Message>)),
         mailbox, SLOT(gotCanHelpPeer(Peer,QList<Message>)));
-    connect(msgstore, SIGNAL(needHelpFromPeer(Peer)),
+    connect(messagestore, SIGNAL(needHelpFromPeer(Peer)),
         mailbox, SLOT(gotNeedHelpFromPeer(Peer)));
-    connect(msgstore, SIGNAL(inConsensusWithPeer()),
+    connect(messagestore, SIGNAL(inConsensusWithPeer()),
         mailbox, SLOT(gotInConsensusWithPeer()));
-    connect(msgstore, SIGNAL(updateGUIOriginsList(QString)),
+    connect(messagestore, SIGNAL(updateGUIOriginsList(QString)),
         gui, SLOT(gotUpdateGUIOriginsList(QString)));
     connect(mailbox, SIGNAL(updateGUIOriginsList(QString)),
         gui, SLOT(gotUpdateGUIOriginsList(QString)));
@@ -38,14 +38,14 @@ Peerster::Peerster()
     connect(mailbox, SIGNAL(updateGUINeighbors(QList<Peer>)),
         gui, SLOT(gotUpdateGUINeighbors(QList<Peer>)));
 
-    connect(msgstore, SIGNAL(broadcastRoute()),
+    connect(messagestore, SIGNAL(broadcastRoute()),
         mailbox, SLOT(gotBroadcastRoute()));
 
     // DChat stuff
-    connect(msgstore, SIGNAL(updateGUIDChatHistory(QString,QList<Message>)),
+    connect(messagestore, SIGNAL(updateGUIDChatHistory(QString,QList<Message>)),
         gui, SLOT(gotUpdateGUIDChatHistory(QString,QList<Message>)));
     connect(gui, SIGNAL(getDChatHistoryFromOrigin(QString)),
-        msgstore, SLOT(gotGetDChatHistoryFromOrigin(QString)));
+        messagestore, SLOT(gotGetDChatHistoryFromOrigin(QString)));
 
     qsrand(QTime(0,0,0).msecsTo(QTime::currentTime()));
     ID = QString::number((qrand() % ID_MAX) + 1);
@@ -65,11 +65,11 @@ Peerster::Peerster()
     QString title = "Peerster Instance " + ID + " on port " + QString::number(port);
     gui->setWindowTitle(title);
 
-    msgstore->setID(ID);
+    messagestore->setID(ID);
 
     mailbox->setPortInfo(myPortMin, myPortMax, port);
     mailbox->setID(ID);
-    mailbox->setMessageStore(msgstore);
+    mailbox->setMessageStore(messagestore);
     mailbox->populateNeighbors();
 
     // noforward stuff

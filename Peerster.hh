@@ -35,7 +35,7 @@
 #include <QPair>
 
 #include "GUI.hh"
-#include "NetSocket.hh"
+#include "Socket.hh"
 #include "Mailbox.hh"
 #include "MessageStore.hh"
 #include "RoutingTable.hh"
@@ -63,7 +63,7 @@
 #define SWITCH_NOFORWARD ("-noforward")
 
 class GUI;
-class NetSocket;
+class Socket;
 class Mailbox;
 
 class Peerster : public QObject
@@ -80,9 +80,9 @@ class Peerster : public QObject
         quint32 myPortMin, myPortMax;
         QString ID;
         GUI* gui;
-        NetSocket* socket;
+        Socket* socket;
         Mailbox* mailbox;
-        MessageStore* msgstore;
+        MessageStore* messagestore;
         QList<quint32> neighbors;
         bool noforward;
 };
