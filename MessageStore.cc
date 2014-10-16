@@ -73,11 +73,12 @@ void MessageStore::gotCreateChatRumor(QString text)
     Q_EMIT(processRumor(msg, *self));
 }
 
-void MessageStore::gotCreateDirectChat(QString text, QString dest)
+void MessageStore::gotCreateDirectChat(QString dest, QString text)
 {
     Message msg = Message();
 
     msg.setType(TYPE_DIRECT_CHAT);
+    msg.setOriginID(ID);
     msg.setDest(dest);
     msg.setHopLimit(DCHAT_HOP_LIMIT);
     msg.setChatText(text);
@@ -87,8 +88,8 @@ void MessageStore::gotCreateDirectChat(QString text, QString dest)
 
 void MessageStore::gotProcessRumor(Message msg, Peer peer)
 {
-    qDebug() << "LOCAL SEQNO: " << localSeqNo << "  ID: " << ID;
-    qDebug() << "PROCESS: " << msg.toString();
+    // qDebug() << "LOCAL SEQNO: " << localSeqNo << "  ID: " << ID;
+    // qDebug() << "PROCESS: " << msg.toString();
 
     // is this conditional block really necessary?
     if(isNewOrigin(msg.getOriginID()))
@@ -111,23 +112,24 @@ void MessageStore::gotProcessRumor(Message msg, Peer peer)
 
     if(isNewRumor(msg))
     {
-        qDebug() << msg.toString() << " IS NEW RUMOR!";
+        // qDebug() << msg.toString() << " IS NEW RUMOR!";
+        // Q_EMIT(monger(msg)); <-- TODO:monger here, or only for nextInSeq?
         if(isNextRumorInSeq(msg))
         {
-            qDebug() << msg.toString() << " IS NEXT RUMOR IN SEQ!";
+            // qDebug() << msg.toString() << " IS NEXT RUMOR IN SEQ!";
             Q_EMIT(monger(msg)); // <-- this could cause a lot of network overhead.
             addRumor(msg);
             if(msg.getType() == TYPE_RUMOR_CHAT)
             {
-                qDebug() << msg.toString() << " IS CHATRUMOR!";
+                // qDebug() << msg.toString() << " IS CHATRUMOR!";
                 groupConvo->append(msg);
                 Q_EMIT(refreshGroupConvo());
             }
         }
         else if(msg.getOriginID() != ID)
         {
-            qDebug() << msg.toString() << " IS NOT NEXT RUMOR IN SEQ!";
-            qDebug() << "STATUS: " << status().toString();
+            // qDebug() << msg.toString() << " IS NOT NEXT RUMOR IN SEQ!";
+            // qDebug() << "STATUS: " << status().toString();
             Q_EMIT(needHelpFromPeer(peer));
         }
     }
@@ -164,13 +166,24 @@ void MessageStore::gotProcessRumorRoute(Message msg, Peer peer)
 
 void MessageStore::gotProcessDirectChat(Message msg)
 {
+    qDebug() << "PROCESS DIRECTCHAT: " << msg.toString();
+    qDebug() << "   TABLE BEFORE:";
+    foreach(QString origin, table->keys())
+    {
+        qDebug() << "       " 
+                 << origin << ":" << ((Peer) table->value(origin).first).toString()
+                           << ", DIRECT=" << table->value(origin).second;
+    }
+
     // double check to make sure this logic is complete + robust
     if(msg.getDest() == ID)
     {
+        qDebug() << "!";
         addDirectChat(msg);
     }
     else if(msg.getOriginID() == ID)
     {
+        qDebug() << "!!";
         addDirectChat(msg);
         Q_EMIT(sendDirect(msg, msg.getDest()));
     }
@@ -186,8 +199,17 @@ void MessageStore::gotProcessDirectChat(Message msg)
     // }
     else if(msg.getHopLimit() > 0)
     {
+        qDebug() << "!!!";
         msg.setHopLimit(msg.getHopLimit() - 1); // decrement HopLimit
         Q_EMIT(sendDirect(msg, msg.getDest())); // send it on its way
+    }
+
+    qDebug() << "   TABLE AFTER:";
+    foreach(QString origin, table->keys())
+    {
+        qDebug() << "       " 
+                 << origin << ":" << ((Peer) table->value(origin).first).toString()
+                           << ", DIRECT=" << table->value(origin).second;
     }
 }
 
@@ -201,8 +223,8 @@ void MessageStore::gotProcessIncomingStatus(Message msg, Peer peer)
     QList<Message> toSend;
     bool needHelp = false;
 
-    qDebug() << "OWN STATUS: " << status().toString();
-    qDebug() << peer.toString() << "'s STATUS" << msg.toString();
+    // qDebug() << "OWN STATUS: " << status().toString();
+    // qDebug() << peer.toString() << "'s STATUS" << msg.toString();
 
     QVariantMap::iterator i;
     QList<Message>::iterator j;
@@ -264,9 +286,20 @@ void MessageStore::gotProcessIncomingStatus(Message msg, Peer peer)
     }
 }
 
-void MessageStore::gotSendDirect(Message msg,QString msgOrigin)
+void MessageStore::gotSendDirect(Message msg, QString msgOrigin)
 {
-    Peer forwardPeer = table->value(msgOrigin).first;
+    Peer forwardPeer;
+    if(table->contains(msgOrigin))
+    {
+        forwardPeer = table->value(msgOrigin).first;
+        qDebug() << "FORWARD PEER FOR " << msgOrigin << ":" << forwardPeer.toString();
+    }
+    else
+    {
+        forwardPeer = *invalid;
+        qDebug() << "WHOOPS! NOT ROUTING TABLE ENTRY FOR " << msgOrigin;
+    }
+
     Q_EMIT(sendMessage(msg, forwardPeer));
 }
 
@@ -353,7 +386,7 @@ Peer MessageStore::nextHop(QString origin)
 
 void MessageStore::addRumor(Message msg)
 {
-    qDebug() << "ADD " << msg.toString() << "TO RUMORSTORE";
+    // qDebug() << "ADD " << msg.toString() << "TO RUMORSTORE";
 
     QString origin = msg.getOriginID();
 
@@ -369,11 +402,11 @@ void MessageStore::addRumor(Message msg)
 
     rumorStore->insert(origin, originRumors);
 
-    qDebug() << "HISTORY OF ORIGIN " << msg.getOriginID() << ": "; 
-    foreach(Message m, rumorStore->value(origin))
-    {
-        qDebug() << m.toString();
-    }
+    // qDebug() << "HISTORY OF ORIGIN " << msg.getOriginID() << ": "; 
+    // foreach(Message m, rumorStore->value(origin))
+    // {
+    //     qDebug() << m.toString();
+    // }
 
 
     Q_EMIT(updateStatus(status()));
@@ -381,6 +414,7 @@ void MessageStore::addRumor(Message msg)
 
 void MessageStore::addDirectChat(Message msg)
 {
+    qDebug() << "in add direct";
     QString origin = (msg.getOriginID() != ID) ? msg.getOriginID() 
                                                     : msg.getDest(); 
     QList<Message> directConvo;

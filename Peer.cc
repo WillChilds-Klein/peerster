@@ -61,8 +61,8 @@ quint16 Peer::getPort()
 }
 
 QHostAddress Peer::getAddress()
-{
-    if(!addresses->isEmpty()){
+{   
+    if(addresses != NULL && !addresses->isEmpty()){
         return addresses->first();
     }
 
