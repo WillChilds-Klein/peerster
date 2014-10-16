@@ -70,7 +70,7 @@ void MessageStore::gotCreateChatRumor(QString text)
     msg.setSeqNo(localSeqNo);
     localSeqNo++;
 
-    Q_EMIT(processRumor(msg, *invalid));
+    Q_EMIT(processRumor(msg, *self));
 }
 
 void MessageStore::gotCreateDirectChat(QString text, QString dest)
@@ -97,7 +97,7 @@ void MessageStore::gotProcessRumor(Message msg, Peer peer)
         Q_EMIT(refreshOrigins(rumorStore->keys()));
     }
 
-    if(msg.getOriginID() != ID && peer != *invalid)
+    if(msg.getOriginID() != ID && peer != *invalid && peer != *self)
     {   // handle potential new neighbors
         if(!msg.isDirectRumor())
         {
@@ -154,7 +154,7 @@ void MessageStore::gotProcessRumorRoute(Message msg, Peer peer)
         tableEntry.second = true;
         table->insert(msgOrigin, tableEntry);
     }
-    else if(isNewOrigin(msgOrigin) || // <-- ? TODO
+    else if(isNewOrigin(msgOrigin) ||
             (isNewRumor(msg) && !nextHopIsDirect(msgOrigin)))
     {
         tableEntry.second = false;
@@ -353,6 +353,8 @@ Peer MessageStore::nextHop(QString origin)
 
 void MessageStore::addRumor(Message msg)
 {
+    qDebug() << "ADD " << msg.toString() << "TO RUMORSTORE";
+
     QString origin = msg.getOriginID();
 
     if(isNewOrigin(origin)) // add new origin
@@ -366,6 +368,13 @@ void MessageStore::addRumor(Message msg)
     originRumors.append(msg);
 
     rumorStore->insert(origin, originRumors);
+
+    qDebug() << "HISTORY OF ORIGIN " << msg.getOriginID() << ": "; 
+    foreach(Message m, rumorStore->value(origin))
+    {
+        qDebug() << m.toString();
+    }
+
 
     Q_EMIT(updateStatus(status()));
 }
@@ -464,10 +473,8 @@ Message MessageStore::routeRumor()
     route.setType(TYPE_RUMOR_ROUTE);
     route.setOriginID(ID);
     route.setSeqNo(localSeqNo);
-    // localSeqNo++;
-    // TODO: ^-- revisit this.
-    // consider initializing localSeqNo 
-    // to 0...
+    localSeqNo++;
+    Q_EMIT(processRumor(route, *self));
 
     return route;
 }

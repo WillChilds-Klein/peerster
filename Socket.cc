@@ -66,7 +66,7 @@ void Socket::gotReadyRead()
         }
         else
         {
-            qDebug() << "GOT BAD MSG FROM: " << senderInfo;
+            qDebug() << "GOT BAD MSG " << msg.toString() << " FROM: " << senderInfo;
         }
     }
 }

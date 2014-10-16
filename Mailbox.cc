@@ -135,7 +135,9 @@ void Mailbox::gotInConsensusWithPeer()
 
 void Mailbox::gotUpdateStatus(Message msg)
 {
+    qDebug() << "STATUS UPDATED FROM: " << status->toString();
     *status = msg;
+    qDebug() << "TO " << status->toString() << "\n";
 }
 
 void Mailbox::gotMonger(Message msg)
