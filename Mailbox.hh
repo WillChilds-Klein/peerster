@@ -32,6 +32,7 @@ class Mailbox : public QObject
         void sendMessage(Message,Peer);
         void refreshNeighbors(QList<Peer>);
         void processRumor(Message,Peer);
+        void processRumorRoute(Message,Peer);
         void processDirectChat(Message);
         void processIncomingStatus(Message,Peer);
         void broadcastRoute();

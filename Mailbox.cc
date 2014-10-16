@@ -16,7 +16,7 @@ Mailbox::Mailbox(Peerster* p)
 
     // neighbor processing
     connect(this, SIGNAL(processNeighbor(Peer)),
-        this, SLOT(processNeighbor(Peer)));
+        this, SLOT(gotProcessNeighbor(Peer)));
 
     // periodic mongering
     connect(status_clock, SIGNAL(timeout()), 
@@ -78,18 +78,7 @@ void Mailbox::gotPostToInbox(Message msg, Peer peer)
 
     if(msg.getType() == TYPE_RUMOR_CHAT || msg.getType() == TYPE_RUMOR_ROUTE)
     {
-        if(msgOrigin != ID && peer != *self && peer != *invalid)
-        {   // handle potential new neighbors
-            if(!msg.isDirectRumor())
-            {
-                Peer neighbor = Peer(msg.getLastIP(), msg.getLastPort());
-                Q_EMIT(processNeighbor(neighbor));
-            }
-
-            msg.setLastIP(peer.getAddress().toIPv4Address());
-            msg.setLastPort(peer.getPort());
-        }
-
+        Q_EMIT(processRumorRoute(msg, peer));
         Q_EMIT(processRumor(msg, peer));
     }
     else if(msg.getType() == TYPE_DIRECT_CHAT)

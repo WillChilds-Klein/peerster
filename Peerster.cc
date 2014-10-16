@@ -5,7 +5,6 @@ Peerster::Peerster()
     , socket(new Socket(this))
     , mailbox(new Mailbox(this))
     , messagestore(new MessageStore(this))
-    , table(new RoutingTable(this))
 {
     // GUI
     connect(gui, SIGNAL(processNeighbor(Peer)),
@@ -13,7 +12,7 @@ Peerster::Peerster()
     connect(gui, SIGNAL(createChatRumor(QString)), 
         messagestore, SLOT(gotCreateChatRumor(QString)));
     connect(gui, SIGNAL(createDirectChat(QString,QString)),
-        messagestore, SLOT(gotCreateDirectChat(QString)));
+        messagestore, SLOT(gotCreateDirectChat(QString,QString)));
 
     // Socket
     connect(socket, SIGNAL(postToInbox(Message,Peer)), 
@@ -28,12 +27,14 @@ Peerster::Peerster()
         gui, SLOT(gotRefreshNeighbors(QList<Peer>)));
     connect(mailbox, SIGNAL(processRumor(Message,Peer)),
         messagestore, SLOT(gotProcessRumor(Message,Peer)));
+    connect(mailbox, SIGNAL(processRumorRoute(Message,Peer)),
+        messagestore, SLOT(gotProcessRumorRoute(Message,Peer)));
     connect(mailbox, SIGNAL(processDirectChat(Message)),
         messagestore, SLOT(gotProcessDirectChat(Message)));
     connect(mailbox, SIGNAL(processIncomingStatus(Message,Peer)),
         messagestore, SLOT(gotProcessIncomingStatus(Message,Peer)));
     connect(mailbox, SIGNAL(broadcastRoute()), 
-        table, SLOT(gotBroadcastRoute()));
+        messagestore, SLOT(gotBroadcastRoute()));
 
     // MessageStore
     connect(messagestore, SIGNAL(helpPeer(Peer,QList<Message>)),
@@ -42,29 +43,24 @@ Peerster::Peerster()
         mailbox, SLOT(gotNeedHelpFromPeer(Peer)));
     connect(messagestore, SIGNAL(inConsensusWithPeer()),
         mailbox, SLOT(gotInConsensusWithPeer()));
+    connect(messagestore, SIGNAL(processNeighbor(Peer)),
+        mailbox, SLOT(gotProcessNeighbor(Peer)));
     connect(messagestore, SIGNAL(monger(Message)),
         mailbox, SLOT(gotMonger(Message)));
     connect(messagestore, SIGNAL(updateStatus(Message)),
         mailbox, SLOT(gotUpdateStatus(Message)));
-    connect(messagestore, SIGNAL(sendDirect(Message)),
-        table, SLOT(gotSendDirect(Message)));
     connect(messagestore, SIGNAL(processRumorRoute(Message,Peer)),
-        table, SLOT(gotProcessRumorRoute(Message,Peer)));
-    connect(messagestore, SIGNAL(broadcastRoute()),
-        table, SLOT(gotBroadcastRoute()));
+        messagestore, SLOT(gotProcessRumorRoute(Message,Peer)));
     connect(messagestore, SIGNAL(refreshGroupConvo()),
         gui, SLOT(gotRefreshGroupConvo()));
     connect(messagestore, SIGNAL(refreshDirectConvo(QString)),
         gui, SLOT(gotRefreshDirectConvo(QString)));
     connect(messagestore, SIGNAL(refreshOrigins(QStringList)),
         gui, SLOT(gotRefreshOrigins(QStringList)));
-    
-    // RoutingTable
-    connect(table, SIGNAL(sendMessage(Message,Peer)),
+    connect(messagestore, SIGNAL(sendMessage(Message,Peer)),
         socket, SLOT(gotSendMessage(Message,Peer)));
-    connect(table, SIGNAL(broadcast(Message)),
+    connect(messagestore, SIGNAL(broadcast(Message)),
         mailbox, SLOT(gotBroadcast(Message)));
-
 
 
     qsrand(QTime(0,0,0).msecsTo(QTime::currentTime()));
@@ -83,8 +79,6 @@ Peerster::Peerster()
     }
 
     QList<Message>* groupConvo = new QList<Message>();
-    QMap< QString,QList<Message> >* rumorStore = 
-        new QMap< QString,QList<Message> >();
     QMap< QString,QList<Message> >* directStore = 
         new QMap< QString,QList<Message> >();
 
@@ -94,10 +88,7 @@ Peerster::Peerster()
 
     messagestore->setID(ID);
     messagestore->setGroupConvo(groupConvo);
-    messagestore->setRumorStore(rumorStore);
     messagestore->setDirectStore(directStore);
-
-    table->setRumorStore(rumorStore);
 
     // noforward stuff
     noforward = false;

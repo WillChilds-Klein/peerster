@@ -6,11 +6,12 @@ TEMPLATE = app
 TARGET = 
 DEPENDPATH += .
 INCLUDEPATH += .
-QT += network
-QT += core
+QT += network core
 
 # Input
-HEADERS += RoutingTable.cc Message.hh Peer.hh MessageStore.hh GUI.hh Socket.hh  Mailbox.hh Peerster.hh
-SOURCES += main.cc RoutingTable.hh Message.cc Peer.cc MessageStore.cc GUI.cc Socket.cc  Mailbox.cc Peerster.cc 
+HEADERS += Message.hh Peer.hh Peerster.hh GUI.hh Socket.hh Mailbox.hh MessageStore.hh \
 
-CONFIG-=app_bundle
+SOURCES += Message.cc Peer.cc Peerster.cc GUI.cc Socket.cc Mailbox.cc MessageStore.cc \
+main.cc
+
+CONFIG -= app_bundle

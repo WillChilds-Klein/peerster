@@ -23,7 +23,7 @@ GUI::GUI(Peerster* p)
     connect(addbtn, SIGNAL(clicked()),
         this, SLOT(gotNeighborEntered()));
     connect(dchatentry, SIGNAL(returnPressed()),
-        this, SLOT(gotDirectMessageEntered()));
+        this, SLOT(gotDirectChatEntered()));
     connect(this, SIGNAL(refreshDirectConvo(QString)),
         this, SLOT(gotRefreshDirectConvo(QString)));
 
