@@ -92,7 +92,6 @@ Peerster::Peerster()
 
     mailbox->setPortInfo(myPortMin, myPortMax, port);
     mailbox->setSelfPeer(self);
-    mailbox->populateNeighbors();
 
     messagestore->setID(ID);
     messagestore->setSelfPeer(self);
@@ -110,6 +109,8 @@ Peerster::Peerster()
         }
     }
     socket->setNoForward(noforward);
+
+    mailbox->populateNeighbors();
 }
 
 Peerster::~Peerster()

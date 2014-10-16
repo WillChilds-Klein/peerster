@@ -90,6 +90,13 @@ void MessageStore::gotProcessRumor(Message msg, Peer peer)
     qDebug() << "LOCAL SEQNO: " << localSeqNo << "  ID: " << ID;
     qDebug() << "PROCESS: " << msg.toString();
 
+    // is this conditional block really necessary?
+    if(isNewOrigin(msg.getOriginID()))
+    {
+        rumorStore->insert(msg.getOriginID(), QList<Message>());
+        Q_EMIT(refreshOrigins(rumorStore->keys()));
+    }
+
     if(msg.getOriginID() != ID && peer != *invalid)
     {   // handle potential new neighbors
         if(!msg.isDirectRumor())
@@ -102,26 +109,25 @@ void MessageStore::gotProcessRumor(Message msg, Peer peer)
         msg.setLastPort(peer.getPort());
     }
 
-    // if(isNewOrigin(msg.getOriginID()))
-    // {
-    //     rumorStore->insert(msg.getOriginID(), QList<Message>());
-    //     Q_EMIT(refreshOrigins(rumorStore->keys()));
-    // }
-
     if(isNewRumor(msg))
     {
+        qDebug() << msg.toString() << " IS NEW RUMOR!";
         if(isNextRumorInSeq(msg))
         {
+            qDebug() << msg.toString() << " IS NEXT RUMOR IN SEQ!";
             Q_EMIT(monger(msg)); // <-- this could cause a lot of network overhead.
             addRumor(msg);
             if(msg.getType() == TYPE_RUMOR_CHAT)
             {
+                qDebug() << msg.toString() << " IS CHATRUMOR!";
                 groupConvo->append(msg);
                 Q_EMIT(refreshGroupConvo());
             }
         }
         else if(msg.getOriginID() != ID)
         {
+            qDebug() << msg.toString() << " IS NOT NEXT RUMOR IN SEQ!";
+            qDebug() << "STATUS: " << status().toString();
             Q_EMIT(needHelpFromPeer(peer));
         }
     }
@@ -459,6 +465,9 @@ Message MessageStore::routeRumor()
     route.setOriginID(ID);
     route.setSeqNo(localSeqNo);
     // localSeqNo++;
+    // TODO: ^-- revisit this.
+    // consider initializing localSeqNo 
+    // to 0...
 
     return route;
 }
