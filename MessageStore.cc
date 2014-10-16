@@ -35,6 +35,11 @@ void MessageStore::setDirectStore(QMap< QString,QList<Message> >* ds)
     directStore = ds;
 }
 
+void MessageStore::setSelfPeer(Peer* s)
+{
+    self = s;
+}
+
 QString MessageStore::toString()
 {
     QString qstr;
@@ -82,6 +87,9 @@ void MessageStore::gotCreateDirectChat(QString text, QString dest)
 
 void MessageStore::gotProcessRumor(Message msg, Peer peer)
 {
+    qDebug() << "LOCAL SEQNO: " << localSeqNo << "  ID: " << ID;
+    qDebug() << "PROCESS: " << msg.toString();
+
     if(msg.getOriginID() != ID && peer != *invalid)
     {   // handle potential new neighbors
         if(!msg.isDirectRumor())
@@ -94,14 +102,25 @@ void MessageStore::gotProcessRumor(Message msg, Peer peer)
         msg.setLastPort(peer.getPort());
     }
 
+    // if(isNewOrigin(msg.getOriginID()))
+    // {
+    //     rumorStore->insert(msg.getOriginID(), QList<Message>());
+    //     Q_EMIT(refreshOrigins(rumorStore->keys()));
+    // }
+
     if(isNewRumor(msg))
     {
         if(isNextRumorInSeq(msg))
         {
             Q_EMIT(monger(msg)); // <-- this could cause a lot of network overhead.
             addRumor(msg);
+            if(msg.getType() == TYPE_RUMOR_CHAT)
+            {
+                groupConvo->append(msg);
+                Q_EMIT(refreshGroupConvo());
+            }
         }
-        else
+        else if(msg.getOriginID() != ID)
         {
             Q_EMIT(needHelpFromPeer(peer));
         }
@@ -276,7 +295,7 @@ bool MessageStore::isNewRumor(Message msg)
 
 bool MessageStore::isNewOrigin(QString origin)
 {
-    return !rumorStore->keys().contains(origin);
+    return !(rumorStore->keys().contains(origin));
 }
 
 bool MessageStore::isNextRumorInSeq(Message msg)
@@ -343,12 +362,6 @@ void MessageStore::addRumor(Message msg)
     rumorStore->insert(origin, originRumors);
 
     Q_EMIT(updateStatus(status()));
-
-    if(msg.getType() == TYPE_RUMOR_CHAT)
-    {
-        groupConvo->append(msg);
-        Q_EMIT(refreshGroupConvo());
-    }
 }
 
 void MessageStore::addDirectChat(Message msg)
@@ -445,7 +458,7 @@ Message MessageStore::routeRumor()
     route.setType(TYPE_RUMOR_ROUTE);
     route.setOriginID(ID);
     route.setSeqNo(localSeqNo);
-    localSeqNo++;
+    // localSeqNo++;
 
     return route;
 }

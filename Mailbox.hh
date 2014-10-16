@@ -25,7 +25,7 @@ class Mailbox : public QObject
         Mailbox(Peerster*);
         ~Mailbox();
         void setPortInfo(quint32,quint32,quint32);
-        void setID(QString);
+        void setSelfPeer(Peer*);
         void populateNeighbors();
 
     signals:

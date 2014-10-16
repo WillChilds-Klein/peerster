@@ -8,13 +8,13 @@ GUI::GUI(Peerster* p)
     , dselectlayout(new QVBoxLayout(this))
     , dchatlayout(new QVBoxLayout(this))
     , chatview(new QTextEdit(this))
-    , chatentry(new EntryQTextEdit())
     , peerview(new QTextEdit(this))
-    , peerentry(new EntryQTextEdit())
     , dchatview(new QTextEdit(this))
-    , dchatentry(new EntryQTextEdit())
     , addbtn(new QPushButton())
     , originslist(new QListWidget(this))
+    , chatentry(new EntryQTextEdit())
+    , dchatentry(new EntryQTextEdit())
+    , peerentry(new EntryQTextEdit())
 {
     connect(chatentry, SIGNAL(returnPressed()), 
         this, SLOT(gotGroupChatEntered()));
@@ -47,6 +47,11 @@ GUI::GUI(Peerster* p)
 GUI::~GUI()
 {}
 
+void GUI::setID(QString id)
+{
+    ID = id;
+}
+
 void GUI::setGroupConvo(QList<Message>* gc)
 {
     groupConvo = gc;
@@ -59,6 +64,8 @@ void GUI::setDirectStore(QMap< QString,QList<Message> >* ds)
 
 void GUI::gotRefreshGroupConvo()
 {
+    qDebug() << "groupConvo SIZE: " << groupConvo->size();
+    chatview->clear();
     foreach(Message msg, *groupConvo)
     {
         chatview->append(msg.getOriginID() + 
@@ -111,7 +118,7 @@ void GUI::gotRefreshOrigins(QStringList origins)
     }
     foreach(QString origin, origins)
     {
-        if(!originsListContents.contains(origin))
+        if(!originsListContents.contains(origin) && origin != ID)
         {
             new QListWidgetItem(origin, originslist);
             qDebug() << "ADD NEW ORIGIN TO GUI LIST:" << origins.last();

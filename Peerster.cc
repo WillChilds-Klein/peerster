@@ -82,11 +82,20 @@ Peerster::Peerster()
     QMap< QString,QList<Message> >* directStore = 
         new QMap< QString,QList<Message> >();
 
+    Peer* self = new Peer("127.0.0.1:" + QString::number(port));
+
+
     gui->setWindowTitle("Peerster Instance " + ID + " on port " + QString::number(port));
+    gui->setID(ID);
     gui->setGroupConvo(groupConvo);
     gui->setDirectStore(directStore);
 
+    mailbox->setPortInfo(myPortMin, myPortMax, port);
+    mailbox->setSelfPeer(self);
+    mailbox->populateNeighbors();
+
     messagestore->setID(ID);
+    messagestore->setSelfPeer(self);
     messagestore->setGroupConvo(groupConvo);
     messagestore->setDirectStore(directStore);
 

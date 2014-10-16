@@ -36,12 +36,11 @@ void Mailbox::setPortInfo(quint32 min, quint32 max, quint32 p)
     myPortMin = min;
     myPortMax = max;
     port = p;
-    self = new Peer("127.0.0.1:" + QString::number(port));
 }
 
-void Mailbox::setID(QString str)
+void Mailbox::setSelfPeer(Peer* s)
 {
-    ID = str;
+    self = s;
 }
 
 void Mailbox::populateNeighbors()

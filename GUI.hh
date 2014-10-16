@@ -22,6 +22,7 @@ class GUI : public QDialog
     public:
         GUI(Peerster*);
         ~GUI();
+        void setID(QString);
         void setGroupConvo(QList<Message>*);
         void setDirectStore(QMap<QString,QList<Message> >*);
 
@@ -47,6 +48,7 @@ class GUI : public QDialog
         Peerster* peerster;
         QMap< QString, QList<Message> >* directStore;
         QList<Message>* groupConvo;
+        QString ID;
         QGridLayout* mainlayout;
         QVBoxLayout *chatlayout, *peerlayout, *dselectlayout, *dchatlayout;
         QHBoxLayout *directlayout;

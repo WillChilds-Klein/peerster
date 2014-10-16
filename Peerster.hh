@@ -38,7 +38,6 @@
 #include "Socket.hh"
 #include "Mailbox.hh"
 #include "MessageStore.hh"
-#include "RoutingTable.hh"
 #include "Message.hh"
 #include "Peer.hh"
 

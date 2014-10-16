@@ -13,6 +13,7 @@ class MessageStore : public QObject
         MessageStore(Peerster*);
         ~MessageStore();
         void setID(QString);
+        void setSelfPeer(Peer*);
         void setGroupConvo(QList<Message>*);
         void setDirectStore(QMap< QString,QList<Message> >*);
         QString toString();
@@ -50,7 +51,7 @@ class MessageStore : public QObject
         QMap< QString, QList<Message> >* directStore;
         QList<Message>* groupConvo;
         QHash< QString,QPair<Peer,bool> >* table;
-        Peer* invalid;
+        Peer *invalid, *self;
         quint32 localSeqNo;
         QString ID;
         bool isNewRumor(Message);
