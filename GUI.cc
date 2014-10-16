@@ -64,7 +64,6 @@ void GUI::setDirectStore(QMap< QString,QList<Message> >* ds)
 
 void GUI::gotRefreshGroupConvo()
 {
-    qDebug() << "groupConvo SIZE: " << groupConvo->size();
     chatview->clear();
     foreach(Message msg, *groupConvo)
     {
@@ -121,7 +120,6 @@ void GUI::gotRefreshOrigins(QStringList origins)
         if(!originsListContents.contains(origin) && origin != ID)
         {
             new QListWidgetItem(origin, originslist);
-            qDebug() << "ADD NEW ORIGIN TO GUI LIST:" << origins.last();
         }
     }
 }

@@ -62,7 +62,7 @@ void Socket::gotReadyRead()
             Peer sender = Peer(senderInfo);
             Q_EMIT(processNeighbor(sender));
             Q_EMIT(postToInbox(msg, sender));
-            qDebug() << "GOT MSG: " << msg.toString() << " FROM: " << sender.toString();
+            // qDebug() << "GOT MSG: " << msg.toString() << " FROM: " << sender.toString();
         }
         else
         {
@@ -76,12 +76,8 @@ void Socket::gotSendMessage(Message msg, Peer peer)
     QString type = msg.getType();
     if(!noforward || (type == TYPE_RUMOR_ROUTE))
     {
-        // serialize map
         QByteArray msgArr = msg.toSerializedQVMap();
 
-        // qDebug() << "SEND MSG" << msg.toString() << "TO:" << peer.toString();
-
-        // Send message via UDP
         writeDatagram(msgArr, peer.getAddress(), peer.getPort());
     }
 }

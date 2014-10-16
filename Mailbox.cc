@@ -135,9 +135,7 @@ void Mailbox::gotInConsensusWithPeer()
 
 void Mailbox::gotUpdateStatus(Message msg)
 {
-    // qDebug() << "STATUS UPDATED FROM: " << status->toString();
     *status = msg;
-    // qDebug() << "TO " << status->toString() << "\n";
 }
 
 void Mailbox::gotMonger(Message msg)
@@ -173,12 +171,16 @@ void Mailbox::route_chime()
 
 void Mailbox::processCommand(QString cmd)
 {
-    /*if(cmd == CMD_PRINT_MSGSTORE)
-    {
-        qDebug() << "\nMESSAGE STORE:";
-        qDebug() << msgstore->toString();
-    }
-    else*/ if(cmd == CMD_PRINT_STATUS)
+    // TODO: ipmlement datastructure dump signal/slots
+    //       for easy print debugging.
+
+    // if(cmd == CMD_PRINT_MSGSTORE)
+    // {
+    //     qDebug() << "\nMESSAGE STORE:";
+    //     qDebug() << msgstore->toString();
+    // }
+
+    if(cmd == CMD_PRINT_STATUS)
     {
         qDebug() << "\nOWN STATUS:";
         qDebug() << status->toString();
@@ -191,6 +193,7 @@ void Mailbox::processCommand(QString cmd)
             qDebug() << "   " << peer.toString();
         }
     }
+
     // else if(cmd == CMD_PRINT_TABLE)
     // {
     //     qDebug() << "\nROUTING TABLE:";

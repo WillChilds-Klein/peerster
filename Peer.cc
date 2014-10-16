@@ -66,7 +66,7 @@ QHostAddress Peer::getAddress()
         return addresses->first();
     }
 
-    qDebug() << "Oh Noes! address list is empty for this Peer!";
+    qDebug() << "Oh No! address list is empty for this Peer!";
     return QHostAddress::LocalHost;
 }
 
@@ -78,7 +78,6 @@ bool Peer::isWellFormed()
 QString Peer::toString()
 {
     return (addresses->isEmpty() ? "NONE" : addresses->first().toString()) + ":" + QString::number(port);
-    // return getAddress().toString() + ":" + QString::number(port);
 }
 
 bool Peer::operator==(Peer other)
