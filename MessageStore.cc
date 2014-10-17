@@ -87,7 +87,7 @@ void MessageStore::gotCreateDirectChat(QString dest, QString text)
 }
 
 void MessageStore::gotProcessRumor(Message msg, Peer peer)
-{x
+{
     // is this conditional block really necessary?
     if(isNewOrigin(msg.getOriginID()))
     {

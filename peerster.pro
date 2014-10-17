@@ -15,3 +15,4 @@ SOURCES += Message.cc Peer.cc Peerster.cc GUI.cc Socket.cc Mailbox.cc MessageSto
 main.cc
 
 CONFIG -= app_bundle
+CONFIG += crypto

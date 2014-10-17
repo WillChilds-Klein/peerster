@@ -6,6 +6,7 @@
 #include <QDialog>
 #include <QVBoxLayout>
 #include <QApplication>
+#include <QtCrypto>
 #include <QDebug>
 #include <QTextEdit>
 #include <QLineEdit>
@@ -83,6 +84,7 @@ class Peerster : public QObject
         Socket* socket;
         Mailbox* mailbox;
         MessageStore* messagestore;
+        // FileStore* filestore;
         bool noforward;
 };
 

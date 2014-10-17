@@ -5,6 +5,7 @@ Peerster::Peerster()
     , socket(new Socket(this))
     , mailbox(new Mailbox(this))
     , messagestore(new MessageStore(this))
+    // , filestore(new FileStore(this))
 {
     // GUI
     connect(gui, SIGNAL(processNeighbor(Peer)),
@@ -78,15 +79,16 @@ Peerster::Peerster()
         exit(1);
     }
 
-    QList<Message>* groupConvo = new QList<Message>();
+    QMap<QString, quint32>* sharedFileInfo = new QMap<QString, quint32>;
+    QList<Message>* groupConvo = new QList<Message>;
     QMap< QString,QList<Message> >* directStore = 
-        new QMap< QString,QList<Message> >();
+        new QMap< QString,QList<Message> >;
 
     Peer* self = new Peer("127.0.0.1:" + QString::number(port));
 
-
     gui->setWindowTitle("Peerster Instance " + ID + " on port " + QString::number(port));
     gui->setID(ID);
+    gui->setSharedFileInfo(sharedFileInfo);
     gui->setGroupConvo(groupConvo);
     gui->setDirectStore(directStore);
 
@@ -97,6 +99,9 @@ Peerster::Peerster()
     messagestore->setSelfPeer(self);
     messagestore->setGroupConvo(groupConvo);
     messagestore->setDirectStore(directStore);
+
+    // filestore->setSharedFileInfo(sharedfileinfo);
+    // filestore->setID(ID);
 
     // noforward stuff
     noforward = false;

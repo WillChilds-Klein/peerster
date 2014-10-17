@@ -2,13 +2,15 @@
 
 int main(int argc, char** argv)
 {
-	// Initialize Qt toolkit
-	QApplication app(argc,argv);
+    // Initialize Qt toolkit
+    QApplication app(argc,argv);
 
-	Peerster peerster;
-	peerster.run();
+    QCA::Initializer qcainit;
 
-	// Enter the Qt main loop; everything else is event driven
-	return app.exec();
+    Peerster peerster;
+    peerster.run();
+
+    // Enter the Qt main loop; everything else is event driven
+    return app.exec();
 }
 

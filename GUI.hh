@@ -1,12 +1,14 @@
 #ifndef PEERSTER_GUI_HH
 #define PEERSTER_GUI_HH
 
-#define TITLE_PEER ("Neighbor Peers")
-#define TITLE_CHAT ("Chat Messages")
-#define TITLE_DSELECT ("Origin ID's Available for DM")
-#define TITLE_DCHAT ("Direct Messages")
+#define TITLE_FILE ("Shared Files")
+#define TITLE_NEIGHBOR ("Neighbor Peer Locations")
+#define TITLE_GROUPCHAT ("Group Chat")
+#define TITLE_ORIGINS ("Known Peer ID's")
+#define TITLE_DIRECTCHAT ("Direct Messages")
 
-#define TITLE_ADDPEER ("Add Neighbor")
+#define TITLE_ADDFILE ("Add File")
+#define TITLE_ADDNEIGHBOR ("Add Neighbor")
 
 #include "Peerster.hh"
 
@@ -23,6 +25,7 @@ class GUI : public QDialog
         GUI(Peerster*);
         ~GUI();
         void setID(QString);
+        void setSharedFileInfo(QMap<QString,quint32>*);
         void setGroupConvo(QList<Message>*);
         void setDirectStore(QMap<QString,QList<Message> >*);
 
@@ -46,20 +49,25 @@ class GUI : public QDialog
 
     private:
         Peerster* peerster;
+        QMap<QString, quint32>* sharedFileInfo;
         QMap< QString, QList<Message> >* directStore;
         QList<Message>* groupConvo;
         QString ID;
         QGridLayout* mainlayout;
-        QVBoxLayout *chatlayout, *peerlayout, *dselectlayout, *dchatlayout;
-        QHBoxLayout *directlayout;
-        QTextEdit *peerview, *chatview, *dchatview;
-        EntryQTextEdit *chatentry, *peerentry, *dchatentry;
-        QPushButton* addbtn;
+        QVBoxLayout *groupchatlayout, *neighborlayout, 
+                    *directchatlayout, *originslayout, *filelayout;
+        QTextEdit *neighborview, *groupchatview, 
+                  *directchatview, *fileview;
+        EntryQTextEdit *groupchatentry, *neighborentry, 
+                       *directchatentry;
+        QPushButton *addneighborbutton, *addfilebutton;
         QListWidget* originslist;
         void clearOriginsList();
-        void createChatLayout();
-        void createPeerLayout();
-        void createDirectLayout();
+        void createFileLayout();
+        void createNeighborLayout();
+        void createGroupChatLayout();
+        void createOriginsLayout();
+        void createDirectChatLayout();
 };
 
 class EntryQTextEdit : public QTextEdit 

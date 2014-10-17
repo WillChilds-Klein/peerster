@@ -3,26 +3,28 @@
 GUI::GUI(Peerster* p)
     : peerster(p)
     , mainlayout(new QGridLayout(this))
-    , chatlayout(new QVBoxLayout(this))
-    , peerlayout(new QVBoxLayout(this))
-    , dselectlayout(new QVBoxLayout(this))
-    , dchatlayout(new QVBoxLayout(this))
-    , chatview(new QTextEdit(this))
-    , peerview(new QTextEdit(this))
-    , dchatview(new QTextEdit(this))
-    , addbtn(new QPushButton())
+    , groupchatlayout(new QVBoxLayout(this))
+    , neighborlayout(new QVBoxLayout(this))
+    , originslayout(new QVBoxLayout(this))
+    , directchatlayout(new QVBoxLayout(this))
+    , filelayout(new QVBoxLayout(this))
+    , groupchatview(new QTextEdit(this))
+    , neighborview(new QTextEdit(this))
+    , directchatview(new QTextEdit(this))
+    , groupchatentry(new EntryQTextEdit())
+    , directchatentry(new EntryQTextEdit())
+    , neighborentry(new EntryQTextEdit())
+    , addneighborbutton(new QPushButton())
+    , addfilebutton(new QPushButton())
     , originslist(new QListWidget(this))
-    , chatentry(new EntryQTextEdit())
-    , dchatentry(new EntryQTextEdit())
-    , peerentry(new EntryQTextEdit())
 {
-    connect(chatentry, SIGNAL(returnPressed()), 
+    connect(groupchatentry, SIGNAL(returnPressed()), 
         this, SLOT(gotGroupChatEntered()));
-    connect(peerentry, SIGNAL(returnPressed()),
+    connect(neighborentry, SIGNAL(returnPressed()),
         this, SLOT(gotNeighborEntered()));
-    connect(addbtn, SIGNAL(clicked()),
+    connect(addneighborbutton, SIGNAL(clicked()),
         this, SLOT(gotNeighborEntered()));
-    connect(dchatentry, SIGNAL(returnPressed()),
+    connect(directchatentry, SIGNAL(returnPressed()),
         this, SLOT(gotDirectChatEntered()));
     connect(this, SIGNAL(refreshDirectConvo(QString)),
         this, SLOT(gotRefreshDirectConvo(QString)));
@@ -30,18 +32,21 @@ GUI::GUI(Peerster* p)
     connect(originslist, SIGNAL(itemClicked(QListWidgetItem*)),
         this, SLOT(originSelected(QListWidgetItem*)));
     
-    createPeerLayout();
-    createChatLayout();
-    createDirectLayout();
+    createFileLayout();
+    createNeighborLayout();
+    createGroupChatLayout();
+    createOriginsLayout();
+    createDirectChatLayout();
 
-    mainlayout->addLayout(peerlayout, 0, 0);
-    mainlayout->addLayout(chatlayout, 0, 1);
-    mainlayout->addLayout(dselectlayout, 0, 2);
-    mainlayout->addLayout(dchatlayout, 0, 3);
+    mainlayout->addLayout(filelayout,       0, 0);
+    mainlayout->addLayout(neighborlayout,   1, 0);
+    mainlayout->addLayout(groupchatlayout,       0, 1);
+    mainlayout->addLayout(originslayout,    0, 2);
+    mainlayout->addLayout(directchatlayout, 1, 2);
 
     setLayout(mainlayout);
 
-    chatentry->setFocus();
+    groupchatentry->setFocus();
 }
 
 GUI::~GUI()
@@ -50,6 +55,11 @@ GUI::~GUI()
 void GUI::setID(QString id)
 {
     ID = id;
+}
+
+void GUI::setSharedFileInfo(QMap<QString,quint32>* sfi)
+{
+    sharedFileInfo = sfi;
 }
 
 void GUI::setGroupConvo(QList<Message>* gc)
@@ -64,17 +74,17 @@ void GUI::setDirectStore(QMap< QString,QList<Message> >* ds)
 
 void GUI::gotRefreshGroupConvo()
 {
-    chatview->clear();
+    groupchatview->clear();
     foreach(Message msg, *groupConvo)
     {
-        chatview->append(msg.getOriginID() + 
+        groupchatview->append(msg.getOriginID() + 
             "<" + QString::number(msg.getSeqNo()) + ">: " + msg.getText());
     }
 }
 
 void GUI::gotRefreshDirectConvo(QString origin)
 {  
-    dchatview->clear();
+    directchatview->clear();
 
     QListWidgetItem* itm = originslist->currentItem();
 
@@ -93,11 +103,11 @@ void GUI::gotRefreshDirectConvo(QString origin)
 
     foreach(Message msg, convo)
     {
-        dchatview->append(msg.getOriginID() + ": " + msg.getText());
+        directchatview->append(msg.getOriginID() + ": " + msg.getText());
     }
 
-    dchatentry->setReadOnly(false);
-    dchatentry->setFocus();
+    directchatentry->setReadOnly(false);
+    directchatentry->setFocus();
 }
 
 void GUI::gotRefreshOrigins(QStringList origins)
@@ -126,11 +136,11 @@ void GUI::gotRefreshOrigins(QStringList origins)
 
 void GUI::gotRefreshNeighbors(QList<Peer> neighbors)
 { // TODO: change input to QStringList
-    peerview->clear();
+    neighborview->clear();
 
     foreach(Peer neighbor, neighbors)
     {
-        peerview->append(neighbor.toString());
+        neighborview->append(neighbor.toString());
     }
 }
 
@@ -141,24 +151,24 @@ void GUI::originSelected(QListWidgetItem* item)
 
 void GUI::gotGroupChatEntered()
 {
-    Q_EMIT(createChatRumor(chatentry->toPlainText()));
-    chatentry->clear();
+    Q_EMIT(createChatRumor(groupchatentry->toPlainText()));
+    groupchatentry->clear();
 }
 
 void GUI::gotDirectChatEntered()
 {
     Q_EMIT(createDirectChat(originslist->currentItem()->text(),
-                            dchatentry->toPlainText()));    
-    dchatentry->clear();
+                            directchatentry->toPlainText()));    
+    directchatentry->clear();
 }
 
 void GUI::gotNeighborEntered()
 {
-    Peer peer = Peer(QString(peerentry->toPlainText()));
+    Peer peer = Peer(QString(neighborentry->toPlainText()));
 
     Q_EMIT(processNeighbor(peer));
 
-    peerentry->clear();
+    neighborentry->clear();
 }
 
 void GUI::clearOriginsList()
@@ -169,53 +179,70 @@ void GUI::clearOriginsList()
     }
 }
 
-void GUI::createChatLayout()
+void GUI::createFileLayout()
 {
-    QLabel* chatlabel = new QLabel(TITLE_CHAT, this, 0);
+    QLabel* filelabel = new QLabel(TITLE_FILE, this, 0);
 
-    chatview->setReadOnly(true);
+    fileview->setReadOnly(true);
 
-    chatentry->setReadOnly(false);
-    chatentry->setLineWrapMode(QTextEdit::WidgetWidth);
+    addfilebutton->setText(TITLE_ADDFILE);
 
-    chatlayout->addWidget(chatlabel);
-    chatlayout->addWidget(chatview);
-    chatlayout->addWidget(chatentry);
+    filelayout->addWidget(filelabel);
+    filelayout->addWidget(fileview);
+    filelayout->addWidget(addfilebutton);
 }
 
-void GUI::createPeerLayout()
+void GUI::createNeighborLayout()
 {
-    QLabel* peerlabel = new QLabel(TITLE_PEER, this, 0);
+    QLabel* neighborlabel = new QLabel(TITLE_NEIGHBOR, this, 0);
 
-    peerview->setReadOnly(true);
+    neighborview->setReadOnly(true);
 
-    peerentry->setReadOnly(false);
-    peerentry->setLineWrapMode(QTextEdit::WidgetWidth);
+    neighborentry->setReadOnly(false);
+    neighborentry->setLineWrapMode(QTextEdit::WidgetWidth);
 
-    addbtn->setText(TITLE_ADDPEER);
+    addneighborbutton->setText(TITLE_ADDNEIGHBOR);
 
-    peerlayout->addWidget(peerlabel);
-    peerlayout->addWidget(peerview);
-    peerlayout->addWidget(peerentry);
-    peerlayout->addWidget(addbtn);
+    neighborlayout->addWidget(neighborlabel);
+    neighborlayout->addWidget(neighborview);
+    neighborlayout->addWidget(neighborentry);
+    neighborlayout->addWidget(addneighborbutton);
 }
 
-void GUI::createDirectLayout()
+void GUI::createGroupChatLayout()
 {
-    QLabel* dselectlabel = new QLabel(TITLE_DSELECT, this, 0);
+    QLabel* groupchatlabel = new QLabel(TITLE_GROUPCHAT, this, 0);
 
-    dselectlayout->addWidget(dselectlabel);
-    dselectlayout->addWidget(originslist);
+    groupchatview->setReadOnly(true);
 
+    groupchatentry->setReadOnly(false);
+    groupchatentry->setLineWrapMode(QTextEdit::WidgetWidth);
 
-    QLabel* dchatlabel = new QLabel(TITLE_DCHAT, this, 0);
-    dchatview->setReadOnly(true);
-    dchatentry->setReadOnly(true);
-    dchatentry->setLineWrapMode(QTextEdit::WidgetWidth);
+    groupchatlayout->addWidget(groupchatlabel);
+    groupchatlayout->addWidget(groupchatview);
+    groupchatlayout->addWidget(groupchatentry);
+}
 
-    dchatlayout->addWidget(dchatlabel);
-    dchatlayout->addWidget(dchatview);
-    dchatlayout->addWidget(dchatentry);
+void GUI::createOriginsLayout()
+{
+    QLabel* originslabel = new QLabel(TITLE_ORIGINS, this, 0);
+
+    originslayout->addWidget(originslabel);
+    originslayout->addWidget(originslist);
+}
+
+void GUI::createDirectChatLayout()
+{
+    QLabel* directchatlabel = new QLabel(TITLE_DIRECTCHAT, this, 0);
+
+    directchatview->setReadOnly(true);
+
+    directchatentry->setReadOnly(true);
+    directchatentry->setLineWrapMode(QTextEdit::WidgetWidth);
+
+    directchatlayout->addWidget(directchatlabel);
+    directchatlayout->addWidget(directchatview);
+    directchatlayout->addWidget(directchatentry);
 }
 
 EntryQTextEdit::EntryQTextEdit()
