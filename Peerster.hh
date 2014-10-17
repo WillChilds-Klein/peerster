@@ -6,7 +6,7 @@
 #include <QDialog>
 #include <QVBoxLayout>
 #include <QApplication>
-// #include <QtCrypto>
+#include <QtCrypto>
 #include <QDebug>
 #include <QTextEdit>
 #include <QLineEdit>
@@ -43,6 +43,7 @@
 #include "FileStore.hh"
 #include "Message.hh"
 #include "Peer.hh"
+#include "File.hh"
 
 #define ID_MAX (1000)
 

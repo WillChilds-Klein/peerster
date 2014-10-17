@@ -7,11 +7,11 @@ TARGET =
 DEPENDPATH += .
 INCLUDEPATH += .
 QT += network core
+CONFIG += crypto
 
 # Input
-HEADERS += Message.hh Peer.hh Peerster.hh GUI.hh Socket.hh Mailbox.hh MessageStore.hh FileStore.hh
+HEADERS += Message.hh Peer.hh File.hh Peerster.hh GUI.hh Socket.hh Mailbox.hh MessageStore.hh FileStore.hh
 
-SOURCES += Message.cc Peer.cc Peerster.cc GUI.cc Socket.cc Mailbox.cc MessageStore.cc FileStore.cc main.cc
+SOURCES += Message.cc Peer.cc File.cc Peerster.cc GUI.cc Socket.cc Mailbox.cc MessageStore.cc FileStore.cc main.cc
 
 CONFIG -= app_bundle
-CONFIG += crypto

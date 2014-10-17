@@ -15,11 +15,13 @@ class FileStore : public QObject
         void setID(QString);
         void setSharedFileInfo(QMap<QString,quint32>*);
 
-    public slots:
-        // void gotProcessShareFiles(QStringList);
+    // public slots:
+    //     void gotProcessShareFiles(QStringList);
 
     private:
         Peerster* peerster;
+        QString ID;
+        QMap<QString, quint32>* sharedFileInfo;
 };
 
 #endif // PEERSTER_FILESTORE_HH

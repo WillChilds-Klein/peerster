@@ -31,7 +31,7 @@ class GUI : public QDialog
 
     signals:
         void processNeighbor(Peer);
-        void processShareFile(QStringList);
+        void processShareFiles(QStringList);
         void createChatRumor(QString);
         void createDirectChat(QString,QString);
         void refreshDirectConvo(QString);

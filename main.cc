@@ -5,7 +5,8 @@ int main(int argc, char** argv)
     // Initialize Qt toolkit
     QApplication app(argc,argv);
 
-    // QCA::Initializer qcainit;
+    qDebug() << qApp->libraryPaths();
+    QCA::Initializer qcainit;
 
     Peerster peerster;
     peerster.run();

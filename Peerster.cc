@@ -14,8 +14,8 @@ Peerster::Peerster()
         messagestore, SLOT(gotCreateChatRumor(QString)));
     connect(gui, SIGNAL(createDirectChat(QString,QString)),
         messagestore, SLOT(gotCreateDirectChat(QString,QString)));
-    // connect(gui, SIGNAL(processShareFiles(QStringList)),
-    //     filestore, SLOT(gotProcessShareFiles(QStringList)));
+    connect(gui, SIGNAL(processShareFiles(QStringList)),
+        filestore, SLOT(gotProcessShareFiles(QStringList)));
 
     // Socket
     connect(socket, SIGNAL(postToInbox(Message,Peer)), 
@@ -102,8 +102,8 @@ Peerster::Peerster()
     messagestore->setGroupConvo(groupConvo);
     messagestore->setDirectStore(directStore);
 
-    // filestore->setSharedFileInfo(sharedfileinfo);
-    // filestore->setID(ID);
+    filestore->setID(ID);
+    filestore->setSharedFileInfo(sharedFileInfo);
 
     // noforward stuff
     noforward = false;
