@@ -31,6 +31,7 @@ class GUI : public QDialog
 
     signals:
         void processNeighbor(Peer);
+        void processShareFile(QStringList);
         void createChatRumor(QString);
         void createDirectChat(QString,QString);
         void refreshDirectConvo(QString);
@@ -46,6 +47,7 @@ class GUI : public QDialog
         void gotGroupChatEntered();
         void gotDirectChatEntered();
         void gotNeighborEntered();
+        void gotOpenFileDialog();
 
     private:
         Peerster* peerster;
@@ -62,7 +64,6 @@ class GUI : public QDialog
                        *directchatentry;
         QPushButton *addneighborbutton, *addfilebutton;
         QListWidget* originslist;
-        void clearOriginsList();
         void createFileLayout();
         void createNeighborLayout();
         void createGroupChatLayout();

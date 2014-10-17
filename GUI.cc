@@ -3,11 +3,12 @@
 GUI::GUI(Peerster* p)
     : peerster(p)
     , mainlayout(new QGridLayout(this))
+    , filelayout(new QVBoxLayout(this))
     , groupchatlayout(new QVBoxLayout(this))
     , neighborlayout(new QVBoxLayout(this))
     , originslayout(new QVBoxLayout(this))
     , directchatlayout(new QVBoxLayout(this))
-    , filelayout(new QVBoxLayout(this))
+    , fileview(new QTextEdit(this))
     , groupchatview(new QTextEdit(this))
     , neighborview(new QTextEdit(this))
     , directchatview(new QTextEdit(this))
@@ -24,11 +25,12 @@ GUI::GUI(Peerster* p)
         this, SLOT(gotNeighborEntered()));
     connect(addneighborbutton, SIGNAL(clicked()),
         this, SLOT(gotNeighborEntered()));
+    connect(addfilebutton, SIGNAL(clicked()),
+        this, SLOT(gotOpenFileDialog()));
     connect(directchatentry, SIGNAL(returnPressed()),
         this, SLOT(gotDirectChatEntered()));
     connect(this, SIGNAL(refreshDirectConvo(QString)),
         this, SLOT(gotRefreshDirectConvo(QString)));
-
     connect(originslist, SIGNAL(itemClicked(QListWidgetItem*)),
         this, SLOT(originSelected(QListWidgetItem*)));
     
@@ -40,7 +42,7 @@ GUI::GUI(Peerster* p)
 
     mainlayout->addLayout(filelayout,       0, 0);
     mainlayout->addLayout(neighborlayout,   1, 0);
-    mainlayout->addLayout(groupchatlayout,       0, 1);
+    mainlayout->addLayout(groupchatlayout,  0, 1, 2, 1);
     mainlayout->addLayout(originslayout,    0, 2);
     mainlayout->addLayout(directchatlayout, 1, 2);
 
@@ -171,11 +173,15 @@ void GUI::gotNeighborEntered()
     neighborentry->clear();
 }
 
-void GUI::clearOriginsList()
+void GUI::gotOpenFileDialog()
 {
-    while(originslist->count() > 0)
+    QStringList fileNames = 
+        QFileDialog::getOpenFileNames(this, tr("Share File"), "~/");
+
+    qDebug() << "FILES SELECTED:";
+    foreach(QString str, fileNames)
     {
-      delete(originslist->takeItem(0));
+        qDebug() << str;
     }
 }
 

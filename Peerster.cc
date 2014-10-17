@@ -14,6 +14,8 @@ Peerster::Peerster()
         messagestore, SLOT(gotCreateChatRumor(QString)));
     connect(gui, SIGNAL(createDirectChat(QString,QString)),
         messagestore, SLOT(gotCreateDirectChat(QString,QString)));
+    // connect(gui, SIGNAL(processShareFiles(QStringList)),
+    //     filestore, SLOT(gotProcessShareFiles(QStringList)));
 
     // Socket
     connect(socket, SIGNAL(postToInbox(Message,Peer)), 

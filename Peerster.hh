@@ -6,7 +6,7 @@
 #include <QDialog>
 #include <QVBoxLayout>
 #include <QApplication>
-#include <QtCrypto>
+// #include <QtCrypto>
 #include <QDebug>
 #include <QTextEdit>
 #include <QLineEdit>
@@ -34,6 +34,7 @@
 #include <QListWidget>
 #include <QListWidgetItem>
 #include <QPair>
+#include <QFileDialog>
 
 #include "GUI.hh"
 #include "Socket.hh"
