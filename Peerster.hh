@@ -40,6 +40,7 @@
 #include "Socket.hh"
 #include "Mailbox.hh"
 #include "MessageStore.hh"
+#include "FileStore.hh"
 #include "Message.hh"
 #include "Peer.hh"
 
@@ -67,6 +68,7 @@ class GUI;
 class Socket;
 class Mailbox;
 class MessageStore;
+class FileStore;
 
 class Peerster : public QObject
 {
@@ -85,7 +87,7 @@ class Peerster : public QObject
         Socket* socket;
         Mailbox* mailbox;
         MessageStore* messagestore;
-        // FileStore* filestore;
+        FileStore* filestore;
         bool noforward;
 };
 

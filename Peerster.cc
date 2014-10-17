@@ -5,7 +5,7 @@ Peerster::Peerster()
     , socket(new Socket(this))
     , mailbox(new Mailbox(this))
     , messagestore(new MessageStore(this))
-    // , filestore(new FileStore(this))
+    , filestore(new FileStore(this))
 {
     // GUI
     connect(gui, SIGNAL(processNeighbor(Peer)),

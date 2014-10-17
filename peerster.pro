@@ -9,10 +9,9 @@ INCLUDEPATH += .
 QT += network core
 
 # Input
-HEADERS += Message.hh Peer.hh Peerster.hh GUI.hh Socket.hh Mailbox.hh MessageStore.hh \
+HEADERS += Message.hh Peer.hh Peerster.hh GUI.hh Socket.hh Mailbox.hh MessageStore.hh FileStore.hh
 
-SOURCES += Message.cc Peer.cc Peerster.cc GUI.cc Socket.cc Mailbox.cc MessageStore.cc \
-main.cc
+SOURCES += Message.cc Peer.cc Peerster.cc GUI.cc Socket.cc Mailbox.cc MessageStore.cc FileStore.cc main.cc
 
 CONFIG -= app_bundle
 CONFIG += crypto

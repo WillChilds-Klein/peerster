@@ -160,12 +160,10 @@ void MessageStore::gotProcessDirectChat(Message msg)
     // double check to make sure this logic is complete + robust
     if(msg.getDest() == ID)
     {
-        qDebug() << "!";
         addDirectChat(msg);
     }
     else if(msg.getOriginID() == ID)
     {
-        qDebug() << "!!";
         addDirectChat(msg);
         Q_EMIT(sendDirect(msg, msg.getDest()));
     }
@@ -181,7 +179,6 @@ void MessageStore::gotProcessDirectChat(Message msg)
     // }
     else if(msg.getHopLimit() > 0)
     {
-        qDebug() << "!!!";
         msg.setHopLimit(msg.getHopLimit() - 1); // decrement HopLimit
         Q_EMIT(sendDirect(msg, msg.getDest())); // send it on its way
     }
