@@ -54,8 +54,9 @@ QString File::ID()
     return fileID;
 }
 
-void File::generateBlocks(File file)
+void File::processFile()
 {
+    QCA::Hash shaHash("sha256");
     QDataStream fileIn(qfile), 
                 blockOut;
     QFile block;
@@ -69,6 +70,8 @@ void File::generateBlocks(File file)
         readSize = fileIn.readRawData(buffer, blockSize);
         blockName = tempDirPath + fileName + "." + i + ".block";
         block = QFile(blockName);
+        
+        // write block.
         if (block.open(QIODevice::WriteOnly))
         {
             blockOut = QDataStream(&block);
@@ -86,17 +89,6 @@ void File::generateBlocks(File file)
 
     // anything else? make sure this is complete.
 }
-
-void File::hashBlocks(File file)
-{
-    QCA::Hash shaHash("sha256");
-}
-
-void File::generateMetaFile(File file)
-{}
-
-void File::hashMetafile(File file)
-{}
 
 bool File::operator==(File other)
 {

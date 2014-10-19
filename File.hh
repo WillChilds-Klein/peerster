@@ -27,7 +27,7 @@ class File
         QString tempDirPath;
         QFile* qfile;
         QList<QFile>* blocks;
-        QList<QFile>* blockHashes;
+        QList<QByteArray>* blockHashes;
         QFile* metafile;
         QFile* metafileHash;
         void splitFile();
