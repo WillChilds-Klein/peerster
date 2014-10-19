@@ -40,6 +40,14 @@ Message::Message(QByteArray* arr)
         {
             setType(TYPE_DIRECT_CHAT);
         }
+        else if(contains(KEY_BLOCKREQUEST))
+        {
+            setType(TYPE_BLOCK_REQUEST);
+        }
+        else if(contains(KEY_BLOCKREPLY))
+        {
+            setType(TYPE_BLOCK_REPLY);
+        }
     }
     else
     {
@@ -111,6 +119,21 @@ QByteArray Message::toSerializedQVMap()
         map.insert(KEY_DEST, value(KEY_DEST));
         map.insert(KEY_HOPLIMIT, value(KEY_HOPLIMIT));
     }
+    else if(getType() == TYPE_BLOCK_REQUEST)
+    {
+        map.insert(KEY_DEST, value(KEY_DEST));
+        map.insert(KEY_ORIGINID, value(KEY_ORIGINID));
+        map.insert(KEY_HOPLIMIT, value(KEY_HOPLIMIT));
+        map.insert(KEY_BLOCKREQUEST, value(KEY_BLOCKREQUEST));
+    }
+    else if(getType() == TYPE_BLOCK_REPLY)
+    {
+        map.insert(KEY_DEST, value(KEY_DEST));
+        map.insert(KEY_ORIGINID, value(KEY_ORIGINID));
+        map.insert(KEY_HOPLIMIT, value(KEY_HOPLIMIT));
+        map.insert(KEY_BLOCKREPLY, value(KEY_BLOCKREPLY));
+        map.insert(KEY_DATA, value(KEY_DATA));
+    }
 
     stream << map;
 
@@ -124,7 +147,8 @@ bool Message::isWellFormed()
     isRumor = (contains(KEY_ORIGINID) && contains(KEY_SEQNO));
     isDChat = (contains(KEY_ORIGINID) && contains(KEY_CHATTEXT) && 
                contains(KEY_HOPLIMIT) && contains(KEY_DEST));
-    if(isStatus || isRumor || isDChat)
+    isBlock = (contains(KEY_BLOCKREQUEST) || contains(KEY_BLOCKREPLY));
+    if(isStatus || isRumor || isDChat || isBlock)
     {
         return true;
     }
@@ -188,6 +212,21 @@ void Message::setLastPort(quint16 port)
     insert(KEY_LASTPORT, port);
 }
 
+void setBlockRequest(QByteArray arr)
+{
+    insert(KEY_BLOCKREQUEST, arr);
+}
+
+void setBlockReply(QByteArray arr)
+{
+    insert(KEY_BLOCKREPLY, arr);
+}
+
+void setData(QByteArray arr)
+{
+    insert(KEY_DATA, arr);
+}
+
 QString Message::getType()
 {
     return value(KEY_TYPE).toString();
@@ -232,4 +271,20 @@ quint16 Message::getLastPort()
 {
     return value(KEY_LASTPORT).toInt();
 }
+
+QByteArray getBlockRequest()
+{
+    return value(KEY_BLOCKREQUEST).toByteArray();
+}
+
+QByteArray getBlockReply()
+{
+    return value(KEY_BLOCKREPLY).toByteArray();
+}
+
+QByteArray getData()
+{
+    return value(KEY_DATA).toByteArray();
+}
+
 

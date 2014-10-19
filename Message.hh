@@ -23,6 +23,9 @@ class Message : public QVariantMap
         void setHopLimit(quint32);
         void setLastIP(quint32);
         void setLastPort(quint16);
+        void setBlockRequest(QByteArray);
+        void setBlockReply(QByteArray);
+        void setData(QByteArray);
         QString getType();
         QString getText();
         QString getOriginID();
@@ -32,6 +35,9 @@ class Message : public QVariantMap
         QVariantMap getWantMap();
         quint32 getLastIP();
         quint16 getLastPort();
+        QByteArray getBlockRequest();
+        QByteArray getBlockReply();
+        QByteArray getData();
 
     private:
         bool wellFormed;

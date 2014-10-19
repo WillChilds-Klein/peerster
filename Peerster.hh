@@ -64,11 +64,18 @@
 #define KEY_HOPLIMIT ("HopLimit")
 #define KEY_LASTIP ("LastIP")
 #define KEY_LASTPORT ("LastPort")
+#define KEY_BLOCKREQUEST ("BlockRequest")
+#define KEY_BLOCKREPLY ("BlockReply")
+#define KEY_DATA ("Data")
+
 #define TYPE_RUMOR_CHAT ("ChatRumor")
 #define TYPE_RUMOR_ROUTE ("RouteRumor")
 #define TYPE_STATUS ("Status")
 #define TYPE_DIRECT_CHAT ("DirectChat")
+#define TYPE_BLOCK_REQUEST ("BlockRequest")
+#define TYPE_BLOCK_REPLY ("BlockReply")
 #define TYPE_NONE ("None")
+
 #define SWITCH_NOFORWARD ("-noforward")
 
 class GUI;
