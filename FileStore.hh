@@ -31,6 +31,7 @@ class FileStore : public QObject
         QList<File>* sharedFiles;
         QMap<QString, quint32>* sharedFileInfo;
         QDir* tempdir;
+        void makeTempdir();
 };
 
 #endif // PEERSTER_FILESTORE_HH

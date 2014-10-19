@@ -2,17 +2,8 @@
 
 FileStore::FileStore(Peerster* p)
     : peerster(p)
-{
-    quint32 modulus = qPow(10,TEMPDIR_NDIGITS);
-    tempdir = new QDir(QDir::tempPath() + "/peerster-" 
-                     + QString::number((qrand() % modulus) + 1));
-    
-    if(!tempdir->exists())
-    {
-        tempdir->mkpath(tempdir->path());
-        qDebug() << "SUCESSFULLY CREATED TEMP DIR " << tempdir->path();
-    }
-}
+    , sharedFiles(new QList<File>)
+{}
 
 FileStore::~FileStore()
 {}
@@ -20,6 +11,8 @@ FileStore::~FileStore()
 void FileStore::setID(QString id)
 {
     ID = id;
+
+    makeTempdir();
 }
 
 void FileStore::setSharedFileInfo(QMap<QString,quint32>* sfi)
@@ -40,4 +33,18 @@ void FileStore::gotProcessFilesToShare(QStringList absfilepaths)
     }
 
     Q_EMIT(refreshSharedFiles());
+}
+
+void FileStore::makeTempdir()
+{
+    if(tempdir)
+    {
+        tempdir = new QDir(QDir::tempPath() + "/peerster-" + ID);
+        
+        if(!tempdir->exists())
+        {
+            tempdir->mkpath(tempdir->path());
+            qDebug() << "SUCESSFULLY CREATED TEMP DIR " << tempdir->path();
+        }
+    }
 }

@@ -73,7 +73,7 @@ QString File::blockFileName(quint32 i)
 
 void File::processFile()
 {
-    QCA::Hash sha("sha256");
+    QCA::Hash sha("sha1");
     QDataStream fileInStream(qfile);
     QString blockName;
     QByteArray blockData, blockHash, metaData;
@@ -91,7 +91,7 @@ void File::processFile()
         blockFile = new QFile(blockName);
 
         // write block file.
-        if (blockFile->open(QIODevice::WriteOnly))
+        if (blockFile->open(QIODevice::WriteOnly | QIODevice::ReadOnly))
         {
             QDataStream blockOutStream(blockFile);
             blockOutStream.writeRawData(buffer, readSize);
@@ -105,13 +105,8 @@ void File::processFile()
         }
         blocks->append(blockFile);
 
-        qDebug() << "BLOCKDATA SIZE: " << blockData.size();
-
-        // hash block
-        // sha.update(blockData);
-        blockHash = QCA::Hash("sha256").hash(blockData).toByteArray();
-        qDebug() << "!!";
-        // blockHash = sha.final().toByteArray();
+        sha.update(blockFile);
+        blockHash = sha.final().toByteArray();
         blockHashes->append(blockHash);
 
         // update metaFile
@@ -125,11 +120,10 @@ void File::processFile()
 
     // write metaFile
     metaFile->setFileName(tempDirPath + fileName + ".meta");
-    if(metaFile->open(QIODevice::WriteOnly))
+    if(metaFile->open(QIODevice::WriteOnly | QIODevice::ReadOnly))
     {
         QDataStream metaOutStream(metaFile);
         metaOutStream << metaData;
-        metaFile->close();
     }
     else
     {
@@ -137,8 +131,9 @@ void File::processFile()
     }
 
     // hash metaFile
-    sha.update(metaData);
+    sha.update(metaFile);
     metaFileHash = sha.final().toByteArray();
+    metaFile->close();
 }
 
 bool File::operator==(File other)
