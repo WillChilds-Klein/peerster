@@ -3,7 +3,8 @@
 
 #include "Peerster.hh"
 
-#define TEMPDIR_NDIGITS ("5")   
+#define SHARED_FILE_DIR_PREFIX ("/tmp/peerster-")
+#define TEMPDIR_NDIGITS (5)   
 
 class Message;
 class File;

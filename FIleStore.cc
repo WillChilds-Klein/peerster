@@ -1,13 +1,17 @@
 #include "FileStore.hh"
 
-#include SHARED_FILE_DIR_PREFIX ("/tmp/peerster-")
-
 FileStore::FileStore(Peerster* p)
     : peerster(p)
 {
     quint32 modulus = qPow(10,TEMPDIR_NDIGITS);
     tempdir = new QDir(QDir::tempPath() + "/peerster-" 
                      + QString::number((qrand() % modulus) + 1));
+    
+    if(!tempdir->exists())
+    {
+        tempdir->mkpath(tempdir->path());
+        qDebug() << "SUCESSFULLY CREATED TEMP DIR " << tempdir->path();
+    }
 }
 
 FileStore::~FileStore()
@@ -29,8 +33,8 @@ void FileStore::gotProcessFilesToShare(QStringList absfilepaths)
     {
         if(!(sharedFileInfo->keys().contains(filepath)))
         {
-            File file = File(filepath, tempdir.path());
-            sharedFiles->append(file));
+            File file = File(filepath, tempdir->path());
+            sharedFiles->append(file);
             sharedFileInfo->insert(file.abspath(), file.size());
         }
     }

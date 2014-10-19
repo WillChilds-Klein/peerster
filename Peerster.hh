@@ -10,6 +10,7 @@
 #include <QDebug>
 // #include <QCritical>
 // #include <QFatal>
+#include <QtCore/qmath.h>
 #include <QTextEdit>
 #include <QLineEdit>
 #include <QUdpSocket>

@@ -13,7 +13,7 @@ class File // : public QObject
 
     public:
         File(QString,QString);
-        ~File();
+         ~File();
         QString name();
         QString abspath();
         quint32 size();
@@ -26,11 +26,11 @@ class File // : public QObject
         quint32 fileSize;
         QString fileID;
         QString tempDirPath;
-        QFile qfile;
-        QList<QFile>* blocks;
+        QFile* qfile;
+        QList<QFile*>* blocks;
         QList<QByteArray>* blockHashes;
-        QFile metafile;
-        QByteArray metafileHash;
+        QFile* metaFile;
+        QByteArray metaFileHash;
         void processFile();
         bool operator==(File);
         bool operator!=(File);
