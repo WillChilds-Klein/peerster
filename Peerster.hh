@@ -8,6 +8,8 @@
 #include <QApplication>
 #include <QtCrypto>
 #include <QDebug>
+#include <QCritical>
+#include <QFatal>
 #include <QTextEdit>
 #include <QLineEdit>
 #include <QUdpSocket>
@@ -35,6 +37,9 @@
 #include <QListWidgetItem>
 #include <QPair>
 #include <QFileDialog>
+#include <QFile>
+#include <QDir>
+#include <QIODevice>
 
 #include "GUI.hh"
 #include "Socket.hh"

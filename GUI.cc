@@ -146,6 +146,18 @@ void GUI::gotRefreshNeighbors(QList<Peer> neighbors)
     }
 }
 
+void GUI::gotRefreshSharedFiles()
+{
+    fileview->clear();
+
+    QString entry;
+    foreach(QString filename, sharedFileInfo->keys())
+    {
+        entry = filename + "(" + sharedFileInfo->value(filename) + "B)";
+        fileview->append(filename);
+    }
+}
+
 void GUI::originSelected(QListWidgetItem* item)
 {
     Q_EMIT(refreshDirectConvo(item->text()));
@@ -183,6 +195,8 @@ void GUI::gotOpenFileDialog()
     {
         qDebug() << str;
     }
+
+    Q_EMIT(processFilesToShare(fileNames));
 }
 
 void GUI::createFileLayout()

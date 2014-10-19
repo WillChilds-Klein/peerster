@@ -31,7 +31,7 @@ class GUI : public QDialog
 
     signals:
         void processNeighbor(Peer);
-        void processShareFiles(QStringList);
+        void processFilesToShare(QStringList);
         void createChatRumor(QString);
         void createDirectChat(QString,QString);
         void refreshDirectConvo(QString);
@@ -41,6 +41,7 @@ class GUI : public QDialog
         void gotRefreshDirectConvo(QString);
         void gotRefreshOrigins(QStringList);
         void gotRefreshNeighbors(QList<Peer>);
+        void gotRefreshSharedFiles();
 
     private slots:
         void originSelected(QListWidgetItem*);
