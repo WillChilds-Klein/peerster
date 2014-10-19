@@ -7,6 +7,7 @@
 #define BLOCK_SIZE ("8000")
 
 class Message;
+class File;
 
 class FileStore : public QObject
 {

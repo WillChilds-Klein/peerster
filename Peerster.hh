@@ -8,8 +8,8 @@
 #include <QApplication>
 #include <QtCrypto>
 #include <QDebug>
-#include <QCritical>
-#include <QFatal>
+// #include <QCritical>
+// #include <QFatal>
 #include <QTextEdit>
 #include <QLineEdit>
 #include <QUdpSocket>

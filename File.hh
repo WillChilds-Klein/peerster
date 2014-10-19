@@ -3,7 +3,7 @@
 
 #include "Peerster.hh"
 
-#define BLOCK_SIZE ("8000")
+#define BLOCK_SIZE (8000)
 
 #define ID_MAX (100000)
 
@@ -12,12 +12,13 @@ class File
     // Q_OBJECT
 
     public:
-        File(QString);
+        File(QString,QString);
         ~File();
         QString name();
         QString abspath();
         quint32 size();
         QString ID();
+        QString blockFileName();
 
     private:
         QString fileName;
@@ -25,15 +26,12 @@ class File
         quint32 fileSize;
         QString fileID;
         QString tempDirPath;
-        QFile* qfile;
+        QFile qfile;
         QList<QFile>* blocks;
         QList<QByteArray>* blockHashes;
-        QFile* metafile;
-        QFile* metafileHash;
-        void splitFile();
-        void hashBlocks();
-        void generateMetafile();
-        void hashMetafile();
+        QFile metafile;
+        QByteArray metafileHash;
+        void processFile();
         bool operator==(Peer);
         bool operator!=(Peer);
 };

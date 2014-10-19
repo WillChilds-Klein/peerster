@@ -2,7 +2,7 @@
 
 File::File(QString absolutepath, QString tempdirpath)
     : blocks(new QList<QFile>)
-    , blockHashes(new QList<QFile>)
+    , blockHashes(new QList<QByteArray>)
 {
     if(absolutepath.isEmpty())
     {
@@ -10,7 +10,7 @@ File::File(QString absolutepath, QString tempdirpath)
         return;
     }
 
-    qfile = new QFile(absolutepath);
+    qfile = QFile(absolutepath);
     if (!qfile.open(QIODevice::ReadOnly)) {
         qDebug() << "FILE " << absolutepath << "DOESN'T EXIST!";
         return;
@@ -25,10 +25,7 @@ File::File(QString absolutepath, QString tempdirpath)
     tempDirPath = tempdirpath + 
                  (tempdirpath.endsWith("/") ? "" : "/");
 
-    generateBlocks();
-    hashBlocks();
-    generateMetaFile();
-    hashMetafile();
+    processFile();
 }
 
 File::~File()
@@ -54,13 +51,19 @@ QString File::ID()
     return fileID;
 }
 
+QString File::blockFileName(quint32 i)
+{
+    return tempDirPath + fileName + "." + i + ".block";
+}
+
 void File::processFile()
 {
-    QCA::Hash shaHash("sha256");
+    QCA::Hash sha("sha256");
     QDataStream fileIn(qfile), 
                 blockOut;
     QFile block;
     QString blockName;
+    QByteArray blockData, blockHash, metaData;
     char buffer[BLOCK_SIZE];
     int readSize, i;
 
@@ -68,9 +71,9 @@ void File::processFile()
     while(!fileIn.atEnd())
     {
         readSize = fileIn.readRawData(buffer, blockSize);
-        blockName = tempDirPath + fileName + "." + i + ".block";
         block = QFile(blockName);
-        
+        blockName = blockFileName(i);
+
         // write block.
         if (block.open(QIODevice::WriteOnly))
         {
@@ -80,14 +83,36 @@ void File::processFile()
         }
         else
         {
-            qCritical() << "COULDN'T CREATE BLOCK "<< i << "!";
+            qCritical() << "COULDN'T CREATE BLOCK "<< i << " FOR " 
+                                                   << fileName << "!";
         }
-        blocks.append(block);
+        blocks->append(block);
+
+        // hash block
+        blockData = block.readAll();
+        blockHash = sha.hash(blockData);
+        blockHashes->append(blockHash);
+
+        // update metafile
+        metaData.append(blockHash);
 
         i++;
     }
 
-    // anything else? make sure this is complete.
+    // write metafile
+    metafile = QFile(tempDirPath + fileName + ".meta");
+    if(metafile.open(QIODevice::WriteOnly))
+    {
+        metafile.writeData(metaData);
+        metafile.close();
+    }
+    else
+    {
+        qCritical() << "COULDN'T CREATE METAFILE FOR "<< fileName << "!";
+    }
+
+    // hash metafile
+    metafileHash = sha.hash(metaData);
 }
 
 bool File::operator==(File other)
