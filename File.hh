@@ -5,9 +5,9 @@
 
 #define BLOCK_SIZE (8000)
 
-#define ID_MAX (100000)
+#define FILE_ID_MAX (100000)
 
-class File
+class File // : public QObject
 {
     // Q_OBJECT
 
@@ -18,7 +18,7 @@ class File
         QString abspath();
         quint32 size();
         QString ID();
-        QString blockFileName();
+        QString blockFileName(quint32);
 
     private:
         QString fileName;
@@ -32,8 +32,8 @@ class File
         QFile metafile;
         QByteArray metafileHash;
         void processFile();
-        bool operator==(Peer);
-        bool operator!=(Peer);
+        bool operator==(File);
+        bool operator!=(File);
 };
 
 #endif // PEERSTER_FILE_HH

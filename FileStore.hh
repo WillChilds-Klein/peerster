@@ -3,8 +3,7 @@
 
 #include "Peerster.hh"
 
-#define TEMPDIR_NDIGITS ("5")
-#define BLOCK_SIZE ("8000")
+#define TEMPDIR_NDIGITS ("5")   
 
 class Message;
 class File;
