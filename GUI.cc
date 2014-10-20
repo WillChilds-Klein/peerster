@@ -3,20 +3,23 @@
 GUI::GUI(Peerster* p)
     : peerster(p)
     , mainlayout(new QGridLayout(this))
-    , filelayout(new QVBoxLayout(this))
+    , filesharelayout(new QVBoxLayout(this))
+    , filesearchlayout(new QVBoxLayout(this))
     , groupchatlayout(new QVBoxLayout(this))
     , neighborlayout(new QVBoxLayout(this))
     , originslayout(new QVBoxLayout(this))
     , directchatlayout(new QVBoxLayout(this))
-    , fileview(new QTextEdit(this))
+    , fileshareview(new QTextEdit(this))
+    , filesearchview(new QTextEdit(this))
     , groupchatview(new QTextEdit(this))
     , neighborview(new QTextEdit(this))
     , directchatview(new QTextEdit(this))
+    , filesearchentry(new EntryQTextEdit())
     , groupchatentry(new EntryQTextEdit())
     , directchatentry(new EntryQTextEdit())
     , neighborentry(new EntryQTextEdit())
     , addneighborbutton(new QPushButton())
-    , addfilebutton(new QPushButton())
+    , sharefilebutton(new QPushButton())
     , originslist(new QListWidget(this))
 {
     connect(groupchatentry, SIGNAL(returnPressed()), 
@@ -25,7 +28,7 @@ GUI::GUI(Peerster* p)
         this, SLOT(gotNeighborEntered()));
     connect(addneighborbutton, SIGNAL(clicked()),
         this, SLOT(gotNeighborEntered()));
-    connect(addfilebutton, SIGNAL(clicked()),
+    connect(sharefilebutton, SIGNAL(clicked()),
         this, SLOT(gotOpenFileDialog()));
     connect(directchatentry, SIGNAL(returnPressed()),
         this, SLOT(gotDirectChatEntered()));
@@ -33,17 +36,21 @@ GUI::GUI(Peerster* p)
         this, SLOT(gotRefreshDirectConvo(QString)));
     connect(originslist, SIGNAL(itemClicked(QListWidgetItem*)),
         this, SLOT(originSelected(QListWidgetItem*)));
+    connect(filesearchentry, SIGNAL(returnPressed()),
+        this, SLOT(gotFileSearchEntered()));
     
-    createFileLayout();
-    createNeighborLayout();
+    createFileShareLayout();
+    createFileSearchLayout();
     createGroupChatLayout();
     createOriginsLayout();
+    createNeighborLayout();
     createDirectChatLayout();
 
-    mainlayout->addLayout(filelayout,       0, 0);
-    mainlayout->addLayout(neighborlayout,   1, 0);
-    mainlayout->addLayout(groupchatlayout,  0, 1, 2, 1);
-    mainlayout->addLayout(originslayout,    0, 2);
+    mainlayout->addLayout(filesharelayout,  0, 0);
+    mainlayout->addLayout(filesearchlayout, 1, 0);
+    mainlayout->addLayout(groupchatlayout,  0, 1);
+    mainlayout->addLayout(originslayout,    1, 1);
+    mainlayout->addLayout(neighborlayout,   0, 2);
     mainlayout->addLayout(directchatlayout, 1, 2);
 
     setLayout(mainlayout);
@@ -148,13 +155,13 @@ void GUI::gotRefreshNeighbors(QList<Peer> neighbors)
 
 void GUI::gotRefreshSharedFiles()
 {
-    fileview->clear();
+    fileshareview->clear();
 
     QString entry;
     foreach(QString filename, sharedFileInfo->keys())
     {
         entry = filename + "(" + sharedFileInfo->value(filename) + "B)";
-        fileview->append(filename);
+        fileshareview->append(filename);
     }
 }
 
@@ -199,17 +206,44 @@ void GUI::gotOpenFileDialog()
     Q_EMIT(processFilesToShare(fileNames));
 }
 
-void GUI::createFileLayout()
+void GUI::gotFileSearchEntered()
 {
-    QLabel* filelabel = new QLabel(TITLE_FILE, this, 0);
+    QString entry = QString(filesearchentry->toPlainText());
+    QStringList args = entry.split(":");
 
-    fileview->setReadOnly(true);
+    if(args.size() == 2)
+    {
+        Q_EMIT(requestFile(args.first(), args.last()));
+    }
 
-    addfilebutton->setText(TITLE_ADDFILE);
+    filesearchentry->clear();
+}
 
-    filelayout->addWidget(filelabel);
-    filelayout->addWidget(fileview);
-    filelayout->addWidget(addfilebutton);
+void GUI::createFileShareLayout()
+{
+    QLabel* filesharelabel = new QLabel(TITLE_FILESHARE, this, 0);
+
+    fileshareview->setReadOnly(true);
+
+    sharefilebutton->setText(TITLE_SHAREFILE);
+
+    filesharelayout->addWidget(filesharelabel);
+    filesharelayout->addWidget(fileshareview);
+    filesharelayout->addWidget(sharefilebutton);
+}
+
+void GUI::createFileSearchLayout()
+{
+    QLabel* filesearchlabel = new QLabel(TITLE_FILESEARCH, this, 0);
+
+    filesearchview->setReadOnly(true);
+
+    filesearchentry->setReadOnly(false);
+    filesearchentry->setLineWrapMode(QTextEdit::WidgetWidth);
+
+    filesearchlayout->addWidget(filesearchlabel);
+    filesearchlayout->addWidget(filesearchview);
+    filesearchlayout->addWidget(filesearchentry);
 }
 
 void GUI::createNeighborLayout()

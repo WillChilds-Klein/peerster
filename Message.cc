@@ -142,13 +142,19 @@ QByteArray Message::toSerializedQVMap()
 
 bool Message::isWellFormed()
 {
-    bool isStatus, isRumor, isDChat;
+    bool isStatus, isRumor, isDChat, isBlock;
     isStatus = contains(KEY_WANT);
     isRumor = (contains(KEY_ORIGINID) && contains(KEY_SEQNO));
     isDChat = (contains(KEY_ORIGINID) && contains(KEY_CHATTEXT) && 
                contains(KEY_HOPLIMIT) && contains(KEY_DEST));
     isBlock = (contains(KEY_BLOCKREQUEST) || contains(KEY_BLOCKREPLY));
-    if(isStatus || isRumor || isDChat || isBlock)
+    
+    if(getType() == TYPE_BLOCK_REPLY && !isValidBlockReply())
+    {
+        qDebug() << "INVALID BLOCK REPLY!!"
+        return false;
+    } // potentially comment out...
+    else if(isStatus || isRumor || isDChat || isBlock)
     {
         return true;
     }
@@ -165,6 +171,20 @@ bool Message::isDirectRumor()
 {
     return (getType() == TYPE_RUMOR_CHAT || getType() == TYPE_RUMOR_ROUTE) && 
            (!contains(KEY_LASTIP) && !contains(KEY_LASTPORT));
+}
+
+bool Message::isValidBlockReply()
+{
+    if(!(getType() == TYPE_BLOCK_REPLY))
+    {
+        return false;
+    }
+
+    QCA::Hash sha("sha1");
+    sha.update(getData().data()); // <-- potential segfault?
+    QByteArray hash = sha.final().toByteArray();
+
+    return hash == getBlockReply();
 }
 
 void Message::setType(QString str)
@@ -212,17 +232,17 @@ void Message::setLastPort(quint16 port)
     insert(KEY_LASTPORT, port);
 }
 
-void setBlockRequest(QByteArray arr)
+void Message::setBlockRequest(QByteArray arr)
 {
     insert(KEY_BLOCKREQUEST, arr);
 }
 
-void setBlockReply(QByteArray arr)
+void Message::setBlockReply(QByteArray arr)
 {
     insert(KEY_BLOCKREPLY, arr);
 }
 
-void setData(QByteArray arr)
+void Message::setData(QByteArray arr)
 {
     insert(KEY_DATA, arr);
 }
@@ -272,17 +292,17 @@ quint16 Message::getLastPort()
     return value(KEY_LASTPORT).toInt();
 }
 
-QByteArray getBlockRequest()
+QByteArray Message::getBlockRequest()
 {
     return value(KEY_BLOCKREQUEST).toByteArray();
 }
 
-QByteArray getBlockReply()
+QByteArray Message::getBlockReply()
 {
     return value(KEY_BLOCKREPLY).toByteArray();
 }
 
-QByteArray getData()
+QByteArray Message::getData()
 {
     return value(KEY_DATA).toByteArray();
 }

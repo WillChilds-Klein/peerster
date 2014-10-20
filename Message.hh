@@ -14,6 +14,7 @@ class Message : public QVariantMap
         bool isWellFormed();
         bool isEmptyStatus();
         bool isDirectRumor();
+        bool isValidBlockReply();
         void setType(QString);
         void setChatText(QString);
         void setOriginID(QString);

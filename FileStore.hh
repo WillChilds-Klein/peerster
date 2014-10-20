@@ -21,9 +21,14 @@ class FileStore : public QObject
 
     signals:
         void refreshSharedFiles();
+        void sendDirect(Message,QString);
 
     public slots:
         void gotProcessFilesToShare(QStringList);
+        void gotRequestFile(QString,QString);
+        // void gotProcessFileSearchRequest(QStringList);
+        void gotProcessBlockRequest(Message);
+        void gotProcessBlockReply(Message);
 
     private:
         Peerster* peerster;

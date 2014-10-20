@@ -134,6 +134,8 @@ void File::processFile()
     sha.update(metaFile);
     metaFileHash = sha.final().toByteArray();
     metaFile->close();
+
+    qDebug() << "HEX METAFILE HASH: " << QCA::arrayToHex(metaFileHash);
 }
 
 bool File::operator==(File other)

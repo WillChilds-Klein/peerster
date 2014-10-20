@@ -1,13 +1,14 @@
 #ifndef PEERSTER_GUI_HH
 #define PEERSTER_GUI_HH
 
-#define TITLE_FILE ("Shared Files")
+#define TITLE_FILESHARE ("Shared Files")
+#define TITLE_FILESEARCH ("Search Files")
 #define TITLE_NEIGHBOR ("Neighbor Peer Locations")
 #define TITLE_GROUPCHAT ("Group Chat")
 #define TITLE_ORIGINS ("Known Peer ID's")
 #define TITLE_DIRECTCHAT ("Direct Messages")
 
-#define TITLE_ADDFILE ("Add File")
+#define TITLE_SHAREFILE ("Share File")
 #define TITLE_ADDNEIGHBOR ("Add Neighbor")
 
 #include "Peerster.hh"
@@ -35,6 +36,8 @@ class GUI : public QDialog
         void createChatRumor(QString);
         void createDirectChat(QString,QString);
         void refreshDirectConvo(QString);
+        void requestFile(QString,QString);
+        // void gotSearchForFiles(QStringList);
 
     public slots:
         void gotRefreshGroupConvo();
@@ -49,6 +52,7 @@ class GUI : public QDialog
         void gotDirectChatEntered();
         void gotNeighborEntered();
         void gotOpenFileDialog();
+        void gotFileSearchEntered();
 
     private:
         Peerster* peerster;
@@ -58,14 +62,16 @@ class GUI : public QDialog
         QString ID;
         QGridLayout* mainlayout;
         QVBoxLayout *groupchatlayout, *neighborlayout, 
-                    *directchatlayout, *originslayout, *filelayout;
+                    *directchatlayout, *originslayout, 
+                    *filesharelayout, *filesearchlayout;
         QTextEdit *neighborview, *groupchatview, 
-                  *directchatview, *fileview;
-        EntryQTextEdit *groupchatentry, *neighborentry, 
-                       *directchatentry;
-        QPushButton *addneighborbutton, *addfilebutton;
+                  *directchatview, *fileshareview, *filesearchview;
+        EntryQTextEdit *filesearchentry, *groupchatentry, 
+                       *neighborentry, *directchatentry;
+        QPushButton *addneighborbutton, *sharefilebutton;
         QListWidget* originslist;
-        void createFileLayout();
+        void createFileShareLayout();
+        void createFileSearchLayout();
         void createNeighborLayout();
         void createGroupChatLayout();
         void createOriginsLayout();

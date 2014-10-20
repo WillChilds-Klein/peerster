@@ -35,6 +35,32 @@ void FileStore::gotProcessFilesToShare(QStringList absfilepaths)
     Q_EMIT(refreshSharedFiles());
 }
 
+void FileStore::gotRequestFile(QString origin, QString hash)
+{
+    Message msg;
+
+    msg.setType(TYPE_BLOCK_REQUEST);
+    msg.setDest(origin);
+    msg.setOriginID(ID);
+    msg.setHopLimit((quint32) BLOCK_HOP_LIMIT);
+    msg.setBlockRequest(QByteArray::fromHex(hash.toLatin1()));
+
+    qDebug() << "SEND " << msg.toString();
+    qDebug() << "TO: " << origin;
+
+    Q_EMIT(sendDirect(msg, origin));
+}
+
+void FileStore::gotProcessBlockRequest(Message msg)
+{
+
+}
+
+void FileStore::gotProcessBlockReply(Message msg)
+{
+
+}
+
 void FileStore::makeTempdir()
 {
     if(tempdir)

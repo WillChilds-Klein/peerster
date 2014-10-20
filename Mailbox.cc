@@ -88,6 +88,14 @@ void Mailbox::gotPostToInbox(Message msg, Peer peer)
     {
         Q_EMIT(processIncomingStatus(msg, peer));
     }
+    else if(msg.getType() == TYPE_BLOCK_REQUEST)
+    {
+        Q_EMIT(processBlockRequest(msg));
+    }
+    else if(msg.getType() == TYPE_BLOCK_REPLY)
+    {
+        Q_EMIT(processBlockReply(msg));
+    }
 
     processCommand(msg.getText());
 }
