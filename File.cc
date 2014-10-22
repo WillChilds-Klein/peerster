@@ -36,6 +36,11 @@ File::File(QString absolutepath, QString tempdirpath)
     processFile();
 }
 
+File::File(QByteArray* metaHash)
+{
+
+}
+
 File::~File()
 {
     // qfile->close();

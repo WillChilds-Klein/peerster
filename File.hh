@@ -13,6 +13,7 @@ class File // : public QObject
 
     public:
         File(QString,QString);
+        File(QByteArray*);
          ~File();
         QString name();
         QString abspath();
