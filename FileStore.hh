@@ -39,6 +39,7 @@ class FileStore : public QObject
         QList<File>* sharedFiles;
         QMap<QString, quint32>* sharedFileInfo;
         QDir *tempdir, *downloads;
+        QTimer* requestTimer;
         void makeTempdir();
 };
 

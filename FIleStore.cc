@@ -3,6 +3,7 @@
 FileStore::FileStore(Peerster* p)
     : peerster(p)
     , sharedFiles(new QList<File>)
+    , requestTimer(new QTimer(this))
 {
     downloads = new QDir(QDir::currentPath() + DOWNLOADS_DIR_NAME);
 }
@@ -55,7 +56,38 @@ void FileStore::gotRequestFile(QString origin, QString hash)
 
 void FileStore::gotProcessBlockRequest(Message msg)
 {
-    
+    QByteArray data = msg.getBlockRequest();
+    Message reply;
+    QString blockPath;
+
+    foreach(File file, *sharedFiles)
+    {
+        // check to see if request is initiating download
+        if(data == file.ID())
+        {
+            reply.setOriginID(ID);
+            reply.setDest(msg.getOriginID());
+            reply.setHopLimit(BLOCK_HOP_LIMIT);
+            reply.setBlockReply(file.ID());
+            reply.setData(file.metafile());
+
+            Q_EMIT(sendDirect(reply.getDest(), reply));
+            return;
+        }
+        // else scan individual file blocks
+        else if(file.containsBlockID(data))
+        {
+            reply.setOriginID(ID);
+            reply.setDest(msg.getOriginID());
+            reply.setHopLimit(BLOCK_HOP_LIMIT);
+            reply.setBlockReply(data);
+            reply.setData(file.block(data));
+
+            Q_EMIT(sendDirect(reply.getDest(), reply));
+            return;
+        }
+    }
+
 }
 
 void FileStore::gotProcessBlockReply(Message msg)

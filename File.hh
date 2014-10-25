@@ -19,19 +19,23 @@ class File // : public QObject
         QString name();
         QString abspath();
         quint32 size();
-        QString ID();
-        QString blockFileName(quint32);
+        QByteArray ID();
+        QByteArray metafile();
+        QByteArray block(QByteArray);
+        bool containsBlock(QByteArray);
         void share();
 
     private:
-        QString fileName, absFilePath, fileID, 
-                tempDirPath, downloadsDirPath;
+        QString fileName, absFilePath, tempDirPath, 
+                downloadsDirPath;
         quint32 fileSize;
         bool complete, shared;
         QFile *qfile, *metaFile;
         QList<QFile*>* blocks;
-        QList<QByteArray>* blockHashes;
-        QByteArray* metaFileHash;
+        QList<QByteArray>* blockIDs;
+        QHash<QByteArray,QFile*>* blockIDTable;
+        QByteArray* metaFileID;
+        QString blockFileName(quint32);
         void processFileForSharing();
         bool operator==(File);
         bool operator!=(File);
