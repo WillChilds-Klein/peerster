@@ -68,6 +68,11 @@
 #define KEY_BLOCKREQUEST ("BlockRequest")
 #define KEY_BLOCKREPLY ("BlockReply")
 #define KEY_DATA ("Data")
+#define KEY_SEARCH ("SearchRequest")
+#define KEY_BUDGET ("Budget")
+#define KEY_SEARCHREPLY ("SearchReply")
+#define KEY_MATCHNAMES ("MatchNames")
+#define KEY_MATCHIDS ("MatchIDs")
 
 #define TYPE_RUMOR_CHAT ("ChatRumor")
 #define TYPE_RUMOR_ROUTE ("RouteRumor")
@@ -75,6 +80,8 @@
 #define TYPE_DIRECT_CHAT ("DirectChat")
 #define TYPE_BLOCK_REQUEST ("BlockRequest")
 #define TYPE_BLOCK_REPLY ("BlockReply")
+#define TYPE_SEARCH_REQUEST ("SearchRequest")
+#define TYPE_SEARCH_REPLY ("SearchReply")
 #define TYPE_NONE ("None")
 
 #define SWITCH_NOFORWARD ("-noforward")

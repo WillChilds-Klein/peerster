@@ -37,6 +37,8 @@ class Mailbox : public QObject
         void processIncomingStatus(Message,Peer);
         void processBlockRequest(Message);
         void processBlockReply(Message);
+        void processSearchRequest(Message);
+        void processSearchReply(Message);
         void broadcastRoute();
         void processNeighbor(Peer);
         void monger(Message);

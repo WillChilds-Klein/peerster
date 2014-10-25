@@ -1,6 +1,6 @@
 #!/bin/bash
 
-make clean &&
+# make clean &&
 (qmake-qt4 || qmake) && 
-make clean && 
+# make clean && 
 make

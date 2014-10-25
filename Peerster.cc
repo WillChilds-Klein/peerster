@@ -44,6 +44,10 @@ Peerster::Peerster()
         filestore, SLOT(processBlockRequest(Message)));
     connect(mailbox, SIGNAL(processBlockReply(Message)),
         filestore, SLOT(processBlockReply(Message)));
+    connect(mailbox, SIGNAL(processSearchRequest(Message)),
+        filestore, SLOT(gotProcessSearchRequest(Message)));
+    connect(mailbox, SIGNAL(processSearchReply(Message)),
+        filestore, SLOT(gotProcessSearchReply(Message)));
     connect(mailbox, SIGNAL(broadcastRoute()), 
         messagestore, SLOT(gotBroadcastRoute()));
 

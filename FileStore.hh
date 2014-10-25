@@ -4,6 +4,7 @@
 #include "Peerster.hh"
 
 #define SHARED_FILE_DIR_PREFIX ("/tmp/peerster-")
+// #define DOWNLOADS_DIR_NAME ("downloads")
 #define TEMPDIR_NDIGITS (5)   
 
 class Message;
@@ -29,13 +30,15 @@ class FileStore : public QObject
         // void gotProcessFileSearchRequest(QStringList);
         void gotProcessBlockRequest(Message);
         void gotProcessBlockReply(Message);
+        void gotProcessSearchRequest(Message);
+        void gotProcessSearchReply(Message);
 
     private:
         Peerster* peerster;
         QString ID;
         QList<File>* sharedFiles;
         QMap<QString, quint32>* sharedFileInfo;
-        QDir* tempdir;
+        QDir *tempdir, *downloads;
         void makeTempdir();
 };
 

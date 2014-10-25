@@ -3,7 +3,9 @@
 FileStore::FileStore(Peerster* p)
     : peerster(p)
     , sharedFiles(new QList<File>)
-{}
+{
+    downloads = new QDir(QDir::currentPath() + DOWNLOADS_DIR_NAME);
+}
 
 FileStore::~FileStore()
 {}
@@ -45,20 +47,30 @@ void FileStore::gotRequestFile(QString origin, QString hash)
     msg.setHopLimit((quint32) BLOCK_HOP_LIMIT);
     msg.setBlockRequest(QByteArray::fromHex(hash.toLatin1()));
 
-    qDebug() << "SEND " << msg.toString();
-    qDebug() << "TO: " << origin;
-
     Q_EMIT(sendDirect(msg, origin));
+
+    qDebug() << "SENT " << msg.toString();
+    qDebug() << "TO: " << origin;
 }
 
 void FileStore::gotProcessBlockRequest(Message msg)
 {
-
+    
 }
 
 void FileStore::gotProcessBlockReply(Message msg)
 {
+    // TODO
+}
 
+void FileStore::gotProcessSearchRequest(Message msg)
+{
+    // TODO
+}
+
+void FileStore::gotProcessSearchReply(Message msg)
+{
+    // TODO
 }
 
 void FileStore::makeTempdir()

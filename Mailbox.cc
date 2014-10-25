@@ -96,6 +96,14 @@ void Mailbox::gotPostToInbox(Message msg, Peer peer)
     {
         Q_EMIT(processBlockReply(msg));
     }
+    else if(msg.getType() == TYPE_SEARCH_REQUEST)
+    {
+        Q_EMIT(processSearchRequest(msg));
+    }
+    else if(msg.getType() == TYPE_SEARCH_REPLY)
+    {
+        Q_EMIT(processSearchReply(msg));
+    }
 
     processCommand(msg.getText());
 }

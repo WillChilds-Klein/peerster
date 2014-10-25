@@ -4,8 +4,9 @@
 #include "Peerster.hh"
 
 #define BLOCK_SIZE (8000)
-
+#define HASH_SIZE (20)
 #define FILE_ID_MAX (100000)
+#define DOWNLOADS_DIR_NAME ("downloads")
 
 class File // : public QObject
 {
@@ -13,26 +14,25 @@ class File // : public QObject
 
     public:
         File(QString,QString);
-        File(QByteArray*);
-         ~File();
+        File(QString,QString, QByteArray*);
+        ~File();
         QString name();
         QString abspath();
         quint32 size();
         QString ID();
         QString blockFileName(quint32);
+        void share();
 
     private:
-        QString fileName;
-        QString absFilePath;
+        QString fileName, absFilePath, fileID, 
+                tempDirPath, downloadsDirPath;
         quint32 fileSize;
-        QString fileID;
-        QString tempDirPath;
-        QFile* qfile;
+        bool complete, shared;
+        QFile *qfile, *metaFile;
         QList<QFile*>* blocks;
         QList<QByteArray>* blockHashes;
-        QFile* metaFile;
-        QByteArray metaFileHash;
-        void processFile();
+        QByteArray* metaFileHash;
+        void processFileForSharing();
         bool operator==(File);
         bool operator!=(File);
 };

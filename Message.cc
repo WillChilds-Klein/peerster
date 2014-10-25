@@ -48,6 +48,17 @@ Message::Message(QByteArray* arr)
         {
             setType(TYPE_BLOCK_REPLY);
         }
+        else if(contains(KEY_ORIGINID) && contains(KEY_SEARCH) && 
+                contains(KEY_BUDGET))
+        {
+            setType(TYPE_SEARCH_REQUEST);
+        }
+        else if(contains(KEY_DEST) && contains(KEY_ORIGINID) && 
+                contains(KEY_HOPLIMIT) && contains(KEY_SEARCHREPLY) &&
+                contains(KEY_MATCHNAMES) && contains(KEY_MATCHIDS))
+        {
+            setType(TYPE_SEARCH_REPLY);
+        }
     }
     else
     {
@@ -134,6 +145,21 @@ QByteArray Message::toSerializedQVMap()
         map.insert(KEY_BLOCKREPLY, value(KEY_BLOCKREPLY));
         map.insert(KEY_DATA, value(KEY_DATA));
     }
+    else if(getType() == TYPE_SEARCH_REQUEST)
+    {
+        map.insert(KEY_ORIGINID, value(KEY_ORIGINID));
+        map.insert(KEY_SEARCH, value(KEY_BUDGET));
+        map.insert(KEY_BUDGET, value(KEY_BUDGET));
+    }
+    else if(getType() == TYPE_SEARCH_REPLY)
+    {
+        map.insert(KEY_DEST, value(KEY_DEST));
+        map.insert(KEY_ORIGINID, value(KEY_ORIGINID));
+        map.insert(KEY_HOPLIMIT, value(KEY_HOPLIMIT));
+        map.insert(KEY_SEARCHREPLY, value(KEY_SEARCHREPLY));
+        map.insert(KEY_MATCHNAMES, value(KEY_MATCHNAMES));
+        map.insert(KEY_MATCHIDS, value(KEY_MATCHIDS));
+    }
 
     stream << map;
 
@@ -142,19 +168,22 @@ QByteArray Message::toSerializedQVMap()
 
 bool Message::isWellFormed()
 {
-    bool isStatus, isRumor, isDChat, isBlock;
+    bool isStatus, isRumor, isDChat, isBlock, isSearch;
     isStatus = contains(KEY_WANT);
     isRumor = (contains(KEY_ORIGINID) && contains(KEY_SEQNO));
     isDChat = (contains(KEY_ORIGINID) && contains(KEY_CHATTEXT) && 
                contains(KEY_HOPLIMIT) && contains(KEY_DEST));
-    isBlock = (contains(KEY_BLOCKREQUEST) || contains(KEY_BLOCKREPLY));
+    isBlock = (contains(KEY_BLOCKREQUEST) && contains(KEY_ORIGINID) &&
+               contains(KEY_HOPLIMIT) && 
+              (contains(KEY_DEST) || contains(KEY_BLOCKREPLY)));
+    isSearch = (contains(KEY_SEARCH) || contains(KEY_SEARCHREPLY));
     
     if(getType() == TYPE_BLOCK_REPLY && !isValidBlockReply())
     {
-        qDebug() << "INVALID BLOCK REPLY!!"
+        qDebug() << "INVALID BLOCK REPLY!!";
         return false;
     } // potentially comment out...
-    else if(isStatus || isRumor || isDChat || isBlock)
+    else if(isStatus || isRumor || isDChat || isBlock || isSearch)
     {
         return true;
     }
@@ -247,6 +276,31 @@ void Message::setData(QByteArray arr)
     insert(KEY_DATA, arr);
 }
 
+void Message::setSearch(QString qstr)
+{
+    insert(KEY_SEARCH, qstr);
+}
+
+void Message::setBudget(quint32 bud)
+{
+    insert(KEY_BUDGET, bud);
+}
+
+void Message::setSearchReply(QString qstr)
+{
+    insert(KEY_SEARCHREPLY, qstr);
+}
+
+void Message::setMatchNames(QVariantList qvl)
+{
+    insert(KEY_MATCHNAMES, qvl);
+}
+
+void Message::setMatchIDs(QByteArray arr)
+{
+    insert(KEY_MATCHIDS, arr);
+}
+
 QString Message::getType()
 {
     return value(KEY_TYPE).toString();
@@ -307,4 +361,28 @@ QByteArray Message::getData()
     return value(KEY_DATA).toByteArray();
 }
 
+QString Message::getSearch()
+{
+    return value(KEY_SEARCH).toString();
+}
+
+quint32 Message::getBudget()
+{
+    return value(KEY_BUDGET).toInt();
+}
+
+QString Message::getSearchReply()
+{
+    return value(KEY_SEARCHREPLY).toString();
+}
+
+QVariantList Message::getMatchNames()
+{
+    return value(KEY_MATCHNAMES).toList();
+}
+
+QByteArray Message::getMatchIDs()
+{
+    return value(KEY_MATCHIDS).toByteArray();
+}
 

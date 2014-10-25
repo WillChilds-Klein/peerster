@@ -27,6 +27,11 @@ class Message : public QVariantMap
         void setBlockRequest(QByteArray);
         void setBlockReply(QByteArray);
         void setData(QByteArray);
+        void setSearch(QString);
+        void setBudget(quint32);
+        void setSearchReply(QString);
+        void setMatchNames(QVariantList);
+        void setMatchIDs(QByteArray);
         QString getType();
         QString getText();
         QString getOriginID();
@@ -39,6 +44,11 @@ class Message : public QVariantMap
         QByteArray getBlockRequest();
         QByteArray getBlockReply();
         QByteArray getData();
+        QString getSearch();
+        quint32 getBudget();
+        QString getSearchReply();
+        QVariantList getMatchNames();
+        QByteArray getMatchIDs();
 
     private:
         bool wellFormed;

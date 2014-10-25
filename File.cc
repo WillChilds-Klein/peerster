@@ -1,7 +1,9 @@
 #include "File.hh"
 
-File::File(QString absolutepath, QString tempdirpath)
+File::File(QString absolutepath, QString temppath)
     : qfile(new QFile)
+    , complete(false)
+    , shared(false)
     , metaFile(new QFile)
     , blocks(new QList<QFile*>)
     , blockHashes(new QList<QByteArray>)
@@ -19,26 +21,50 @@ File::File(QString absolutepath, QString tempdirpath)
     }
 
     fileName = absolutepath.split("/").last();
-    absFilePath = qfile->fileName();
+    absFilePath = qfile->fileName();    fileID = QString::number((qrand() % FILE_ID_MAX) + 1);
+    tempDirPath = temppath + 
+                 (temppath.endsWith("/") ? "" : "/");
+    downloadsDirPath = QDir::currentPath() + DOWNLOADS_DIR_NAME + "/";
+
     fileSize = qfile->size();
 
-    fileID = QString::number((qrand() % FILE_ID_MAX) + 1);
+    complete = true;
 
-    tempDirPath = tempdirpath + 
-                 (tempdirpath.endsWith("/") ? "" : "/");
-
-    qDebug() << "SHARING FILE " << fileName << " (" 
+    qDebug() << "CREATED FILE " << fileName << " (" 
              << fileSize << " B)";
     qDebug() << "LOCATED AT " << absFilePath;
     qDebug() << "FILE ID: " << fileID;
     qDebug() << "TEMP DIR:" << tempDirPath;
-
-    processFile();
 }
 
-File::File(QByteArray* metaHash)
+File::File(QString fn, QString temppath, QByteArray* metaHashBits)
+    : qfile(new QFile)
+    , fileName(fn)
+    , complete(false)
+    , shared(false)
+    , metaFile(new QFile)
+    , blocks(new QList<QFile*>)
 {
+    if(metaHashBits == NULL || metaHashBits->size() != HASH_SIZE)
+    {
+        qDebug() << "INVALID HASH!";
+        return;
+    }
 
+    downloadsDirPath = QDir::currentPath() + DOWNLOADS_DIR_NAME + "/";
+
+    fileName = fn;
+    absFilePath = downloadsDirPath + fn;
+    fileID = QString::number((qrand() % FILE_ID_MAX) + 1);
+    tempDirPath = temppath + 
+                 (temppath.endsWith("/") ? "" : "/");
+
+    metaFileHash = new QByteArray(*metaHashBits);
+
+    qDebug() << "DOWNLOADED FILE " << fileName;
+    qDebug() << "LOCATED AT " << absFilePath;
+    qDebug() << "FILE ID: " << fileID;
+    qDebug() << "TEMP DIR:" << tempDirPath;
 }
 
 File::~File()
@@ -76,7 +102,20 @@ QString File::blockFileName(quint32 i)
     return tempDirPath + fileName + "." + QString::number(i) + ".block";
 }
 
-void File::processFile()
+void File::share()
+{
+    processFileForSharing();
+
+    shared = true;
+
+    qDebug() << "SHARED FILE " << fileName << " (" 
+             << fileSize << " B)";
+    qDebug() << "LOCATED AT " << absFilePath;
+    qDebug() << "FILE ID: " << fileID;
+    qDebug() << "TEMP DIR:" << tempDirPath;
+}
+
+void File::processFileForSharing()
 {
     QCA::Hash sha("sha1");
     QDataStream fileInStream(qfile);
@@ -137,10 +176,10 @@ void File::processFile()
 
     // hash metaFile
     sha.update(metaFile);
-    metaFileHash = sha.final().toByteArray();
+    metaFileHash = new QByteArray(sha.final().toByteArray());
     metaFile->close();
 
-    qDebug() << "HEX METAFILE HASH: " << QCA::arrayToHex(metaFileHash);
+    qDebug() << "HEX METAFILE HASH: " << QCA::arrayToHex(*metaFileHash);
 }
 
 bool File::operator==(File other)
