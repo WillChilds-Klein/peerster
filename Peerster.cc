@@ -80,6 +80,8 @@ Peerster::Peerster()
     // FileStore
     connect(filestore, SIGNAL(refreshSharedFiles()),
         gui, SLOT(gotRefreshSharedFiles()));
+    connect(filestore, SIGNAL(refreshDownloadInfo()),
+        gui, SLOT(gotRefreshDownloadInfo()));
     connect(filestore, SIGNAL(sendDirect(Message,QString)),
         messagestore, SLOT(gotSendDirect(Message,QString)));
 
@@ -100,6 +102,7 @@ Peerster::Peerster()
     }
 
     QMap<QString, quint32>* sharedFileInfo = new QMap<QString, quint32>;
+    QMap<QString,DownloadStatus>* downloadInfo = new QMap<QString,DownloadStatus>;
     QList<Message>* groupConvo = new QList<Message>;
     QMap< QString,QList<Message> >* directStore = 
         new QMap< QString,QList<Message> >;
@@ -109,6 +112,7 @@ Peerster::Peerster()
     gui->setWindowTitle("Peerster Instance " + ID + " on port " + QString::number(port));
     gui->setID(ID);
     gui->setSharedFileInfo(sharedFileInfo);
+    gui->setDownloadInfo(downloadInfo);
     gui->setGroupConvo(groupConvo);
     gui->setDirectStore(directStore);
 
@@ -122,6 +126,7 @@ Peerster::Peerster()
 
     filestore->setID(ID);
     filestore->setSharedFileInfo(sharedFileInfo);
+    filestore->setDownloadInfo(downloadInfo);
 
     // noforward stuff
     noforward = false;

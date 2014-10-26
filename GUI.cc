@@ -71,6 +71,11 @@ void GUI::setSharedFileInfo(QMap<QString,quint32>* sfi)
     sharedFileInfo = sfi;
 }
 
+void GUI::setDownloadInfo(QMap<QString,DownloadStatus> di)
+{
+    downloadInfo = di;
+}
+
 void GUI::setGroupConvo(QList<Message>* gc)
 {
     groupConvo = gc;
@@ -163,6 +168,11 @@ void GUI::gotRefreshSharedFiles()
         entry = filename + "(" + sharedFileInfo->value(filename) + "B)";
         fileshareview->append(filename);
     }
+}
+
+void GUI::gotRefreshDownloadInfo()
+{
+    // TODO
 }
 
 void GUI::originSelected(QListWidgetItem* item)

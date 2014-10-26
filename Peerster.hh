@@ -40,6 +40,8 @@
 #include <QDir>
 #include <QIODevice>
 
+#include <tuple>
+
 #include "GUI.hh"
 #include "Socket.hh"
 #include "Mailbox.hh"
@@ -85,6 +87,13 @@
 #define TYPE_NONE ("None")
 
 #define SWITCH_NOFORWARD ("-noforward")
+
+enum DownloadStatus
+{
+    PENDING,
+    COMPLETE,
+    FAILED
+}
 
 class GUI;
 class Socket;

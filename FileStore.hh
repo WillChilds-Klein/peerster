@@ -15,16 +15,21 @@ class FileStore : public QObject
 {
     Q_OBJECT
 
+    class DownloadQueue;
+    class Download;
+
     public:
         FileStore(Peerster*);
         ~FileStore();
         void setID(QString);
         void setSharedFileInfo(QMap<QString,quint32>*);
+        void setDownloadInfo(QMap<QString,Status>)
 
     signals:
         void refreshSharedFiles();
         void sendDirect(Message,QString);
-        void recievedID(QByteArray);
+        void updateDownloadInfo(QString,DownloadStatus);
+        void refreshDownloadInfo();
 
     public slots:
         void gotProcessFilesToShare(QStringList);
@@ -37,13 +42,13 @@ class FileStore : public QObject
 
     private slots:
         void gotBlockRequestChime();
+        void gotUpdateDownloadInfo(QString,DownloadStatus);
 
     private:
         Peerster* peerster;
         QString ID;
         QList<File>* sharedFiles;
-        QList< QPair<File,QString> >* pendingFileDownloads;
-        QHash<QByteArray,quint32>* pendingRequests;
+        DownloadQueue* pendingDownloads;
         QMap<QString, quint32>* sharedFileInfo;
         QMap<QString, quint32>* downloadInfo;
         QDir *tempdir, *downloads;
@@ -52,4 +57,39 @@ class FileStore : public QObject
         bool maxRequestsMade(QByteArray);
 };
 
+class FileStore::Download : private QMap<QByteArray,quint32>
+{
+    public:
+        Download(File*,QString);
+        ~Download();
+        File* file();
+        QString peer();
+        QList<QByteArray> IDsNeeded();
+        bool isAlive();
+        void touch(QByteArray);
+        void addBlockID(QByteArray);
+        void removeBlockID(QByteArray);
+        void addBlockToFile(QByteArray,QByteArray);
+        void kill();
+
+    private:
+        File* file;
+        QString peer;
+        bool alive;
+};
+
+
+class FileStore::DownloadQueue : private QList<Download>
+{
+    public:
+        DownloadQueue(FileStore*);
+        ~DownloadQueue();
+        Download dequeue();
+        void enqueue(Download);
+        void processBlock(QByteArray,QByteArray);
+        void reap();
+        
+    private:
+        FileStore* filestore;
+};
 #endif // PEERSTER_FILESTORE_HH

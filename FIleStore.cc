@@ -3,9 +3,8 @@
 FileStore::FileStore(Peerster* p)
     : peerster(p)
     , sharedFiles(new QList<File>)
-    , pendingRequests(new QHash<QString,quint32>)
-    , pendingFileDownloads(new QList< QPair<File,QString> >)
-    , downloads(new QDir(QDir::currentPath() + DOWNLOADS_DIR_NAME))
+    , pendingFileDownloads(new DownloadQueue)
+    , downloads(new QQueue<Download>)
     , blockRequestTimer(new QTimer(this))
 {
     // downloads = new QDir(QDir::currentPath() + DOWNLOADS_DIR_NAME);
@@ -27,6 +26,11 @@ void FileStore::setID(QString id)
 void FileStore::setSharedFileInfo(QMap<QString,quint32>* sfi)
 {
     sharedFileInfo = sfi;
+}
+
+void FileStore::setDownloadInfo(QMap<QString,DownloadStatus> di)
+{
+    downloadInfo = di;
 }
 
 void FileStore::gotProcessFilesToShare(QStringList absfilepaths)
@@ -59,14 +63,14 @@ void FileStore::gotRequestFile(QString origin, QString fileIDString)
     request.setHopLimit((quint32) BLOCK_HOP_LIMIT);
     request.setBlockRequest(fileID);
 
-    File file = File(filePath, tempdir->absolutePath(), fileID);
-
-    pendingFileDownloads->append(QPair(file, origin));
+    File newFile = new File(filePath, tempPath);
+    Download download(newFile, origin);
+    pendingDownloads->enqueue(download);
+    Q_EMIT(updateDownloadInfo(filepath, DownloadStatus::PENDING));
 
     Q_EMIT(sendDirect(request, origin));
-    (*pendingRequests)[fileID] = 1;
 
-    qDebug() << "SENT INITIAL REQUEST: " << request.toString();
+    qDebug() << "SENT INITIAL METAFILE ID REQUEST: " << request.toString();
 }
 
 void FileStore::gotProcessBlockRequest(Message msg)
@@ -107,50 +111,7 @@ void FileStore::gotProcessBlockRequest(Message msg)
 
 void FileStore::gotProcessBlockReply(Message reply)
 {    
-    QByteArray metaData,
-               blockID = reply.getBlockReply();
-    QList<QByteArray> blockIDs;
-    QString blockPath;
-    quint32 blockIndex;
-
-    foreach(File file, *pendingFileDownloads)
-    {
-        // check to see if request is confirming download
-        // init by replying with requested file's fileID
-        if(bockID == file.ID())
-        {
-            // break down metafile
-            metaData = reply.metadata();
-            for(int i = 0; i < metaData.size(); i += HASH_SIZE)
-            {
-                blockIndex = (i / HASH_SIZE);
-                if(metaData.mid(i,i+HASH_SIZE) > 0)
-                {
-                    file.addBlockID(blockIndex, metaData.mid(i,i+HASH_SIZE));
-                }
-            }
-
-            pendingRequests->remove(blockID);
-            return;
-        }
-        // else scan individual file blocks
-        else if(file.containsBlock(bockID))
-        {
-            if(!file.hasBlock(blockID))
-            {
-                file.addBlock(bockID, reply.getData());
-                pendingRequests->remove(blockID);
-            }
-
-            if(file.isComplete())
-            {
-                pendingFileDownloads->removeOne(file);
-            }
-
-            return;
-        }
-    }
-
+    pendingDownloads->processBlock(reply.getBlockReply(), reply.getData());
 }
 
 void FileStore::gotProcessSearchRequest(Message msg)
@@ -165,23 +126,40 @@ void FileStore::gotProcessSearchReply(Message msg)
 
 void FileStore::gotBlockRequestChime()
 {
-    if(!pendingFileDownloads->empty())
+    if(!pendingDownloads->empty())
     {
-        File head = pendingFileDownloads->first().first;
-        QString peer = pendingFileDownloads->first().second;
+        pendingDownloads->reap();
 
-        
+        Download head = pendingDownloads->dequeue();
 
         Message request;
         request.setType(TYPE_BLOCK_REQUEST);
-        request.setDest(peer);
+        request.setDest(head.peer());
         request.setOriginID(ID);
         request.setHopLimit((quint32) BLOCK_HOP_LIMIT);
-        request.setBlockRequest();
+        
+        QList<QByteArray> needed = head.IDsNeeded();
+        QList<QByteArray>::iterator i;
+        for(i = needed.begin(); i != needed.end(); ++i)
+        {   // update # times each request sent.
+            head.touch(*i);
+            request.setBlockRequest(blockID);
+            Q_EMIT(sendDirect(request, request.getDest()));
+        }
+
+        if(head.isAlive())
+        {
+            enqueue(head);
+        }
     }
 }
 
-void FileStore::makeTempdir() path()
+void gotUpdateDownloadInfo(QString fn, DownloadStatus status)
+{
+    downloadInfo[fn] = status;
+}
+
+void FileStore::makeTempdir()
 {
     tempdir = new QDir(QDir::tempPath() + "/peerster-" + ID);
     
@@ -197,11 +175,160 @@ void FileStore::makeTempdir() path()
                      << "! CHECK PERMISSIONS!";
         }
     }
-
 }
 
-bool maxRequestsMade(QByteArray blockID)
+FileStore::Download::Download(File* f, QString p)
+    : file(f)
+    , peer(p)
+    , alive(true)
+{}
+
+FileStore::Download::~Download()
+{}
+
+File* FileStore::Download::file()
 {
-    return pendingRequests[blockID] >= BLOCK_REQUEST_LIMIT;
+    return file;
 }
+
+QString FileStore::Download::peer()
+{
+    return peer;
+}
+
+bool FileStore::Download::isAlive()
+{
+    return alive;
+}
+
+void FileStore::Download::touch(QByteArray blockID)
+{
+    QList<QByteArray>::iterator i;
+    for(i = keys().begin(); i != keys().end(); ++i)
+    {
+        (*this)[blockID]++;
+
+        if((*this)[blockID] > BLOCK_REQUEST_LIMIT)
+        {
+            kill();
+            return;
+        }
+    }
+}
+
+void FileStore::Download::addBlockID(QByteArray blockID)
+{
+    if(!contains(blockID) && isAlive())
+    {
+        (*this)[blockID] = 0;
+    }
+}
+
+void FileStore::Download::removeBlockID(QByteArray blockID)
+{
+    if(!empty())
+    {
+        removeOne(blockID);
+
+        if(empty())
+        { 
+            kill(); // file successfully downloaded!!
+        }
+    }
+    else
+    {
+        kill();    // file successfully downloaded!!
+    }
+}
+
+void FileStore::Download::addBlockToFile(QByteArray blockID, QByteArray blockData)
+{
+    if(!hasBlock(blockID) && contains(blockID) && isAlive())
+    {
+        file->addBlockToFile(blockID, blockData);
+    }
+}
+
+void FileStore::Download::kill()
+{
+    alive = false;
+}
+
+FileStore::DownloadQueue::DownloadQueue(FileStore* fs)
+    : filestore(fs)
+{}
+
+FileStore::DownloadQueue::~DownloadQueue()
+{}
+
+Download FileStore::DownloadQueue::dequeue()
+{
+    return takeFirst();
+}
+
+void FileStore::DownloadQueue::enqueue(Download d)
+{
+    append(d);
+}
+
+void FileStore::DownloadQueue::processBlock(QByteArray blockID, QByteArray blockData)
+{    
+    QFile* file;
+    quint32 blockIndex;
+
+    QList<Download>::iterator i;
+    for(i = this->begin(); i != this->end(); ++i)
+    {
+        if(i->isAlive())
+        {
+            file = i->file();
+
+            // check against each fileID
+            if(bockID == file->ID())
+            {
+                // break down metafile
+                for(int j = 0; j < blockData.size(); j += HASH_SIZE)
+                {
+                    blockIndex = (j / HASH_SIZE);
+                    if(blockData.mid(j,j+HASH_SIZE) > 0)
+                    {
+                        i->addBlockID(blockIndex, blockData.mid(j,j+HASH_SIZE));
+                    }
+                }
+
+                i->removeBlockID(blockID);
+                return;
+            }
+            // else scan individual file blocks
+            else if(file.containsBlock(bockID) && !file.hasBlock(blockID))
+            {
+                file->addBlockToFile(bockID, blockData);
+
+                i->removeBlockID(blockID);
+                return;
+            }
+        }
+    }
+}
+
+void FileStore::DownloadQueue::reap()
+{
+    QList<Download>::iterator i;
+    for(i = this->begin(); i != this->end(); ++i)
+    {
+        if(!i->isAlive() && i->empty())
+        {
+            Q_EMIT(updateDownloadInfo(i->file()->filePath(), DownloadStatus::COMPLETE));
+            erase(i);
+        }
+        else if(!i->isAlive())
+        {
+            Q_EMIT(updateDownloadInfo(i->file()->filePath(), DownloadStatus::FAILED));
+            erase(i);
+        }
+    }
+}
+
+
+
 

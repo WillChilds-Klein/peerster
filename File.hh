@@ -26,9 +26,9 @@ class File // : public QObject
         QByteArray block(QByteArray);
         bool containsBlock(QByteArray); // block is a part of file
         bool hasBlock(QByteArray); // currently has actual block
+        bool addBlockID(QByteArray);
+        bool addBlock(QByteArray,QByteArray);
         void share();
-        void addBlockID(QByteArray);
-        void addBlock(QByteArray,QByteArray);
 
     private:
         QString fileNameOnly, filePath, tempDirPath, 
@@ -40,9 +40,10 @@ class File // : public QObject
         QList<QByteArray>* blockIDs; // ID in here != have block data
         QHash<QByteArray,QFile*>* blockTable;
         void assemble();
-        void cleanup();
-        QString metaFilePath();
-        QString blockFilePath(quint32);
+        void cleanupDownloads();
+        QString metaFileTempPath();
+        QString blockFileTempPath(quint32);
+        QString blockFileDownloadsPath(quint32);
         QFile* writeByteArray(QString,QByteArray);
         QByteArray readNBytesFromStream(quint32,QDataStream*);
         QByteArray readBytesFromFile(QFile*);
