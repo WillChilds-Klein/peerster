@@ -71,7 +71,7 @@ void GUI::setSharedFileInfo(QMap<QString,quint32>* sfi)
     sharedFileInfo = sfi;
 }
 
-void GUI::setDownloadInfo(QMap<QString,DownloadStatus> di)
+void GUI::setDownloadInfo(QMap<QString,DownloadStatus>* di)
 {
     downloadInfo = di;
 }
@@ -223,7 +223,7 @@ void GUI::gotFileSearchEntered()
 
     if(args.size() == 2)
     {
-        Q_EMIT(requestFile(args.first(), args.last()));
+        Q_EMIT(requestFileFromPeer(args.first(), args.last()));
     }
 
     filesearchentry->clear();

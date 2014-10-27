@@ -23,7 +23,7 @@ class FileStore : public QObject
         ~FileStore();
         void setID(QString);
         void setSharedFileInfo(QMap<QString,quint32>*);
-        void setDownloadInfo(QMap<QString,Status>)
+        void setDownloadInfo(QMap<QString,DownloadStatus>*);
 
     signals:
         void refreshSharedFiles();
@@ -33,7 +33,7 @@ class FileStore : public QObject
 
     public slots:
         void gotProcessFilesToShare(QStringList);
-        void gotRequestFile(QString,QString);
+        void gotRequestFileFromPeer(QString,QString);
         // void gotProcessFileSearchRequest(QStringList);
         void gotProcessBlockRequest(Message);
         void gotProcessBlockReply(Message);
@@ -62,9 +62,9 @@ class FileStore::Download : private QMap<QByteArray,quint32>
     public:
         Download(File*,QString);
         ~Download();
-        File* file();
+        File* fileObject();
         QString peer();
-        QList<QByteArray> IDsNeeded();
+        QList<QByteArray> blocksNeeded();
         bool isAlive();
         void touch(QByteArray);
         void addBlockID(QByteArray);
@@ -74,7 +74,7 @@ class FileStore::Download : private QMap<QByteArray,quint32>
 
     private:
         File* file;
-        QString peer;
+        QString peerID;
         bool alive;
 };
 
@@ -87,6 +87,7 @@ class FileStore::DownloadQueue : private QList<Download>
         Download dequeue();
         void enqueue(Download);
         void processBlock(QByteArray,QByteArray);
+        void cycle();
         void reap();
         
     private:

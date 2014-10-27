@@ -42,6 +42,13 @@
 
 #include <tuple>
 
+typedef enum DownloadStatus
+{
+    PENDING,
+    COMPLETE,
+    FAILED
+} DownloadStatus;
+
 #include "GUI.hh"
 #include "Socket.hh"
 #include "Mailbox.hh"
@@ -87,13 +94,6 @@
 #define TYPE_NONE ("None")
 
 #define SWITCH_NOFORWARD ("-noforward")
-
-enum DownloadStatus
-{
-    PENDING,
-    COMPLETE,
-    FAILED
-}
 
 class GUI;
 class Socket;

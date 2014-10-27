@@ -37,7 +37,7 @@ class GUI : public QDialog
         void createChatRumor(QString);
         void createDirectChat(QString,QString);
         void refreshDirectConvo(QString);
-        void requestFile(QString,QString);
+        void requestFileFromPeer(QString,QString);
         // void gotSearchForFiles(QStringList);
 
     public slots:

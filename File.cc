@@ -27,7 +27,7 @@ File::File(QString absolutepath, QString temppath)
     filePath = absolutepath;
     tempDirPath = temppath + 
                  (temppath.endsWith("/") ? "" : "/");
-    downloadsDirPath = QDir::currentPath() + 
+    downloadsDirPath = QDir::currentPath() +
                       (QDir::currentPath().endsWith("/") ? "" : "/") +
                        DOWNLOADS_DIR_NAME + "/";
 
@@ -47,7 +47,7 @@ File::File(QString absolutepath, QString temppath, QByteArray metaFileIDBytes)
     , blockIDs(new QList<QByteArray>)
     , blockTable(new QHash<QByteArray,QFile*>)
 {
-    if(metaFileID.size() == 0 || metaFileID->size() != HASH_SIZE)
+    if(metaFileID->size() == 0 || metaFileID->size() != HASH_SIZE)
     {
         qDebug() << "INVALID FILEID PASSED TO "
                  << "File(QString,QString,QByteArray) CONSTRUCTOR!";
@@ -143,13 +143,11 @@ bool File::addBlockID(quint32 index, QByteArray blockID)
         index >= 0 && index <= blockIDs->size())
     {
         blockIDs->insert(index, blockID);
+        return true;
     }
-
-    if(blockIDs->size() == blockTable->size())
+    else
     {
-        assemble();
-        cleanupDownloads();
-        complete = true;
+        return false;
     }
 }
 
@@ -157,9 +155,18 @@ bool File::addBlock(QByteArray blockID, QByteArray blockData)
 {
     if(!complete && !blockIDs->contains(blockID))
     {
-        (*blockTable)[blockID] = blockData;
-        writeByteArray(blockFileDownloadsPath(blockIDs->indexOf(blockID)), blockData);
-        
+        QString path = blockFileDownloadsPath(blockIDs->indexOf(blockID));
+        QFile* blockFile = writeByteArray(path, blockData);
+        blockTable->insert(blockID, blockFile);
+
+        if(blockIDs->size() == blockTable->size())
+        {
+            assemble();
+            cleanupDownloads();
+            complete = true;
+        }
+
+        return true;
     }
 
     return false;
@@ -178,7 +185,7 @@ void File::share()
 
     if(!qfile->open(QIODevice::ReadOnly))
     {
-        qDebug() << "COULDN'T READ FILE: " << f->fileName();
+        qDebug() << "COULDN'T READ FILE: " << qfile->fileName();
         return;
     }
     QDataStream in(qfile);
@@ -221,7 +228,7 @@ void File::share()
     }
 
     // write metaFile...move over to writeByteArray method...
-    metaFile->setFileName(metaFilePath());      //          |
+    metaFile->setFileName(metaFileTempPath());      //          |
     // metaFile = writeByteArray(metaFilemetaFile);      <---
     if(metaFile->open(QIODevice::WriteOnly | QIODevice::ReadOnly))
     {
@@ -253,7 +260,7 @@ void File::assemble()
 
     foreach(QByteArray blockID, *blockIDs)
     {
-        filebytes.append(readBytesFromFile(blockTable[blockID]));
+        filebytes.append(readBytesFromFile(blockTable->value(blockID)));
     }
 
     writeByteArray(filePath, filebytes);
@@ -263,10 +270,10 @@ void File::cleanupDownloads()
 {
     foreach(QByteArray blockID, blockTable->keys())
     {
-        if(!blockTable[blockID]->remove())
+        if(!(blockTable->value(blockID))->remove())
         {
             qDebug() << "ERROR REMOVING FILE " 
-                     << blockTable[blockID]->fileName();
+                     << blockTable->value(blockID)->fileName();
         }
     }
 }
@@ -289,7 +296,7 @@ QString File::blockFileDownloadsPath(quint32 i)
 
 QFile* File::writeByteArray(QString filepath, QByteArray bytes)
 {
-    QFile writeFile = new QFile(filepath);
+    QFile* writeFile = new QFile(filepath);
     if (writeFile->open(QIODevice::WriteOnly))// | QIODevice::ReadOnly))
     {
         QDataStream outStream(writeFile);

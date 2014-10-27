@@ -25,18 +25,18 @@ Message::Message(QByteArray* arr)
         {
             setType(TYPE_STATUS);
         }
-        else if(contains(KEY_ORIGINID) && contains(KEY_SEQNO) 
-            && contains(KEY_CHATTEXT))
+        else if(contains(KEY_ORIGINID) && contains(KEY_SEQNO) &&
+                contains(KEY_CHATTEXT))
         {
             setType(TYPE_RUMOR_CHAT);
         }
-        else if(contains(KEY_ORIGINID) && contains(KEY_SEQNO)
-            && !contains(KEY_CHATTEXT))
+        else if(contains(KEY_ORIGINID) && contains(KEY_SEQNO) &&
+               !contains(KEY_CHATTEXT))
         {
             setType(TYPE_RUMOR_ROUTE);
         }
         else if(contains(KEY_ORIGINID) && contains(KEY_CHATTEXT) && 
-               contains(KEY_HOPLIMIT) && contains(KEY_DEST))
+                contains(KEY_HOPLIMIT) && contains(KEY_DEST))
         {
             setType(TYPE_DIRECT_CHAT);
         }
@@ -48,14 +48,11 @@ Message::Message(QByteArray* arr)
         {
             setType(TYPE_BLOCK_REPLY);
         }
-        else if(contains(KEY_ORIGINID) && contains(KEY_SEARCH) && 
-                contains(KEY_BUDGET))
+        else if(contains(KEY_SEARCH))
         {
             setType(TYPE_SEARCH_REQUEST);
         }
-        else if(contains(KEY_DEST) && contains(KEY_ORIGINID) && 
-                contains(KEY_HOPLIMIT) && contains(KEY_SEARCHREPLY) &&
-                contains(KEY_MATCHNAMES) && contains(KEY_MATCHIDS))
+        else if(contains(KEY_SEARCHREPLY))
         {
             setType(TYPE_SEARCH_REPLY);
         }
@@ -176,7 +173,11 @@ bool Message::isWellFormed()
     isBlock = (contains(KEY_BLOCKREQUEST) && contains(KEY_ORIGINID) &&
                contains(KEY_HOPLIMIT) && 
               (contains(KEY_DEST) || contains(KEY_BLOCKREPLY)));
-    isSearch = (contains(KEY_SEARCH) || contains(KEY_SEARCHREPLY));
+    isSearch = ((contains(KEY_SEARCH) && contains(KEY_ORIGINID) && 
+                 contains(KEY_BUDGET)) || 
+                (contains(KEY_SEARCHREPLY) && contains(KEY_DEST) && 
+                 contains(KEY_HOPLIMIT) && contains(KEY_SEARCHREPLY) &&
+                 contains(KEY_MATCHNAMES) && contains(KEY_MATCHIDS)));
     
     if(getType() == TYPE_BLOCK_REPLY && !isValidBlockReply())
     {

@@ -14,7 +14,7 @@ class File // : public QObject
 
     public:
         File(QString,QString);
-        File(QString,QString, QByteArray*);
+        File(QString,QString,QByteArray);
         ~File();
         QString name();
         QString abspath();
@@ -28,6 +28,7 @@ class File // : public QObject
         bool hasBlock(QByteArray); // currently has actual block
         bool addBlockID(QByteArray);
         bool addBlock(QByteArray,QByteArray);
+        bool addBlockID(quint32,QByteArray);
         void share();
 
     private:

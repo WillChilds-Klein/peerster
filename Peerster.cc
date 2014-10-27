@@ -7,6 +7,8 @@ Peerster::Peerster()
     , messagestore(new MessageStore(this))
     , filestore(new FileStore(this))
 {
+    // TODO: make all components take InstanceID as constructor paramerter.
+
     // GUI
     connect(gui, SIGNAL(processNeighbor(Peer)),
         mailbox, SLOT(gotProcessNeighbor(Peer)));
@@ -16,8 +18,8 @@ Peerster::Peerster()
         messagestore, SLOT(gotCreateDirectChat(QString,QString)));
     connect(gui, SIGNAL(processFilesToShare(QStringList)),
         filestore, SLOT(gotProcessFilesToShare(QStringList)));
-    connect(gui, SIGNAL(requestFile(QString,QString)),
-        filestore, SLOT(gotRequestFile(QString,QString)));
+    connect(gui, SIGNAL(requestFileFromPeer(QString,QString)),
+        filestore, SLOT(gotRequestFilePeer(QString,QString)));
     // connect(gui, SIGNAL(searchForFiles(QStringList)),
     //     filestore, SLOT(gotSearchForFiles(QStringList)));
 
