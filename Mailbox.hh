@@ -1,8 +1,6 @@
 #ifndef PEERSTER_MAILBOX_HH
 #define PEERSTER_MAILBOX_HH
 
-#include "Peerster.hh"
-
 #define CMD_PRINT_MSGSTORE ("PRINT_MSGSTORE")
 #define CMD_PRINT_STATUS ("PRINT_STATUS")
 #define CMD_PRINT_NEIGHBORS ("PRINT_NEIGHBORS")
@@ -10,6 +8,8 @@
 
 #define STATUS_CLOCK_RATE (5000) // 5s in ms
 #define ROUTE_CLOCK_RATE (60000) // 60s in ms
+
+#include "Peerster.hh"
 
 class Peerster;
 class MessageStore;

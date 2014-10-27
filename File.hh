@@ -1,17 +1,18 @@
 #ifndef PEERSTER_FILE_HH
 #define PEERSTER_FILE_HH
 
-#include "Peerster.hh"
-
 #define BLOCK_SIZE (8000)
 #define HASH_SIZE (20)
 #define FILE_ID_MAX (100000)
 #define DOWNLOADS_DIR_NAME ("downloads")
 
-class File // : public QObject
-{
-    // Q_OBJECT
+#define METAFILE_APPENDAGE (".meta")
+#define BLOCKFILE_APPENDAGE (".block")
 
+#include "Peerster.hh"
+
+class File 
+{
     public:
         File(QString,QString);
         File(QString,QString,QByteArray);
@@ -19,33 +20,35 @@ class File // : public QObject
         QString name();
         QString abspath();
         quint32 size();
-        bool isComplete();
-        bool isShared();
-        QByteArray ID();
+        QByteArray fileID();
         QByteArray metadata();
         QByteArray block(QByteArray);
+        QList<QByteArray> blockIDs();
+        bool isComplete();
+        bool isShared();
         bool containsBlock(QByteArray); // block is a part of file
-        bool hasBlock(QByteArray); // currently has actual block
-        bool addBlockID(QByteArray);
-        bool addBlock(QByteArray,QByteArray);
-        bool addBlockID(quint32,QByteArray);
+        // bool hasMetaData();
+        bool hasBlock(QByteArray);  // currently has actual block data
+        bool addMetaData(QByteArray);        // true on successful add
+        bool addBlock(QByteArray,QByteArray);// true on successful add
         void share();
 
     private:
         QString fileNameOnly, filePath, tempDirPath, 
                 downloadsDirPath;
-        quint32 fileSize, fileSizeMin, fileSizeMax;
+        quint32 fileSize;
         bool complete, shared;
         QFile *qfile, *metaFile;
         QByteArray* metaFileID;
-        QList<QByteArray>* blockIDs; // ID in here != have block data
+        QList<QByteArray>* blockIDList; // ID in here != have block data
         QHash<QByteArray,QFile*>* blockTable;
         void assemble();
         void cleanupDownloads();
         QString metaFileTempPath();
+        QString metaFileDownloadsPath();
         QString blockFileTempPath(quint32);
         QString blockFileDownloadsPath(quint32);
-        QFile* writeByteArray(QString,QByteArray);
+        QFile* writeByteArrayToFile(QString,QByteArray);
         QByteArray readNBytesFromStream(quint32,QDataStream*);
         QByteArray readBytesFromFile(QFile*);
         bool operator==(File);

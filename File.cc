@@ -8,7 +8,7 @@ File::File(QString absolutepath, QString temppath)
     , qfile(new QFile)
     , metaFile(new QFile)
     , metaFileID(new QByteArray())
-    , blockIDs(new QList<QByteArray>)
+    , blockIDList(new QList<QByteArray>)
     , blockTable(new QHash<QByteArray,QFile*>)
 {
     if(absolutepath.isEmpty())
@@ -31,9 +31,11 @@ File::File(QString absolutepath, QString temppath)
                       (QDir::currentPath().endsWith("/") ? "" : "/") +
                        DOWNLOADS_DIR_NAME + "/";
 
-    fileSize = fileSizeMin = fileSizeMax = qfile->size();
+    fileSize = qfile->size();
 
     share();
+
+    complete = true;
 }
 
 File::File(QString absolutepath, QString temppath, QByteArray metaFileIDBytes)
@@ -44,7 +46,7 @@ File::File(QString absolutepath, QString temppath, QByteArray metaFileIDBytes)
     , qfile(new QFile)
     , metaFile(new QFile)
     , metaFileID(new QByteArray(metaFileIDBytes))
-    , blockIDs(new QList<QByteArray>)
+    , blockIDList(new QList<QByteArray>)
     , blockTable(new QHash<QByteArray,QFile*>)
 {
     if(metaFileID->size() == 0 || metaFileID->size() != HASH_SIZE)
@@ -71,7 +73,7 @@ File::~File()
     // delete(qfile);
     // qDeleteAll(blocks);
     // delete(blocks);
-    // delete(blockIDs);
+    // delete(blockIDList);
     // delete(metaFile);
 }
 
@@ -100,7 +102,7 @@ bool File::isShared()
     return shared;
 }
 
-QByteArray File::ID()
+QByteArray File::fileID()
 {
     return *metaFileID;
 }
@@ -127,9 +129,14 @@ QByteArray File::block(QByteArray blockID)
     return blockData;
 }
 
+QList<QByteArray> File::blockIDs()
+{
+    return *blockIDList;
+}
+
 bool File::containsBlock(QByteArray blockID)
 {
-    return blockIDs->contains(blockID);
+    return blockIDList->contains(blockID);
 }
 
 bool File::hasBlock(QByteArray blockID)
@@ -137,29 +144,35 @@ bool File::hasBlock(QByteArray blockID)
     return blockTable->contains(blockID);
 }
 
-bool File::addBlockID(quint32 index, QByteArray blockID)
+bool File::addMetaData(QByteArray metaFileBytes)
 {
-    if(!complete && !blockIDs->contains(blockID) && 
-        index >= 0 && index <= blockIDs->size())
-    {
-        blockIDs->insert(index, blockID);
-        return true;
-    }
-    else
+    if(blockIDList->empty())
     {
         return false;
     }
+
+    QByteArray blockBytes;
+
+    for(int i = 0; i < metaFileBytes.size(); i += BLOCK_SIZE)
+    {
+        blockBytes = metaFileBytes.mid(i, BLOCK_SIZE);
+        blockIDList->append(blockBytes);
+    }
+
+    return true;
 }
 
 bool File::addBlock(QByteArray blockID, QByteArray blockData)
 {
-    if(!complete && !blockIDs->contains(blockID))
+    if(!complete && blockIDList->contains(blockID))
     {
-        QString path = blockFileDownloadsPath(blockIDs->indexOf(blockID));
-        QFile* blockFile = writeByteArray(path, blockData);
+        // TODO: determine whether to use fileName.i or blockID for blockfiles
+        // QString path = downloadsDirPath + QStirng(blockID) + BLOCKFILE_APPENDAGE;
+        QString path = blockFileDownloadsPath(blockIDList->indexOf(blockID));
+        QFile* blockFile = writeByteArrayToFile(path, blockData);
         blockTable->insert(blockID, blockFile);
 
-        if(blockIDs->size() == blockTable->size())
+        if(blockTable->size() == blockIDList->size())
         {
             assemble();
             cleanupDownloads();
@@ -200,7 +213,7 @@ void File::share()
         qDebug() << "BLOCKFILE " << i << "NAME: " << blockFilePath;
         blockFile = new QFile(blockFilePath);
 
-        // write block file...move over writeByteArray method..
+        // write block file...move over writeByteArrayToFile method..
         if (blockFile->open(QIODevice::WriteOnly | QIODevice::ReadOnly))
         {
             QDataStream blockOutStream(blockFile);
@@ -215,7 +228,7 @@ void File::share()
         }
         sha.update(blockFile);
         blockID = sha.final().toByteArray();
-        blockIDs->append(blockID);
+        blockIDList->append(blockID);
         (*blockTable)[blockID] = blockFile;
 
         // update metaFile
@@ -227,7 +240,7 @@ void File::share()
         i++;
     }
 
-    // write metaFile...move over to writeByteArray method...
+    // write metaFile...move over to writeByteArrayToFile method...
     metaFile->setFileName(metaFileTempPath());      //          |
     // metaFile = writeByteArray(metaFilemetaFile);      <---
     if(metaFile->open(QIODevice::WriteOnly | QIODevice::ReadOnly))
@@ -258,12 +271,12 @@ void File::assemble()
 {
     QByteArray filebytes;
 
-    foreach(QByteArray blockID, *blockIDs)
+    foreach(QByteArray blockID, *blockIDList)
     {
         filebytes.append(readBytesFromFile(blockTable->value(blockID)));
     }
 
-    writeByteArray(filePath, filebytes);
+    writeByteArrayToFile(filePath, filebytes);
 }
 
 void File::cleanupDownloads()
@@ -280,21 +293,26 @@ void File::cleanupDownloads()
 
 QString File::metaFileTempPath()
 {
-    return tempDirPath + fileNameOnly + ".meta";
+    return tempDirPath + fileNameOnly + METAFILE_APPENDAGE;
+}
+
+QString File::metaFileDownloadsPath()
+{
+    return downloadsDirPath + fileNameOnly + METAFILE_APPENDAGE;
 }
 
 QString File::blockFileTempPath(quint32 i)
 {
-    return tempDirPath + fileNameOnly + "." + QString::number(i) + ".block";
+    return tempDirPath + fileNameOnly + "." + QString::number(i) + BLOCKFILE_APPENDAGE;
 }
 
 QString File::blockFileDownloadsPath(quint32 i)
 {
     return downloadsDirPath + fileNameOnly + "." + 
-                              QString::number(i) + ".block";
+                              QString::number(i) + BLOCKFILE_APPENDAGE;
 }
 
-QFile* File::writeByteArray(QString filepath, QByteArray bytes)
+QFile* File::writeByteArrayToFile(QString filepath, QByteArray bytes)
 {
     QFile* writeFile = new QFile(filepath);
     if (writeFile->open(QIODevice::WriteOnly))// | QIODevice::ReadOnly))
@@ -340,13 +358,11 @@ QByteArray File::readBytesFromFile(QFile* f)
 
 bool File::operator==(File other)
 {
-    return (this->ID() == other.ID());
+    return (this->fileID() == other.fileID());
 } 
 
 bool File::operator!=(File other)
 {
     return !(*this == other);
 }
-
-
 

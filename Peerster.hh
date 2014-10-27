@@ -42,22 +42,6 @@
 
 #include <tuple>
 
-typedef enum DownloadStatus
-{
-    PENDING,
-    COMPLETE,
-    FAILED
-} DownloadStatus;
-
-#include "GUI.hh"
-#include "Socket.hh"
-#include "Mailbox.hh"
-#include "MessageStore.hh"
-#include "FileStore.hh"
-#include "Message.hh"
-#include "Peer.hh"
-#include "File.hh"
-
 #define ID_MAX (1000)
 
 #define DCHAT_HOP_LIMIT (10)
@@ -94,6 +78,25 @@ typedef enum DownloadStatus
 #define TYPE_NONE ("None")
 
 #define SWITCH_NOFORWARD ("-noforward")
+
+typedef enum DownloadStatus
+{
+    INIT        = 0
+    CONFIRMING  = 1,
+    PENDING     = 2,
+    COMPLETE    = 3,
+    FAILED      = 4,
+    NONE        = 5
+}   DownloadStatus;
+
+#include "GUI.hh"
+#include "Socket.hh"
+#include "Mailbox.hh"
+#include "MessageStore.hh"
+#include "FileStore.hh"
+#include "Message.hh"
+#include "Peer.hh"
+#include "File.hh"
 
 class GUI;
 class Socket;
