@@ -5,13 +5,12 @@ FileStore::FileStore(Peerster* p)
     , sharedFiles(new QList<File>)
     , pendingDownloads(new DownloadQueue(this))
     , downloads(new QDir)
-    , blockRequestTimer(new QTimer(this))
+    , cycleTimer(new QTimer(this))
     , reapTimer(new QTimer(this))
 {
-    // downloads = new QDir(QDir::currentPath() + DOWNLOADS_DIR_NAME);
-    connect(blockRequestTimer, SIGNAL(timeout()), 
-        this, SLOT(gotBlockRequestChime()));
-    blockRequestTimer->start(BLOCK_REQUEST_RATE);
+    connect(cycleTimer, SIGNAL(timeout()), 
+        this, SLOT(gotCycleChime()));
+    cycleTimer->start(CYCLE_RATE);
 
     connect(reapTimer, SIGNAL(timeout()),
         this, SLOT(gotReapChime()));
@@ -150,7 +149,7 @@ void FileStore::gotProcessSearchReply(Message msg)
     // TODO
 }
 
-void FileStore::gotBlockRequestChime()
+void FileStore::gotCycleChime()
 {
     cyclePendingDownloadQueue();
 }
@@ -169,7 +168,6 @@ void FileStore::gotUpdateDownloadInfo(QString fn, DownloadStatus::Status status)
 void FileStore::makeTempdir()
 {
     tempdir = new QDir(QDir::tempPath() + "/peerster-" + ID);
-    
     if(!tempdir->exists())
     {
         if(tempdir->mkpath(tempdir->absolutePath()))
@@ -179,6 +177,20 @@ void FileStore::makeTempdir()
         else
         {
             qDebug() << "UNABLE TO CREATE TEMP DIR " << tempdir->absolutePath()
+                     << "! CHECK PERMISSIONS!";
+        }
+    }
+
+    downloads = new QDir(tempdir->absolutePath() + "/" + DOWNLOADS_DIR_NAME);
+    if(!downloads->exists())
+    {
+        if(downloads->mkpath(downloads->absolutePath() + "/"))
+        {
+            qDebug() << "SUCCESSFULLY CREATED DOWNLOADS DIR: " << downloads->absolutePath();
+        }
+        else
+        {
+            qDebug() << "UNABLE TO CREATE DOWNLOADS DIR " << downloads->absolutePath()
                      << "! CHECK PERMISSIONS!";
         }
     }
