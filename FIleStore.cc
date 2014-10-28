@@ -3,10 +3,7 @@
 FileStore::FileStore(Peerster* p)
     : peerster(p)
     , sharedFiles(new QList<File>)
-    , confirmingDownloads(new DownloadQueue(this))
     , pendingDownloads(new DownloadQueue(this))
-    , completedDownloads(new DownloadQueue(this))
-    , failedDownloads(new DownloadQueue(this))
     , downloads(new QDir)
     , blockRequestTimer(new QTimer(this))
 {
@@ -14,6 +11,10 @@ FileStore::FileStore(Peerster* p)
     connect(blockRequestTimer, SIGNAL(chime()), 
         this, SLOT(gotBlockRequestChime()));
     blockRequestTimer->start(BLOCK_REQUEST_RATE);
+
+    connect(reapTimer, SIGNAL(chime()),
+        this, SLOT(gotReapChime()));
+    reapTimer->start(REAP_RATE);
 }
 
 FileStore::~FileStore()
@@ -31,7 +32,7 @@ void FileStore::setSharedFileInfo(QMap<QString,quint32>* sfi)
     sharedFileInfo = sfi;
 }
 
-void FileStore::setDownloadInfo(QMap<QString,DownloadStatus>* di)
+void FileStore::setDownloadInfo(QMap<QString,DownloadStatus::Status>* di)
 {
     downloadInfo = di;
 }
@@ -68,7 +69,7 @@ void FileStore::gotRequestFileFromPeer(QString origin, QString fileIDString)
 
     File* newFile = new File(filePath, tempdir->absolutePath(), fileID);
     Download download(newFile, origin);
-    confirmingDownloads->enqueue(download);
+    pendingDownloads->enqueue(download);
     Q_EMIT(updateDownloadInfo(filePath, DownloadStatus::CONFIRMING));
 
     Q_EMIT(sendDirect(request, origin));
@@ -131,7 +132,7 @@ void FileStore::gotProcessBlockReply(Message reply)
         query->addMetaData(blockData);
         enDequeuePendingDownloadQueue();
     }
-    else if(query->needs(blockID))
+    else if(query->needsBlock(blockID))
     {
         query->addBlockData(blockID, blockData);
         enDequeuePendingDownloadQueue();
@@ -153,11 +154,14 @@ void FileStore::gotBlockRequestChime()
     cyclePendingDownloadQueue();
 }
 
-void FileStore::gotUpdateDownloadInfo(QString fn, DownloadStatus status)
+void FileStore::gotReapChime()
 {
-    downloadInfo->[fn] = status;
-    // (*downloadInfo)[fn] = status;
-    // downloadInfo->insert(fn, status);
+    pendingDownloads->reap();
+}
+
+void FileStore::gotUpdateDownloadInfo(QString fn, DownloadStatus::Status status)
+{
+    downloadInfo->insert(fn, status);
     Q_EMIT(refreshDownloadInfo());
 }
 
@@ -185,11 +189,10 @@ bool FileStore::enDequeuePendingDownloadQueue()
 
     if(!pendingDownloads->isEmpty())
     {
-        pendingDownloads->reap();
-
-        qDebug() << "POP PENDING DOWNLOADQUEUE HEAD";
-
         Download head = pendingDownloads->dequeue();
+
+        qDebug() << "POP PENDING DOWNLOADQUEUE HEAD: FILE " 
+                 << head->file()->fileName();
 
         Message request;
         request.setType(TYPE_BLOCK_REQUEST);
@@ -222,8 +225,6 @@ bool FileStore::enDequeuePendingDownloadQueue()
 
 void FileStore::cyclePendingDownloadQueue()
 {
-    pendingDownloads->reap();
-
     int size = pendingDownloads->size();
     bool headReQueued;
 
@@ -251,7 +252,9 @@ FileStore::Download::Download(File* f, QString p)
     : file(f)
     , peerID(p)
     , downloadStatus(DownloadStatus::INIT)
-{}
+{
+    begin();
+}
 
 FileStore::Download::~Download()
 {}
@@ -266,7 +269,7 @@ QString FileStore::Download::peer()
     return peerID;
 }
 
-DownloadStatus FileStore::Download::status()
+DownloadStatus::Status FileStore::Download::status()
 {
     return downloadStatus;
 }
@@ -288,15 +291,16 @@ QList<QByteArray> FileStore::Download::blocksNeeded()
     return needed;
 }
 
-bool FileStore::Download::needs(QByteArray blockID)
+bool FileStore::Download::needsBlock(QByteArray blockID)
 {
     return blocksNeeded().contains(blockID);
 }
 
 bool FileStore::Download::isAlive()
 {
-    return downloadStatus == (DownloadStatus::PENDING | 
-                              DownloadStatus::CONFIRMING);
+    return downloadStatus == (DownloadStatus::INIT |
+                              DownloadStatus::CONFIRMING |
+                              DownloadStatus::DOWNLOADING);
 }
 
 void FileStore::Download::touch(QByteArray blockID)
@@ -321,7 +325,7 @@ void FileStore::Download::addMetaData(QByteArray metaDataBytes)
         insert(*i, 0);
     }
 
-    begin();
+    confirm();
 }
 
 void FileStore::Download::addBlockData(QByteArray blockID, QByteArray blockData)
@@ -336,6 +340,16 @@ void FileStore::Download::addBlockData(QByteArray blockID, QByteArray blockData)
     }
 }
 
+void FileStore::Download::begin()
+{
+    downloadStatus = DownloadStatus::CONFIRMING;
+}
+
+void FileStore::Download::confirm()
+{
+    downloadStatus = DownloadStatus::DOWNLOADING;
+}
+
 void FileStore::Download::kill()
 {
     downloadStatus = DownloadStatus::FAILED;
@@ -343,7 +357,7 @@ void FileStore::Download::kill()
 
 void FileStore::Download::complete()
 {
-    downloadStatus = DownloadStatus::COMPLETE;
+    downloadStatus = DownloadStatus::COMPLETED;
 }
 
 // =========================FileStore::DownloadQueue======================== //
@@ -391,17 +405,38 @@ void FileStore::DownloadQueue::reap()
         QList<Download>::iterator i;
         for(i = this->begin(); i != this->end(); ++i)
         {
-            if(!i->isAlive() && i->isEmpty())
+            switch(i->status())
             {
-                Q_EMIT(updateDownloadInfo(i->fileObject()->filePath(), 
-                                          DownloadStatus::COMPLETE));
-                erase(i);
-            }
-            else if(!i->isAlive() && !i->isEmpty())
-            {
-                Q_EMIT(updateDownloadInfo(i->fileObject()->filePath(), 
+                case DownloadStatus::INIT:
+                    Q_EMIT(updateDownloadInfo(i->fileObject()->filePath(), 
+                                          DownloadStatus::INIT));
+                    qDebug() << "DOWNLOAD FLOW ERROR! SHOULD NOT BE IN "
+                             << "INIT STATE AND ON DOWNLOADQUEUE!";
+                    break;
+                case DownloadStatus::CONFIRMING:
+                    Q_EMIT(updateDownloadInfo(i->fileObject()->filePath(), 
+                                          DownloadStatus::CONFIRMING));
+                    break;
+                case DownloadStatus::DOWNLOADING:
+                    Q_EMIT(updateDownloadInfo(i->fileObject()->filePath(), 
+                                          DownloadStatus::DOWNLOADING));
+                    break;
+                case DownloadStatus::COMPLETED:
+                    Q_EMIT(updateDownloadInfo(i->fileObject()->filePath(), 
+                                          DownloadStatus::COMPLETED));
+                    erase(i);
+                    break;
+                case DownloadStatus::FAILED:
+                    Q_EMIT(updateDownloadInfo(i->fileObject()->filePath(), 
                                           DownloadStatus::FAILED));
-                erase(i);
+                    erase(i);
+                    break;
+                case DownloadStatus::NONE:
+                    Q_EMIT(updateDownloadInfo(i->fileObject()->filePath(), 
+                                          DownloadStatus::NONE));
+                    break;
+                default:
+                    qDebug() << "INVALID DOWNLOADSTATUS " << QString(i->status())
             }
         }
     }
@@ -411,7 +446,3 @@ bool FileStore::DownloadQueue::isEmpty()
 {
     return empty();
 }
-
-
-
-

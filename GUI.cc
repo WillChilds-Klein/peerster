@@ -71,7 +71,7 @@ void GUI::setSharedFileInfo(QMap<QString,quint32>* sfi)
     sharedFileInfo = sfi;
 }
 
-void GUI::setDownloadInfo(QMap<QString,DownloadStatus>* di)
+void GUI::setDownloadInfo(QMap<QString,DownloadStatus::Status>* di)
 {
     downloadInfo = di;
 }

@@ -1,6 +1,9 @@
 #ifndef PEERSTER_PEERSTER_HH
 #define PEERSTER_PEERSTER_HH
 
+#define CLEANENUMS_BEGIN(name) namespace name { typedef enum {
+#define CLEANENUMS_END(name) } internal_ ## name ## _e;} typedef name::internal_ ## name ## _e name ## _e;
+
 #include <unistd.h>
 
 #include <QDialog>
@@ -79,15 +82,27 @@
 
 #define SWITCH_NOFORWARD ("-noforward")
 
-typedef enum DownloadStatus
+// CLEANENUMS_BEGIN(DownloadStatus)
+//         INIT        = 0,
+//         CONFIRMING  = 1,
+//         PENDING     = 2,
+//         COMPLETE    = 3,
+//         FAILED      = 4,
+//         NONE        = 5
+// CLEANENUMS_END(DownloadStatus)
+
+namespace DownloadStatus
 {
-    INIT        = 0
-    CONFIRMING  = 1,
-    PENDING     = 2,
-    COMPLETE    = 3,
-    FAILED      = 4,
-    NONE        = 5
-}   DownloadStatus;
+    enum Status
+    {
+        INIT        = 0,
+        CONFIRMING  = 1,
+        DOWNLOADING = 2,
+        COMPLETED   = 3,
+        FAILED      = 4,
+        NONE        = 5
+    };
+}
 
 #include "GUI.hh"
 #include "Socket.hh"

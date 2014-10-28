@@ -2,6 +2,7 @@
 #define PEERSTER_FILESTORE_HH
 
 #define BLOCK_REQUEST_RATE (30000) // 30s in ms
+#define REAP_RATE (5000)           // 5s in ms
 #define BLOCK_REQUEST_LIMIT (10)
 #define SHARED_FILE_DIR_PREFIX ("/tmp/peerster-")
 #define TEMPDIR_NDIGITS (5)
@@ -23,12 +24,12 @@ class FileStore : public QObject
         ~FileStore();
         void setID(QString);
         void setSharedFileInfo(QMap<QString,quint32>*);
-        void setDownloadInfo(QMap<QString,DownloadStatus>*);
+        void setDownloadInfo(QMap<QString,DownloadStatus::Status>*);
 
     signals:
         void refreshSharedFiles();
         void sendDirect(Message,QString);
-        void updateDownloadInfo(QString,DownloadStatus);
+        void updateDownloadInfo(QString,DownloadStatus::Status);
         void refreshDownloadInfo();
 
     public slots:
@@ -42,16 +43,16 @@ class FileStore : public QObject
 
     private slots:
         void gotBlockRequestChime();
-        void gotUpdateDownloadInfo(QString,DownloadStatus);
+        void gotUpdateDownloadInfo(QString,DownloadStatus::Status);
+        void gotReapChime();
 
     private:
         Peerster* peerster;
         QString ID;
         QList<File>* sharedFiles;
-        DownloadQueue *confirmingDownloads, *pendingDownloads,
-                      *completedDownloads, *failedDownloads;
+        DownloadQueue *pendingDownloads;
         QMap<QString,quint32>* sharedFileInfo;
-        QMap<QString,DownloadStatus>* downloadInfo;
+        QMap<QString,DownloadStatus::Status>* downloadInfo;
         QDir *tempdir, *downloads;
         QTimer* blockRequestTimer;
         void makeTempdir();
@@ -61,25 +62,15 @@ class FileStore : public QObject
 
 class FileStore::Download : private QMap<QByteArray,quint32>
 {
-    typedef enum DownloadStatus
-    {
-        INIT        = 0
-        CONFIRMING  = 1,
-        PENDING     = 2,
-        COMPLETE    = 3,
-        FAILED      = 4,
-        NONE        = 5
-    }   DownloadStatus;
-    
     public:
         Download();
         Download(File*,QString);
         ~Download();
         File* fileObject();
         QString peer();
-        DownloadStatus status();
+        DownloadStatus::Status status();
         QList<QByteArray> blocksNeeded();
-        bool needs(QByteArray);
+        bool needsBlock(QByteArray);
         bool needsMetaData();
         bool isAlive();
         void touch(QByteArray);
@@ -89,10 +80,11 @@ class FileStore::Download : private QMap<QByteArray,quint32>
     private:
         File* file;
         QString peerID;
-        DownloadStatus downloadStatus;
+        DownloadStatus::Status downloadStatus;
         void begin();
-        void kill();
+        void confirm();
         void complete();
+        void kill();
 };
 
 
