@@ -19,7 +19,7 @@ Peerster::Peerster()
     connect(gui, SIGNAL(processFilesToShare(QStringList)),
         filestore, SLOT(gotProcessFilesToShare(QStringList)));
     connect(gui, SIGNAL(requestFileFromPeer(QString,QString)),
-        filestore, SLOT(gotRequestFilePeer(QString,QString)));
+        filestore, SLOT(gotRequestFileFromPeer(QString,QString)));
     // connect(gui, SIGNAL(searchForFiles(QStringList)),
     //     filestore, SLOT(gotSearchForFiles(QStringList)));
 
@@ -43,9 +43,9 @@ Peerster::Peerster()
     connect(mailbox, SIGNAL(processIncomingStatus(Message,Peer)),
         messagestore, SLOT(gotProcessIncomingStatus(Message,Peer)));
     connect(mailbox, SIGNAL(processBlockRequest(Message)),
-        filestore, SLOT(processBlockRequest(Message)));
+        filestore, SLOT(gotProcessBlockRequest(Message)));
     connect(mailbox, SIGNAL(processBlockReply(Message)),
-        filestore, SLOT(processBlockReply(Message)));
+        filestore, SLOT(gotProcessBlockReply(Message)));
     connect(mailbox, SIGNAL(processSearchRequest(Message)),
         filestore, SLOT(gotProcessSearchRequest(Message)));
     connect(mailbox, SIGNAL(processSearchReply(Message)),

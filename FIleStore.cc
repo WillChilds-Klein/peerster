@@ -9,11 +9,11 @@ FileStore::FileStore(Peerster* p)
     , reapTimer(new QTimer(this))
 {
     // downloads = new QDir(QDir::currentPath() + DOWNLOADS_DIR_NAME);
-    connect(blockRequestTimer, SIGNAL(chime()), 
+    connect(blockRequestTimer, SIGNAL(timeout()), 
         this, SLOT(gotBlockRequestChime()));
     blockRequestTimer->start(BLOCK_REQUEST_RATE);
 
-    connect(reapTimer, SIGNAL(chime()),
+    connect(reapTimer, SIGNAL(timeout()),
         this, SLOT(gotReapChime()));
     reapTimer->start(REAP_RATE);
 }

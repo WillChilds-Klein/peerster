@@ -35,7 +35,6 @@ class FileStore : public QObject
     public slots:
         void gotProcessFilesToShare(QStringList);
         void gotRequestFileFromPeer(QString,QString);
-        // void gotProcessFileSearchRequest(QStringList);
         void gotProcessBlockRequest(Message);
         void gotProcessBlockReply(Message);
         void gotProcessSearchRequest(Message);
