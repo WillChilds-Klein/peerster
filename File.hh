@@ -27,7 +27,7 @@ class File
         bool isComplete();
         bool isShared();
         bool containsBlock(QByteArray); // block is a part of file
-        // bool hasMetaData();
+        bool hasMetaData();
         bool hasBlock(QByteArray);  // currently has actual block data
         bool addMetaData(QByteArray);        // true on successful add
         bool addBlock(QByteArray,QByteArray);// true on successful add

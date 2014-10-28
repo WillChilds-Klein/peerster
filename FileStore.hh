@@ -54,7 +54,7 @@ class FileStore : public QObject
         QMap<QString,quint32>* sharedFileInfo;
         QMap<QString,DownloadStatus::Status>* downloadInfo;
         QDir *tempdir, *downloads;
-        QTimer* blockRequestTimer;
+        QTimer *blockRequestTimer, *reapTimer;
         void makeTempdir();
         bool enDequeuePendingDownloadQueue(); // true if head re-queue
         void cyclePendingDownloadQueue();
@@ -70,8 +70,8 @@ class FileStore::Download : private QMap<QByteArray,quint32>
         QString peer();
         DownloadStatus::Status status();
         QList<QByteArray> blocksNeeded();
-        bool needsBlock(QByteArray);
         bool needsMetaData();
+        bool needsBlock(QByteArray);
         bool isAlive();
         void touch(QByteArray);
         void addMetaData(QByteArray);
@@ -97,6 +97,7 @@ class FileStore::DownloadQueue : private QList<Download>
         Download dequeue();
         void enqueue(Download);
         Download* search(QByteArray); // ret ptr to val, NULL on not found.
+        void upadateDownloadInfo(QString,DownloadStatus::Status);
         void reap();
         bool isEmpty();
         

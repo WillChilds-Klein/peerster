@@ -82,15 +82,6 @@
 
 #define SWITCH_NOFORWARD ("-noforward")
 
-// CLEANENUMS_BEGIN(DownloadStatus)
-//         INIT        = 0,
-//         CONFIRMING  = 1,
-//         PENDING     = 2,
-//         COMPLETE    = 3,
-//         FAILED      = 4,
-//         NONE        = 5
-// CLEANENUMS_END(DownloadStatus)
-
 namespace DownloadStatus
 {
     enum Status

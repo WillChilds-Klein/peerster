@@ -139,6 +139,11 @@ bool File::containsBlock(QByteArray blockID)
     return blockIDList->contains(blockID);
 }
 
+bool File::hasMetaData()
+{
+    return !blockIDList->empty();
+}
+
 bool File::hasBlock(QByteArray blockID)
 {
     return blockTable->contains(blockID);
