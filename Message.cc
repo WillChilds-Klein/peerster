@@ -179,7 +179,7 @@ bool Message::isWellFormed()
                  contains(KEY_HOPLIMIT) && contains(KEY_SEARCHREPLY) &&
                  contains(KEY_MATCHNAMES) && contains(KEY_MATCHIDS)));
     
-    if(getType() == TYPE_BLOCK_REPLY && !isValidBlockReply())
+    if(false/*getType() == TYPE_BLOCK_REPLY && !isValidBlockReply()*/)
     {
         qDebug() << "INVALID BLOCK REPLY!!";
         return false;
@@ -205,7 +205,7 @@ bool Message::isDirectRumor()
 
 bool Message::isValidBlockReply()
 {
-    if(!(getType() == TYPE_BLOCK_REPLY))
+    if(getType() != TYPE_BLOCK_REPLY)
     {
         return false;
     }

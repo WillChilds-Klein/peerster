@@ -97,6 +97,8 @@ void FileStore::gotProcessBlockRequest(Message msg)
             reply.setData(file.metadata());
 
             Q_EMIT(sendDirect(reply, reply.getDest()));
+            qDebug() << "SENDING METAFILE REPLY: " << reply.toString()
+                     << " TO " << reply.getDest();
             return;
         }
         // else scan individual file blocks
@@ -106,6 +108,8 @@ void FileStore::gotProcessBlockRequest(Message msg)
             reply.setData(file.block(data));
 
             Q_EMIT(sendDirect(reply, reply.getDest()));
+            qDebug() << "SENDING BLOCK REPLY: " << reply.toString() 
+                     << " TO " << reply.getDest();
             return;
         }
     }
@@ -186,7 +190,8 @@ void FileStore::makeTempdir()
     {
         if(downloads->mkpath(downloads->absolutePath() + "/"))
         {
-            qDebug() << "SUCCESSFULLY CREATED DOWNLOADS DIR: " << downloads->absolutePath();
+            qDebug() << "SUCCESSFULLY CREATED DOWNLOADS DIR: " 
+                     << downloads->absolutePath();
         }
         else
         {
