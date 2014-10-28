@@ -82,6 +82,40 @@ QString Message::toString()
         }
         str += "]";
     }
+    else if(getType() == TYPE_BLOCK_REPLY) 
+    {
+        str += "[";
+        for(i = this->begin(); i != this->end(); ++i)
+        {
+            if(i.key() == KEY_BLOCKREPLY || i.key() == KEY_DATA)
+            {
+                str += "<" + i.key() + ": " + 
+                             i.value().toByteArray().toHex() + ">,";
+            }
+            else
+            {
+                str += "<" + i.key() + ": " + i.value().toString() + ">,";
+            }
+        }
+        str += "]";
+    }
+    else if(getType() == TYPE_BLOCK_REQUEST) 
+    {
+        str += "[";
+        for(i = this->begin(); i != this->end(); ++i)
+        {
+            if(i.key() == KEY_BLOCKREQUEST)
+            {
+                str += "<" + i.key() + ": " + 
+                             i.value().toByteArray().toHex() + ">,";
+            }
+            else
+            {
+                str += "<" + i.key() + ": " + i.value().toString() + ">,";
+            }
+        }
+        str += "]";
+    }
     else
     {
         str += "[";
