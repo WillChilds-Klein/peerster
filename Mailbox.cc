@@ -128,15 +128,14 @@ void Mailbox::gotHelpPeer(Peer peer, QList<Message> list)
         Q_EMIT(sendMessage(*i, peer));
     }
 
-    qDebug() << "HELPING PEER " << peer.toString() << " WITH " 
-             << list.size() << " MESSAGES";
+    // qDebug() << "HELPING PEER " << peer.toString() << " WITH
 }
 
 void Mailbox::gotNeedHelpFromPeer(Peer peer)
 {
     Q_EMIT(sendMessage(*status, peer));
 
-    qDebug() << "NEED HELP FROM PEER " << peer.toString();
+    // qDebug() << "NEED HELP FROM PEER " << peer.toString();
 }
 
 void Mailbox::gotInConsensusWithPeer()
@@ -146,7 +145,7 @@ void Mailbox::gotInConsensusWithPeer()
         Q_EMIT(monger(*status));
     }
 
-    qDebug() << "IN CONSENSUS WITH PEER ";
+    // qDebug() << "IN CONSENSUS WITH PEER ";
 }
 
 void Mailbox::gotUpdateStatus(Message msg)
