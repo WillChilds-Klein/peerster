@@ -27,7 +27,7 @@ File::File(QString absolutepath, QString temppath)
     filePath = absolutepath;
     tempDirPath = temppath + 
                  (temppath.endsWith("/") ? "" : "/");
-    downloadsDirPath = QDir::currentPath() +
+    downloadsDirPath = temppath +
                       (QDir::currentPath().endsWith("/") ? "" : "/") +
                        DOWNLOADS_DIR_NAME + "/";
 
@@ -37,6 +37,7 @@ File::File(QString absolutepath, QString temppath)
 
     qDebug() << "fileNameOnly: " << fileNameOnly;
     qDebug() << "filePath: " << filePath;
+    qDebug() << "tempDirPath: " << tempDirPath;
     qDebug() << "downloadsDirPath: " << downloadsDirPath;
     qDebug() << "fileSize: " << QString::number(fileSize);
 }
@@ -346,7 +347,9 @@ QByteArray File::readBytesFromFile(QFile* f)
     else if(f->open(QIODevice::ReadOnly))
     {
         QDataStream inStream(f);
-        inStream >> bytes;
+        inStream >> bytes; // NOT READING CORRECTLY!!!!
+        qDebug() << "JUST READ FROM FILE " << f->fileName() 
+                 << ": " << QString(bytes.toHex());
         f->close();
     }
     else
