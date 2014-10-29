@@ -65,6 +65,7 @@ class FileStore::Download : private QMap<QByteArray,quint32>
         Download();
         Download(File*,QString);
         ~Download();
+        QString toString();
         File* fileObject();
         QString peer();
         DownloadStatus::Status status();

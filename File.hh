@@ -33,6 +33,9 @@ class File
         bool addMetaData(QByteArray);        // true on successful add
         bool addBlock(QByteArray,QByteArray);// true on successful add
         void share();
+        static QFile* writeByteArrayToFile(QString,QByteArray);
+        static QByteArray readNBytesFromStream(quint32,QDataStream*);
+        static QByteArray readBytesFromFile(QFile*);
 
     private:
         QString fileNameOnly, filePath, tempDirPath, 
@@ -45,13 +48,8 @@ class File
         QHash<QByteArray,QFile*>* blockTable;
         void assemble();
         void cleanupDownloads();
-        QString metaFileTempPath();
-        QString metaFileDownloadsPath();
-        QString blockFileTempPath(quint32);
-        QString blockFileDownloadsPath(quint32);
-        QFile* writeByteArrayToFile(QString,QByteArray);
-        QByteArray readNBytesFromStream(quint32,QDataStream*);
-        QByteArray readBytesFromFile(QFile*);
+        QString metaFileName();
+        QString blockFileName(quint32);
         bool operator==(File);
         bool operator!=(File);
 };

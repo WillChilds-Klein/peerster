@@ -136,9 +136,9 @@ QString Message::toString()
             {
                 QByteArray matches = i.value().toByteArray();
                 str += "<" + i.key() + ": ["; 
-                for(int j = 0; j < matches.size(); j += BLOCK_SIZE)
+                for(int j = 0; j < matches.size(); j += HASH_SIZE)
                 {
-                    str += QString(i.value().toByteArray().mid(j, BLOCK_SIZE).toHex())+",";
+                    str += QString(i.value().toByteArray().mid(j, HASH_SIZE).toHex())+",";
                 }
                 str += "]>,";
             }
@@ -280,6 +280,8 @@ bool Message::isValidBlockReply()
     QCA::Hash sha("sha1");
     sha.update(getData()); 
     QByteArray hash = sha.final().toByteArray();
+    // TODO: issue is definitely in hashing....
+    // data field is empty!! is it not being set properly?
 
     qDebug() << "ATTN: " << QString(hash.toHex()) << "=?=" 
              << QString(getBlockReply().toHex());

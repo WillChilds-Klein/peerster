@@ -44,6 +44,7 @@ void FileStore::gotProcessFilesToShare(QStringList absfilepaths)
         if(!(sharedFileInfo->keys().contains(filepath)))
         {
             File file = File(filepath, tempdir->absolutePath());
+            file.share();
             sharedFiles->append(file);
             sharedFileInfo->insert(file.abspath(), file.size());
         }
@@ -220,8 +221,8 @@ bool FileStore::enDequeuePendingDownloadQueue()
     {
         Download head = pendingDownloads->dequeue();
 
-        qDebug() << "POP PENDING DOWNLOADQUEUE HEAD: FILE " 
-                 << head.fileObject()->name();
+        qDebug() << "POP PENDING DOWNLOADQUEUE HEAD: "
+                 << head.toString();
 
         Message request;
         request.setType(TYPE_BLOCK_REQUEST);
@@ -236,13 +237,13 @@ bool FileStore::enDequeuePendingDownloadQueue()
             head.touch(*i);     // increment # times each request sent.
             request.setBlockRequest(*i);
             Q_EMIT(sendDirect(request, request.getDest()));
-            qDebug() << "\tSENT BLOCK_REQUEST " << *i
+            qDebug() << "\tSENT BLOCK_REQUEST " << QString(*i->toHex())
                      << " TO " << request.getOriginID();
         }
 
         if(head.isAlive())
         {
-            qDebug() << "RE-QUEUE'ING HEAD";
+            qDebug() << "RE-QUEUE'ING HEAD " << head.toString();
 
             pendingDownloads->enqueue(head);
             return true;
@@ -287,6 +288,17 @@ FileStore::Download::Download(File* f, QString p)
 
 FileStore::Download::~Download()
 {}
+
+QString FileStore::Download::toString()
+{
+    QString qstr = "-------- Download --------\n";
+    qstr += "peer originID: " + peerID + "\n";
+    qstr += "DownloadStatus: " + QString::number(downloadStatus) + "\n";
+    qstr += "File:\n" + file->toString() + "\n\n";
+    qstr += "--------------------------\n\n";
+
+    return qstr;
+}
 
 File* FileStore::Download::fileObject()
 {
