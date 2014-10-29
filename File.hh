@@ -17,6 +17,7 @@ class File
         File(QString,QString);
         File(QString,QString,QByteArray);
         ~File();
+        QString toString();
         QString name();
         QString abspath();
         quint32 size();

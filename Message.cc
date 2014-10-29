@@ -90,7 +90,7 @@ QString Message::toString()
             if(i.key() == KEY_BLOCKREPLY || i.key() == KEY_DATA)
             {
                 str += "<" + i.key() + ": " + 
-                             i.value().toByteArray().toHex() + ">,";
+                             QString(i.value().toByteArray().toHex()) + ">,";
             }
             else
             {
@@ -107,7 +107,40 @@ QString Message::toString()
             if(i.key() == KEY_BLOCKREQUEST)
             {
                 str += "<" + i.key() + ": " + 
-                             i.value().toByteArray().toHex() + ">,";
+                             QString(i.value().toByteArray().toHex()) + ">,";
+            }
+            else
+            {
+                str += "<" + i.key() + ": " + i.value().toString() + ">,";
+            }
+        }
+        str += "]";
+    }
+    else if(getType() == TYPE_SEARCH_REPLY)
+    {
+        str += "[";
+        for(i = this->begin(); i != this->end(); ++i)
+        {
+            if(i.key() == KEY_MATCHNAMES)
+            {
+                QVariantList matchNames = i.value().toList();
+                str += "<" + i.key() + ": [";
+                QVariantList::iterator j;
+                for(j = matchNames.begin(); j != matchNames.end(); ++j)
+                {
+                    str += j->toString() + ",";
+                }
+                str += "]>,";
+            }
+            else if(i.key() == KEY_MATCHIDS)
+            {
+                QByteArray matches = i.value().toByteArray();
+                str += "<" + i.key() + ": ["; 
+                for(int j = 0; j < matches.size(); j += BLOCK_SIZE)
+                {
+                    str += QString(i.value().toByteArray().mid(j, BLOCK_SIZE).toHex())+",";
+                }
+                str += "]>,";
             }
             else
             {
@@ -125,7 +158,6 @@ QString Message::toString()
         }
         str += "]";
     }
-
 
     return str;
 }
@@ -204,20 +236,21 @@ bool Message::isWellFormed()
     isRumor = (contains(KEY_ORIGINID) && contains(KEY_SEQNO));
     isDChat = (contains(KEY_ORIGINID) && contains(KEY_CHATTEXT) && 
                contains(KEY_HOPLIMIT) && contains(KEY_DEST));
-    isBlock = (contains(KEY_BLOCKREQUEST) && contains(KEY_ORIGINID) &&
+    isBlock = (contains(KEY_DEST) && contains(KEY_ORIGINID) &&
                contains(KEY_HOPLIMIT) && 
-              (contains(KEY_DEST) || contains(KEY_BLOCKREPLY)));
+              (contains(KEY_BLOCKREQUEST) || 
+              (contains(KEY_BLOCKREPLY) && contains(KEY_DATA))));
     isSearch = ((contains(KEY_SEARCH) && contains(KEY_ORIGINID) && 
                  contains(KEY_BUDGET)) || 
                 (contains(KEY_SEARCHREPLY) && contains(KEY_DEST) && 
                  contains(KEY_HOPLIMIT) && contains(KEY_SEARCHREPLY) &&
                  contains(KEY_MATCHNAMES) && contains(KEY_MATCHIDS)));
     
-    if(false/*getType() == TYPE_BLOCK_REPLY && !isValidBlockReply()*/)
+    if(getType() == TYPE_BLOCK_REPLY && !isValidBlockReply())
     {
         qDebug() << "INVALID BLOCK REPLY!!";
         return false;
-    } // potentially comment out...
+    }
     else if(isStatus || isRumor || isDChat || isBlock || isSearch)
     {
         return true;
@@ -245,8 +278,12 @@ bool Message::isValidBlockReply()
     }
 
     QCA::Hash sha("sha1");
-    sha.update(getData().data()); // <-- potential segfault?
+    sha.update(getData()); 
     QByteArray hash = sha.final().toByteArray();
+
+    qDebug() << "ATTN: " << QString(hash.toHex()) << "=?=" 
+             << QString(getBlockReply().toHex());
+    qDebug() << "DATA: " << QString(getData().toHex());
 
     return hash == getBlockReply();
 }

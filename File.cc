@@ -77,6 +77,29 @@ File::~File()
     // delete(metaFile);
 }
 
+QString File::toString()
+{
+    QString qstr;
+    QList<QByteArray>::iterator i;
+
+    qstr += "===== File " + filePath + " (" + 
+            QString::number(fileSize) + "KB) =====\n";
+    qstr += "\tfileID: " + QString(metaFileID->toHex());
+    qstr += "\tmetadata: " + QString(readBytesFromFile(metaFile).toHex());
+    qstr += "\tblockIDs: [ ";
+    for(i = blockIDList->begin(); i != blockIDList->end(); ++i)
+    {
+        qstr += "{" + QString(i->toHex()) + "},";
+    }
+    qstr += " ]\n";
+    qstr += "\thave blocks: [ ";
+    for(i = blockTable->keys().begin(); i != blockTable->keys().end(); ++i)
+    {
+        qstr += "{" + QString(i->toHex()) + "},";
+    }
+    qstr += " ]\n";
+}
+
 QString File::name()
 {
     return fileNameOnly;
@@ -231,7 +254,7 @@ void File::share()
                                                     << fileNameOnly << "!";
             return;
         }
-        sha.update(blockFile);
+        sha.update(blockData);
         blockID = sha.final().toByteArray();
         blockIDList->append(blockID);
         (*blockTable)[blockID] = blockFile;
@@ -243,6 +266,8 @@ void File::share()
         blockID.clear();
         sha.clear();
         i++;
+
+        qDebug() << "METADATA PER ITER:" << QString(metaData.toHex()) << "\n\n\n";
     }
 
     // write metaFile...move over to writeByteArrayToFile method...
@@ -259,9 +284,11 @@ void File::share()
     }
 
     // generate metaFileID
-    sha.update(metaFile);
+    QCA::Hash metaSha("sha1");
+    metaSha.update(metaData);
     metaFile->close();
-    metaFileID = new QByteArray(sha.final().toByteArray());
+    qDebug() << "TESTEST::" << metaData.toHex();
+    metaFileID = new QByteArray(metaSha.final().toByteArray());
 
     shared = true;
 

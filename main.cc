@@ -2,10 +2,10 @@
 
 int main(int argc, char** argv)
 {
+    QCA::Initializer qcainit;
+ 
     // Initialize Qt toolkit
     QApplication app(argc,argv);
-
-    QCA::Initializer qcainit;
 
     Peerster peerster;
     peerster.run();

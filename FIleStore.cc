@@ -54,6 +54,9 @@ void FileStore::gotProcessFilesToShare(QStringList absfilepaths)
 
 void FileStore::gotRequestFileFromPeer(QString origin, QString fileIDString)
 {
+    qDebug() << "REQUESTING FILE " << fileIDString 
+             << " FROM " << origin; 
+
     QByteArray fileID = QByteArray::fromHex(fileIDString.toLatin1());
     QString fileName = "download-" +  QString::number((qrand() % 1000) + 1);
     QString filePath = downloads->absolutePath() + 
@@ -79,6 +82,9 @@ void FileStore::gotRequestFileFromPeer(QString origin, QString fileIDString)
 
 void FileStore::gotProcessBlockRequest(Message msg)
 {
+    qDebug() << "PROCESSING BLOCK REQUEST FROM " << msg.getOriginID() 
+             << ": " << msg.toString();
+
     QByteArray data = msg.getBlockRequest();
     QString blockPath;
 
@@ -117,6 +123,9 @@ void FileStore::gotProcessBlockRequest(Message msg)
 
 void FileStore::gotProcessBlockReply(Message reply)
 {    
+    qDebug() << "PROCESSING BLOCK REPLY FROM " << reply.getOriginID() 
+             << ": " << reply.toString();
+
     QFile* file;
     QByteArray blockID = reply.getBlockReply(),
                blockData = reply.getData();
@@ -134,11 +143,13 @@ void FileStore::gotProcessBlockReply(Message reply)
     else if(query->fileObject()->fileID() == blockID && query->needsMetaData())
     {   // got dl confirmation. create dl obj and init dl
         query->addMetaData(blockData);
+        pendingDownloads->enqueue(*query);
         enDequeuePendingDownloadQueue();
     }
     else if(query->needsBlock(blockID))
     {
         query->addBlockData(blockID, blockData);
+        pendingDownloads->enqueue(*query);
         enDequeuePendingDownloadQueue();
     }
 }
@@ -413,7 +424,8 @@ FileStore::Download* FileStore::DownloadQueue::search(QByteArray blockID)
     QList<Download>::iterator i;
     for(i = this->begin(); i != this->end(); ++i)
     {
-        if(i->fileObject()->containsBlock(blockID))
+        if(i->fileObject()->containsBlock(blockID) ||
+           i->fileObject()->fileID() == blockID)
         {
             return &(*i);
         }
