@@ -280,8 +280,6 @@ bool Message::isValidBlockReply()
     QCA::Hash sha("sha1");
     sha.update(getData()); 
     QByteArray hash = sha.final().toByteArray();
-    // TODO: issue is definitely in hashing....
-    // data field is empty!! is it not being set properly?
 
     qDebug() << "ATTN: " << QString(hash.toHex()) << "=?=" 
              << QString(getBlockReply().toHex());

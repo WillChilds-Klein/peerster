@@ -15,6 +15,33 @@ FileStore::FileStore(Peerster* p)
     connect(reapTimer, SIGNAL(timeout()),
         this, SLOT(gotReapChime()));
     reapTimer->start(REAP_RATE);
+
+    downloads = new QDir(QDir::currentPath() +
+                        (QDir::currentPath().endsWith("/") ? "" : "/") +
+                         DOWNLOADS_DIR_NAME + "/");
+    if(downloads->exists())
+    {
+        qDebug() << "DOWNLOADS DIR ALREADY EXISTS! EMPTYING IT.";
+        QString path = downloads->absolutePath();
+        QDir dir(path);
+        dir.setNameFilters(QStringList() << "*.*");
+        dir.setFilter(QDir::Files);
+        foreach(QString dirFile, dir.entryList())
+        {
+            dir.remove(dirFile);
+        }
+    }
+
+    if(downloads->mkpath(downloads->absolutePath() + "/"))
+    {
+        qDebug() << "SUCCESSFULLY CREATED DOWNLOADS DIR: " 
+                 << downloads->absolutePath();
+    }
+    else
+    {
+        qDebug() << "UNABLE TO CREATE DOWNLOADS DIR " 
+                 << downloads->absolutePath() << "! CHECK PERMISSIONS!";
+    }
 }
 
 FileStore::~FileStore()
@@ -193,21 +220,6 @@ void FileStore::makeTempdir()
         else
         {
             qDebug() << "UNABLE TO CREATE TEMP DIR " << tempdir->absolutePath()
-                     << "! CHECK PERMISSIONS!";
-        }
-    }
-
-    downloads = new QDir(tempdir->absolutePath() + "/" + DOWNLOADS_DIR_NAME);
-    if(!downloads->exists())
-    {
-        if(downloads->mkpath(downloads->absolutePath() + "/"))
-        {
-            qDebug() << "SUCCESSFULLY CREATED DOWNLOADS DIR: " 
-                     << downloads->absolutePath();
-        }
-        else
-        {
-            qDebug() << "UNABLE TO CREATE DOWNLOADS DIR " << downloads->absolutePath()
                      << "! CHECK PERMISSIONS!";
         }
     }

@@ -27,7 +27,7 @@ File::File(QString absolutepath, QString temppath)
     filePath = absolutepath;
     tempDirPath = temppath + 
                  (temppath.endsWith("/") ? "" : "/");
-    downloadsDirPath = temppath +
+    downloadsDirPath = QDir::currentPath() +
                       (QDir::currentPath().endsWith("/") ? "" : "/") +
                        DOWNLOADS_DIR_NAME + "/";
 
@@ -149,7 +149,6 @@ QByteArray File::block(QByteArray blockID)
     {
         blockFile = (*blockTable)[blockID];
         blockData = readBytesFromFile(blockFile);
-        //TODO: issue is RIGHT HERE. investigate further...
     }
     else
     {
@@ -253,7 +252,7 @@ void File::share()
         qDebug() << "BLOCKFILE " << i << "NAME: " << blockFilePath;
         blockFile = new QFile(blockFilePath);
 
-        // write block file...move over writeByteArrayToFile method..
+        // write block file...move over to writeByteArrayToFile method..
         if (blockFile->open(QIODevice::WriteOnly | QIODevice::ReadOnly))
         {
             QDataStream blockOutStream(blockFile);
@@ -339,6 +338,9 @@ QByteArray File::readNBytesFromStream(quint32 n, QDataStream* in)
 QByteArray File::readBytesFromFile(QFile* f)
 {
     QByteArray bytes;
+    char buffer[BLOCK_SIZE];
+    int readSize;
+
     if(f == NULL)
     {
         qDebug() << "NULL FILE PTR PASSED TO " 
@@ -346,8 +348,15 @@ QByteArray File::readBytesFromFile(QFile* f)
     }
     else if(f->open(QIODevice::ReadOnly))
     {
-        QDataStream inStream(f);
-        inStream >> bytes; // NOT READING CORRECTLY!!!!
+        QDataStream in(f);
+        while(!in.atEnd())
+        {
+            readSize = in.readRawData(buffer, BLOCK_SIZE);
+            bytes.append(QByteArray(buffer));
+            qDebug() << "PER ITER " << QString::number(readSize) 
+                     << ": " << QString(bytes.toHex());
+        }
+
         qDebug() << "JUST READ FROM FILE " << f->fileName() 
                  << ": " << QString(bytes.toHex());
         f->close();
@@ -371,7 +380,9 @@ void File::assemble()
         filebytes.append(readBytesFromFile(blockTable->value(blockID)));
     }
 
-    writeByteArrayToFile(filePath, filebytes);
+    qfile = writeByteArrayToFile(filePath, filebytes);
+    qDebug() << "FINISHED DOWNLOADING " << qfile->fileName() 
+             << " WHICH CAN BE FOUND AT " << filePath;
 }
 
 void File::cleanupDownloads()
