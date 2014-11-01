@@ -47,7 +47,7 @@ File::File(QString absolutepath, QString temppath, QByteArray metaFileIDBytes)
     , complete(false)
     , shared(false)
     , qfile(NULL)            // potential segfault?
-    , metaFile(NULL)    // potential segfault?
+    , metaFile(NULL)         // potential segfault?
     , metaFileID(QByteArray(metaFileIDBytes))
     , blockIDList(new QList<QByteArray>)
     , blockTable(new QHash<QByteArray,QFile*>)
@@ -83,27 +83,33 @@ File::~File()
 
 QString File::toString()
 {
-    QList<QByteArray>::iterator i;
-
     QString qstr = "===== File " + fileNameOnly + " (" + 
             QString::number(fileSize) + " B) =====\n";
     qstr += "fileID: " + QString(metaFileID.toHex()) + "\n";
     qstr += "metadata: " + (metaFile == NULL
                             ? "METADATA HASN'T BEEN SET YET!!" 
-                            : QString(readBytesFromFile(metaFile).toHex()) + "\n");
-    qstr += "blockIDs: [ ";
-    for(i = blockIDList->begin(); i != blockIDList->end(); ++i)
+                            : QString(metadata().toHex()))
+                         + "\n";
+    
+    qstr += "blockIDs (size " + QString::number(blockIDList->size()) 
+          + "): [ ";
+    foreach(QByteArray blockID, *blockIDList)
     {
-        qstr += "{" + QString(i->toHex()) + "},";
+        qstr += "{" + QString(blockID.toHex()) + "},";
     }
     qstr += " ]\n";
-    qstr += "have blocks: [ ";
-    for(i = blockTable->keys().begin(); i != blockTable->keys().end(); ++i)
+
+    qstr += "have blocks: [";
+    if(blockTable->isEmpty())
     {
-        qstr += "{" + QString(i->toHex()) + "},";
+        qstr += " NO BLOCKS YET ";
     }
-    qstr += " ]\n";
-    qstr += "==========================\n";
+    foreach(QByteArray blockID, blockTable->keys())
+    {
+        qstr += "{" + QString(blockID.toHex()) + "},";
+    }
+    qstr += "]\n";
+    qstr += "==============================\n";
 
     return qstr;
 }
@@ -231,7 +237,7 @@ bool File::addBlock(QByteArray blockID, QByteArray blockData)
                  << QString(metaFileID.toHex());
 
         assemble();
-        // cleanup();
+        cleanup();
 
         complete = true;
     }
@@ -303,14 +309,14 @@ void File::share()
     }
     delete(in);
 
-    // write metaFile
-    metaFile = new QFile(tempDirPath + metaFileName());
-    writeByteArrayToFile(metaFile, metaData);
-
     // compute metaFileID
     QCA::Hash metaSha("sha1");
     metaSha.update(metaData);
     metaFileID = QByteArray(metaSha.final().toByteArray());
+
+    // write metaFile
+    metaFile = new QFile(tempDirPath + metaFileName());
+    writeByteArrayToFile(metaFile, metaData);
 
     shared = true;
 

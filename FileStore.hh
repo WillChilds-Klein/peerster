@@ -1,8 +1,9 @@
 #ifndef PEERSTER_FILESTORE_HH
 #define PEERSTER_FILESTORE_HH
 
-#define CYCLE_RATE (30000) // 30s in ms
+#define POP_RATE (2000)            // 2s in ms
 #define REAP_RATE (5000)           // 5s in ms
+#define CYCLE_THRESHOLD (10)
 #define BLOCK_REQUEST_LIMIT (10)
 #define SHARED_FILE_DIR_PREFIX ("/tmp/peerster-")
 #define TEMPDIR_NDIGITS (5)
@@ -41,7 +42,7 @@ class FileStore : public QObject
         void gotProcessSearchReply(Message);
 
     private slots:
-        void gotCycleChime();
+        void gotPopChime();
         void gotReapChime();
         void gotUpdateDownloadInfo(Download);
 
@@ -53,13 +54,13 @@ class FileStore : public QObject
         QMap<QString,quint32>* sharedFileInfo;
         QMap<QString,DownloadStatus::Status>* downloadInfo;
         QDir *tempdir, *downloads;
-        QTimer *cycleTimer, *reapTimer;
+        QTimer *popTimer, *reapTimer;
         void makeTempdir();
         bool enDequeuePendingDownloadQueue(); // true if head re-queue
         void cyclePendingDownloadQueue();
 };
 
-class FileStore::Download : private QMap<QByteArray,quint32>
+class FileStore::Download : private QHash<QByteArray,quint32>
 {
     public:
         Download();

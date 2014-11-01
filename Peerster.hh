@@ -1,9 +1,6 @@
 #ifndef PEERSTER_PEERSTER_HH
 #define PEERSTER_PEERSTER_HH
 
-#define CLEANENUMS_BEGIN(name) namespace name { typedef enum {
-#define CLEANENUMS_END(name) } internal_ ## name ## _e;} typedef name::internal_ ## name ## _e name ## _e;
-
 #include <unistd.h>
 
 #include <QDialog>

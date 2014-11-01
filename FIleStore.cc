@@ -5,12 +5,12 @@ FileStore::FileStore(Peerster* p)
     , sharedFiles(new QList<File>)
     , pendingDownloads(new DownloadQueue(this))
     , downloads(new QDir)
-    , cycleTimer(new QTimer(this))
+    , popTimer(new QTimer(this))
     , reapTimer(new QTimer(this))
 {
-    connect(cycleTimer, SIGNAL(timeout()), 
-        this, SLOT(gotCycleChime()));
-    cycleTimer->start(CYCLE_RATE);
+    connect(popTimer, SIGNAL(timeout()), 
+        this, SLOT(gotPopChime()));
+    popTimer->start(POP_RATE);
 
     connect(reapTimer, SIGNAL(timeout()),
         this, SLOT(gotReapChime()));
@@ -23,10 +23,11 @@ FileStore::FileStore(Peerster* p)
     if(downloads->exists())
     {
         qDebug() << "DOWNLOADS DIR ALREADY EXISTS! EMPTYING IT.";
-        QString path = downloads->absolutePath();
-        QDir dir(path);
-        dir.setNameFilters(QStringList() << "*.*");
+
+        QDir dir(downloads->absolutePath());
+        dir.setNameFilters(QStringList() << "*");
         dir.setFilter(QDir::Files);
+        
         foreach(QString dirFile, dir.entryList())
         {
             dir.remove(dirFile);
@@ -99,7 +100,6 @@ void FileStore::gotRequestFileFromPeer(QString origin, QString fileIDString)
     Download* newDownload = new Download(newFile, origin);
     
     pendingDownloads->enqueue(newDownload);
-    enDequeuePendingDownloadQueue();
 }
 
 void FileStore::gotProcessBlockRequest(Message msg)
@@ -163,14 +163,12 @@ void FileStore::gotProcessBlockReply(Message reply)
         //  3. block for complete file
     }
     else if(query->fileObject()->fileID() == blockID && query->needsMetaData())
-    {   // got dl confirmation. create dl obj and init dl
+    {   // got dl confirmation.
         query->addMetaData(blockData);
-        enDequeuePendingDownloadQueue();
     }
     else if(query->needsBlock(blockID))
     {
         query->addBlockData(blockID, blockData);
-        enDequeuePendingDownloadQueue();
     }
 }
 
@@ -184,9 +182,18 @@ void FileStore::gotProcessSearchReply(Message msg)
     // TODO
 }
 
-void FileStore::gotCycleChime()
+void FileStore::gotPopChime()
 {
-    cyclePendingDownloadQueue();
+    if(pendingDownloads->size() >= CYCLE_THRESHOLD)
+    {
+        qDebug() << "PENDING DL'S SIZE: " 
+                 << QString::number(pendingDownloads->size());
+        cyclePendingDownloadQueue();
+    }
+    else if(!pendingDownloads->isEmpty())
+    {
+        enDequeuePendingDownloadQueue();
+    }
 }
 
 void FileStore::gotReapChime()
@@ -220,57 +227,66 @@ void FileStore::makeTempdir()
 bool FileStore::enDequeuePendingDownloadQueue()
 {
     qDebug() << "ENDEQUEUE PENDING DOWNLOADQUEUE";
-
-    if(!pendingDownloads->isEmpty())
+    
+    Download* head = pendingDownloads->dequeue();
+    while(!head->isAlive())
     {
-        Download* head = pendingDownloads->dequeue();
-
-        qDebug() << "POP PENDING DOWNLOADQUEUE HEAD: "
-                 << head->toString();
-
-        Message request;
-        request.setType(TYPE_BLOCK_REQUEST);
-        request.setDest(head->peer());
-        request.setOriginID(ID);
-        request.setHopLimit((quint32) BLOCK_HOP_LIMIT);
-
-        if(head->needsMetaData())
+        if(pendingDownloads->isEmpty())
         {
-            request.setBlockRequest(head->fileObject()->fileID());
-            Q_EMIT(sendDirect(request, request.getDest()));
-
-            head->begin();
-
-            Q_EMIT(updateDownloadInfo(*head));
-            qDebug() << "SENT INITIAL METADATA REQUEST: " 
-                     << request.toString();
-        }
-        else
-        {
-            QList<QByteArray> needed = head->blocksNeeded();
-            QList<QByteArray>::iterator i;
-            for(i = needed.begin(); i != needed.end(); ++i)
-            {
-                head->touch(*i);     // increment # times each request sent.
-                request.setBlockRequest(*i);
-                Q_EMIT(sendDirect(request, request.getDest()));
-                qDebug() << "\tSENT BLOCK_REQUEST " << QString(i->toHex())
-                         << " TO " << request.getOriginID();
-            }
-        }
-
-        if(head->isAlive())
-        {
-            qDebug() << "RE-QUEUE'ING HEAD " << head->toString();
-
-            pendingDownloads->enqueue(head);
-            return true;
-        }
-        else
-        {
-            delete(head);
             return false;
         }
+        head = pendingDownloads->dequeue();
+    }
+
+    qDebug() << "POP PENDING DOWNLOADQUEUE HEAD: "
+             << head->toString();
+
+    Message request;
+    request.setType(TYPE_BLOCK_REQUEST);
+    request.setDest(head->peer());
+    request.setOriginID(ID);
+    request.setHopLimit((quint32) BLOCK_HOP_LIMIT);
+
+    if(head->needsMetaData())
+    {
+        QByteArray fileID = head->fileObject()->fileID();
+
+        request.setBlockRequest(fileID);
+        Q_EMIT(sendDirect(request, request.getDest()));
+
+        head->begin();
+        head->touch(fileID);
+
+        Q_EMIT(updateDownloadInfo(*head));
+        qDebug() << "SENT INITIAL METADATA REQUEST: " 
+                 << request.toString();
+    }
+    else
+    {
+        QList<QByteArray> needed = head->blocksNeeded();
+        QList<QByteArray>::iterator i;
+        for(i = needed.begin(); i != needed.end(); ++i)
+        {
+            request.setBlockRequest(*i);
+            Q_EMIT(sendDirect(request, request.getDest()));
+            head->touch(*i);    // increment # times each request sent.
+
+            qDebug() << "\tSENT BLOCK_REQUEST " << QString(i->toHex())
+                     << " TO " << request.getOriginID();
+        }
+    }
+
+    if(head->isAlive())
+    {
+        qDebug() << "RE-QUEUE'ING HEAD";
+
+        pendingDownloads->enqueue(head);
+        return true;
+    }
+    else
+    {
+        delete(head);
+        return false;
     }
 }
 
@@ -307,7 +323,10 @@ FileStore::Download::Download(File* f, QString p)
     , peerID(p)
     , downloadStatus(DownloadStatus::INIT)
 {
-    begin();
+    if(f->fileID().size() > 0)
+    {
+        insert(f->fileID(), 0);
+    }
 }
 
 FileStore::Download::~Download()
@@ -321,11 +340,10 @@ QString FileStore::Download::toString()
     qstr += "isAlive?: " + QString::number(isAlive()) + "\n";
 
     qstr += "touch counts:\n";
-    QList<QByteArray>::iterator i = this->keys().begin();
-    for(; i != this->keys().end(); ++i)
+    foreach(QByteArray blockID, keys())
     {
-        qstr += "\t[" + QString(i->toHex()) 
-               + ": " + QString::number(value(*i)) + "]\n";
+        qstr += "\t[" + QString(blockID.toHex()) 
+               + ": " + QString::number(value(blockID)) + "]\n";
     }
 
     qstr += "File:\n" + file->toString();
@@ -353,6 +371,12 @@ QList<QByteArray> FileStore::Download::blocksNeeded()
 {
     QList<QByteArray> needed,
                       blockIDs = file->blockIDs();
+
+    if(needsMetaData()) // need metadata!
+    {
+        needed.append(file->fileID());
+        return needed;
+    }
 
     QList<QByteArray>::iterator i;
     for(i = blockIDs.begin(); i != blockIDs.end(); ++i)
@@ -401,7 +425,13 @@ void FileStore::Download::touch(QByteArray blockID)
 
 void FileStore::Download::addMetaData(QByteArray metaDataBytes)
 {
-    file->addMetaData(metaDataBytes);
+    if(!file->addMetaData(metaDataBytes))
+    {
+        qDebug() << "DOWNLOAD ALREADY HAS METADATA!";
+        return;
+    }
+
+    remove(file->fileID());
 
     QList<QByteArray> blockIDs = file->blockIDs();
     QList<QByteArray>::iterator i;
@@ -409,7 +439,7 @@ void FileStore::Download::addMetaData(QByteArray metaDataBytes)
     {
         insert(*i, 0);
     }
-
+    
     confirm();
 }
 
@@ -417,6 +447,7 @@ void FileStore::Download::addBlockData(QByteArray blockID, QByteArray blockData)
 {
     if(!file->hasBlock(blockID) && file->containsBlock(blockID) && isAlive())
     {
+        qDebug() << "bleeeehh!!";
         file->addBlock(blockID, blockData);
         if(file->isComplete())
         {
@@ -458,7 +489,7 @@ FileStore::DownloadQueue::~DownloadQueue()
 
 quint32 FileStore::DownloadQueue::size()
 {
-    return size();
+    return count();
 }
 
 FileStore::Download* FileStore::DownloadQueue::dequeue()
@@ -509,5 +540,5 @@ void FileStore::DownloadQueue::reap()
 
 bool FileStore::DownloadQueue::isEmpty()
 {
-    return empty();
+    return count() == 0;
 }
