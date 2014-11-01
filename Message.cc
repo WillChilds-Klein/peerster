@@ -87,10 +87,16 @@ QString Message::toString()
         str += "[";
         for(i = this->begin(); i != this->end(); ++i)
         {
-            if(i.key() == KEY_BLOCKREPLY || i.key() == KEY_DATA)
+            if(i.key() == KEY_BLOCKREPLY)
             {
                 str += "<" + i.key() + ": " + 
                              QString(i.value().toByteArray().toHex()) + ">,";
+            }
+            else if(i.key() == KEY_DATA)
+            {
+                str += "<" + i.key() + ": {" 
+                     + QString::number(i.value().toByteArray().size()) 
+                     + "B data}>,";
             }
             else
             {
@@ -280,10 +286,6 @@ bool Message::isValidBlockReply()
     QCA::Hash sha("sha1");
     sha.update(getData()); 
     QByteArray hash = sha.final().toByteArray();
-
-    qDebug() << "ATTN: " << QString(hash.toHex()) << "=?=" 
-             << QString(getBlockReply().toHex());
-    qDebug() << "DATA: " << QString(getData().toHex());
 
     return hash == getBlockReply();
 }

@@ -30,8 +30,9 @@ File::File(QString absolutepath, QString temppath)
     downloadsDirPath = QDir::currentPath() +
                       (QDir::currentPath().endsWith("/") ? "" : "/") +
                        DOWNLOADS_DIR_NAME + "/";
-
     fileSize = qfile->size();
+
+    metaFile->setFileName(tempDirPath + metaFileName());
 
     complete = true;
 
@@ -65,6 +66,8 @@ File::File(QString absolutepath, QString temppath, QByteArray metaFileIDBytes)
     downloadsDirPath = QDir::currentPath() + 
                       (QDir::currentPath().endsWith("/") ? "" : "/") +
                        DOWNLOADS_DIR_NAME + "/";
+
+    metaFile->setFileName(tempDirPath + metaFileName());
 
     qDebug() << "DOWNLOADING FILE " << fileNameOnly;
     qDebug() << "LOCATED AT " << filePath;
@@ -204,30 +207,36 @@ bool File::addBlock(QByteArray blockID, QByteArray blockData)
 {
     if(!complete && blockIDList->contains(blockID))
     {
-        // TODO: determine whether to use fileName.i or blockID for blockfiles
-        // QString path = downloadsDirPath + QStirng(blockID.toHex()) + BLOCKFILE_APPENDAGE;
-        QString path = downloadsDirPath + blockFileName(blockIDList->indexOf(blockID));
-        QFile* blockFile = writeByteArrayToFile(path, blockData);
+        // write blockData to file
+        QString blockFilePath = downloadsDirPath + blockFileName(blockIDList->indexOf(blockID));
+        QFile* blockFile = new QFile(blockFilePath);
+        writeByteArrayToFile(blockFile, blockData);
+        
+        // update blockTable
         blockTable->insert(blockID, blockFile);
 
         if(blockTable->size() == blockIDList->size())
         {
             qDebug() << "HAVE ALL BLOCKS FOR FILE " 
                      << QString(metaFileID->toHex());
+
             assemble();
-            cleanupDownloads();
+            cleanup();
+
             complete = true;
         }
 
         return true;
     }
-
-    return false;
+    else
+    {
+        return false;
+    }
 }
 
 void File::share()
 {
-    int readSize, i;
+    int readSize, writeSize, i;
     char buffer[BLOCK_SIZE];    
     QString blockFilePath;
     QFile* blockFile;
@@ -235,43 +244,48 @@ void File::share()
                blockID, 
                metaData;
 
-    if(!qfile->open(QIODevice::ReadOnly))
+    if(qfile == NULL)
     {
-        qDebug() << "COULDN'T READ FILE: " << qfile->fileName();
+        qDebug() << "TRYING TO SHARE FILE THAT DOESN'T EXIST!!";
         return;
     }
-    QDataStream in(qfile);
-
-    // TODO: Make this code not shitty...
-    i = 1;
-    while(!in.atEnd())
+    else if(!qfile->open(QIODevice::ReadOnly))
     {
-        readSize = in.readRawData(buffer, BLOCK_SIZE);
-        blockData.setRawData(buffer, readSize);
-        blockFilePath = tempDirPath + blockFileName(i);
-        qDebug() << "BLOCKFILE " << i << "NAME: " << blockFilePath;
-        blockFile = new QFile(blockFilePath);
+        qDebug() << "COULDN'T OPEN FILE: " << qfile->fileName();
+        return;
+    }
 
-        // write block file...move over to writeByteArrayToFile method..
-        if (blockFile->open(QIODevice::WriteOnly | QIODevice::ReadOnly))
+    QDataStream* in = new QDataStream(qfile);
+
+    i = 1;
+    while(!in->atEnd())
+    {
+        blockData = readNBytesFromStream(BLOCK_SIZE, in);
+        readSize = blockData.size();
+        if(readSize <= 0)
         {
-            QDataStream blockOutStream(blockFile);
-            blockOutStream.writeRawData(buffer, readSize);
-            blockFile->close();
+            qCritical() << "COULDN'T READ BLOCK " << i << " FROM FILE "
+                                                  << fileNameOnly << "!";
         }
-        else
+
+        blockFile = new QFile(tempDirPath + blockFileName(i));
+        writeSize = writeByteArrayToFile(blockFile, blockData);
+        if(writeSize <= 0)
         {
-            qCritical() << "COULDN'T CREATE BLOCK " << i << " FOR " 
-                                                    << fileNameOnly << "!";
+            qCritical() << "COULDN'T WRITE BLOCKFILE " << i << " FOR " 
+                                                       << fileNameOnly << "!";
             return;
         }
 
+        // compute blockID
         QCA::Hash sha("sha1");
         sha.update(blockData);
         blockID = sha.final().toByteArray();
-        qDebug() << "blockID::" << blockID.toHex();
-        qDebug() << "blockData::" << blockData.toHex();
+
+        // update blockIDList
         blockIDList->append(blockID);
+
+        // update blockTable
         (*blockTable)[blockID] = blockFile;
 
         // update metaFile
@@ -283,79 +297,92 @@ void File::share()
 
         qDebug() << "METADATA PER ITER:" << QString(metaData.toHex()) << "\n\n";
     }
+    delete(in);
 
-    // write metaFile...move over to writeByteArrayToFile method...
-    metaFile->setFileName(tempDirPath + metaFileName()); // |
-    // metaFile = writeByteArray(metaFilemetaFile);      <--+
-    if(metaFile->open(QIODevice::WriteOnly | QIODevice::ReadOnly))
-    {
-        QDataStream metaOutStream(metaFile);
-        metaOutStream << metaData;
-    }
-    else
-    {
-        qCritical() << "COULDN'T CREATE METAFILE FOR "<< fileNameOnly << "!";
-    }
+    // write metaFile
+    writeByteArrayToFile(metaFile, metaData);
 
-    // generate metaFileID
+    // compute metaFileID
     QCA::Hash metaSha("sha1");
     metaSha.update(metaData);
-    metaFile->close();
-    qDebug() << "TESTEST::" << metaData.toHex();
     metaFileID = new QByteArray(metaSha.final().toByteArray());
 
     shared = true;
 
-    qDebug() << "SHARING FILE " << fileNameOnly << " (" << fileSize << " B)";
+
+    qDebug() << "SHARED FILE " << fileNameOnly << " (" << fileSize << " B)";
     qDebug() << "LOCATED AT " << filePath;
     qDebug() << "TEMP DIR:" << tempDirPath;
+    qDebug() << "FINAL METADATA:" << metaData.toHex();
     qDebug() << "METAFILE ID (HEX): " 
              << QCA::arrayToHex(*metaFileID) << "\n";
 }
 
-QFile* File::writeByteArrayToFile(QString filepath, QByteArray bytes)
+quint32 File::writeByteArrayToFile(QFile* file, QByteArray bytes)
 {
-    QFile* writeFile = new QFile(filepath);
-    if (writeFile->open(QIODevice::WriteOnly))// | QIODevice::ReadOnly))
+    quint32 bytesWritten = -1;
+
+    if(file == NULL)
     {
-        QDataStream outStream(writeFile);
-        outStream << bytes;
-        writeFile->close();
+        qDebug() << "NULL QFILE PTR PASSED TO " 
+                 << "readNBytesFromStream(quint32,QDataStream)!";
+    }
+    else if (file->open(QIODevice::WriteOnly))
+    {
+        bytesWritten = file->write(bytes);
+        file->close();
     }
     else
     {
-        qCritical() << "COULDN'T WRITE FILE: "  << filepath;
+        qCritical() << "COULDN'T WRITE FILE: "  << file->fileName();
     }
 
-    return writeFile;
+    return bytesWritten;
 }
 
 QByteArray File::readNBytesFromStream(quint32 n, QDataStream* in)
 {
-    // TODO
+    int readSize;
+    char rawBytes[n];
+    QByteArray bytes;
+
+    if(in == NULL)
+    {
+        qDebug() << "NULL QDATASTREAM PTR PASSED TO " 
+                 << "readNBytesFromStream(quint32,QDataStream)!";
+    }
+    else if(!in->atEnd())
+    {
+        readSize = in->readRawData(rawBytes, n);
+        if(readSize <= 0)
+        {
+            qDebug() << "ERROR READING FROM QDATASTREAM!!";
+            return bytes;
+        }
+
+        bytes = QByteArray(rawBytes, readSize);
+        qDebug() << "JUST READ FROM STREAM: " << QString(bytes.toHex());
+    }
+    else
+    {
+        qDebug() << "QDATASTREAM ALREADY AT EOF!";
+    }
+
+    return bytes;
 }
 
 QByteArray File::readBytesFromFile(QFile* f)
 {
     QByteArray bytes;
-    char buffer[BLOCK_SIZE];
-    int readSize;
 
     if(f == NULL)
     {
-        qDebug() << "NULL FILE PTR PASSED TO " 
+        qDebug() << "NULL QFILE PTR PASSED TO " 
                  << "readBytesFromFile(QFile*)!";
     }
     else if(f->open(QIODevice::ReadOnly))
     {
-        QDataStream in(f);
-        while(!in.atEnd())
-        {
-            readSize = in.readRawData(buffer, BLOCK_SIZE);
-            bytes.append(QByteArray(buffer));
-            qDebug() << "PER ITER " << QString::number(readSize) 
-                     << ": " << QString(bytes.toHex());
-        }
+        bytes = f->readAll();
 
         qDebug() << "JUST READ FROM FILE " << f->fileName() 
                  << ": " << QString(bytes.toHex());
@@ -371,31 +398,37 @@ QByteArray File::readBytesFromFile(QFile* f)
 
 void File::assemble()
 {
-    qDebug() << "ASSEMBLING FILE WITH ID " << QString(metaFileID->toHex());
+    qDebug() << "ASSEMBLING FILE WITH ID " << QString(metaFileID->toHex())
+             << "IN DIRECTORY " << downloadsDirPath;
 
     QByteArray filebytes;
 
-    foreach(QByteArray blockID, *blockIDList)
+    QList<QByteArray>::iterator i;
+    for(i = blockIDList->begin(); i != blockIDList->end(); ++i)
     {
+        QByteArray blockID = *i;
         filebytes.append(readBytesFromFile(blockTable->value(blockID)));
     }
 
-    qfile = writeByteArrayToFile(filePath, filebytes);
+    qfile = new QFile(filePath);
+    writeByteArrayToFile(qfile, filebytes);
+
     qDebug() << "FINISHED DOWNLOADING " << qfile->fileName() 
              << " WHICH CAN BE FOUND AT " << filePath;
 }
 
-void File::cleanupDownloads()
+void File::cleanup()
 {
-    qDebug() << "CLEANING UP DOWNLOADS FOLDER FOR FILE WITH ID " 
+    qDebug() << "CLEANING UP DOWNLOADS DIR FOR FILE WITH ID " 
            << QString(metaFileID->toHex());
 
-    foreach(QByteArray blockID, blockTable->keys())
+    QHash<QByteArray,QFile*>::iterator i;
+    for(i = blockTable->begin(); i != blockTable->end(); ++i)
     {
-        if(!(blockTable->value(blockID))->remove())
+        if(!(i.value()->remove()))
         {
             qDebug() << "ERROR REMOVING FILE " 
-                     << blockTable->value(blockID)->fileName();
+                     << i.value()->fileName();
         }
     }
 }
@@ -407,6 +440,10 @@ QString File::metaFileName()
 
 QString File::blockFileName(quint32 i)
 {
+
+    // TODO: determine whether to use fileName.i or blockID for blockfiles
+    // return QString path = downloadsDirPath + QStirng(blockID.toHex()) 
+    //                                        + BLOCKFILE_APPENDAGE;
     return fileNameOnly + "." + QString::number(i) + BLOCKFILE_APPENDAGE;
 }
 

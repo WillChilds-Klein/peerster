@@ -98,7 +98,7 @@ void FileStore::gotRequestFileFromPeer(QString origin, QString fileIDString)
     request.setHopLimit((quint32) BLOCK_HOP_LIMIT);
     request.setBlockRequest(fileID);
 
-    File* newFile = new File(filePath, downloads->absolutePath(), fileID);
+    File* newFile = new File(filePath, tempdir->absolutePath(), fileID);
     Download download(newFile, origin);
     pendingDownloads->enqueue(download);
     Q_EMIT(updateDownloadInfo(filePath, DownloadStatus::CONFIRMING));

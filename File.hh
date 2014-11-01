@@ -27,13 +27,13 @@ class File
         QList<QByteArray> blockIDs();
         bool isComplete();
         bool isShared();
-        bool containsBlock(QByteArray); // block is a part of file
+        bool containsBlock(QByteArray);     // block is a part of file
         bool hasMetaData();
         bool hasBlock(QByteArray);  // currently has actual block data
         bool addMetaData(QByteArray);        // true on successful add
         bool addBlock(QByteArray,QByteArray);// true on successful add
         void share();
-        static QFile* writeByteArrayToFile(QString,QByteArray);
+        static quint32 writeByteArrayToFile(QFile*,QByteArray);
         static QByteArray readNBytesFromStream(quint32,QDataStream*);
         static QByteArray readBytesFromFile(QFile*);
 
@@ -47,7 +47,7 @@ class File
         QList<QByteArray>* blockIDList; // ID in here != have block data
         QHash<QByteArray,QFile*>* blockTable;
         void assemble();
-        void cleanupDownloads();
+        void cleanup();
         QString metaFileName();
         QString blockFileName(quint32);
         bool operator==(File);
