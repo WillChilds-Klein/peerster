@@ -88,10 +88,10 @@ QString File::toString()
 {
     QList<QByteArray>::iterator i;
 
-    QString qstr = "\n===== File " + filePath + " (" + 
+    QString qstr = "===== File " + fileNameOnly + " (" + 
             QString::number(fileSize) + "KB) =====\n";
-    qstr += "\tfileID: " + QString(metaFileID->toHex());
-    qstr += "\tmetadata: " + QString(readBytesFromFile(metaFile).toHex());
+    qstr += "\tfileID: " + QString(metaFileID->toHex()) + "\n";
+    qstr += "\tmetadata: " + QString(readBytesFromFile(metaFile).toHex()) + "\n";
     qstr += "\tblockIDs: [ ";
     for(i = blockIDList->begin(); i != blockIDList->end(); ++i)
     {
@@ -104,7 +104,7 @@ QString File::toString()
         qstr += "{" + QString(i->toHex()) + "},";
     }
     qstr += " ]\n";
-    qstr += "==========================";
+    qstr += "==========================\n";
 
     return qstr;
 }
@@ -294,8 +294,6 @@ void File::share()
         blockData.clear();
         blockID.clear();
         i++;
-
-        qDebug() << "METADATA PER ITER:" << QString(metaData.toHex()) << "\n\n";
     }
     delete(in);
 
@@ -361,7 +359,6 @@ QByteArray File::readNBytesFromStream(quint32 n, QDataStream* in)
         }
 
         bytes = QByteArray(rawBytes, readSize);
-        qDebug() << "JUST READ FROM STREAM: " << QString(bytes.toHex());
     }
     else
     {
@@ -385,7 +382,7 @@ QByteArray File::readBytesFromFile(QFile* f)
         bytes = f->readAll();
 
         qDebug() << "JUST READ FROM FILE " << f->fileName() 
-                 << ": " << QString(bytes.toHex());
+                 << ": " << QString::number(bytes.size())  << " bytes";
         f->close();
     }
     else

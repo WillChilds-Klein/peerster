@@ -96,7 +96,7 @@ QString Message::toString()
             {
                 str += "<" + i.key() + ": {" 
                      + QString::number(i.value().toByteArray().size()) 
-                     + "B data}>,";
+                     + " B data}>,";
             }
             else
             {

@@ -99,13 +99,10 @@ void FileStore::gotRequestFileFromPeer(QString origin, QString fileIDString)
     request.setBlockRequest(fileID);
 
     File* newFile = new File(filePath, tempdir->absolutePath(), fileID);
-    Download download(newFile, origin);
-    pendingDownloads->enqueue(download);
-    Q_EMIT(updateDownloadInfo(filePath, DownloadStatus::CONFIRMING));
-
-    Q_EMIT(sendDirect(request, origin));
-
-    qDebug() << "SENT INITIAL METAFILE ID REQUEST: " << request.toString();
+    Download* newDownload = new Download(newFile, origin);
+    
+    pendingDownloads->enqueue(newDownload);
+    enDequeuePendingDownloadQueue();
 }
 
 void FileStore::gotProcessBlockRequest(Message msg)
@@ -171,13 +168,11 @@ void FileStore::gotProcessBlockReply(Message reply)
     else if(query->fileObject()->fileID() == blockID && query->needsMetaData())
     {   // got dl confirmation. create dl obj and init dl
         query->addMetaData(blockData);
-        pendingDownloads->enqueue(*query);
         enDequeuePendingDownloadQueue();
     }
     else if(query->needsBlock(blockID))
     {
         query->addBlockData(blockID, blockData);
-        pendingDownloads->enqueue(*query);
         enDequeuePendingDownloadQueue();
     }
 }
@@ -231,42 +226,60 @@ bool FileStore::enDequeuePendingDownloadQueue()
 
     if(!pendingDownloads->isEmpty())
     {
-        Download head = pendingDownloads->dequeue();
+        Download* head = pendingDownloads->dequeue();
 
         qDebug() << "POP PENDING DOWNLOADQUEUE HEAD: "
-                 << head.toString();
+                 << head->toString();
 
         Message request;
         request.setType(TYPE_BLOCK_REQUEST);
-        request.setDest(head.peer());
+        request.setDest(head->peer());
         request.setOriginID(ID);
         request.setHopLimit((quint32) BLOCK_HOP_LIMIT);
-        
-        QList<QByteArray> needed = head.blocksNeeded();
-        QList<QByteArray>::iterator i;
-        for(i = needed.begin(); i != needed.end(); ++i)
+
+        if(head->needsMetaData())
         {
-            head.touch(*i);     // increment # times each request sent.
-            request.setBlockRequest(*i);
+            request.setBlockRequest(head->fileObject()->fileID());
             Q_EMIT(sendDirect(request, request.getDest()));
-            qDebug() << "\tSENT BLOCK_REQUEST " << QString(*i->toHex())
-                     << " TO " << request.getOriginID();
+
+            Q_EMIT(updateDownloadInfo(head->fileObject()->abspath(), 
+                                      DownloadStatus::CONFIRMING));
+            qDebug() << "SENT INITIAL METADATA REQUEST: " 
+                     << request.toString();
+        }
+        else
+        {
+            QList<QByteArray> needed = head->blocksNeeded();
+            QList<QByteArray>::iterator i;
+            for(i = needed.begin(); i != needed.end(); ++i)
+            {
+                head->touch(*i);     // increment # times each request sent.
+                request.setBlockRequest(*i);
+                Q_EMIT(sendDirect(request, request.getDest()));
+                qDebug() << "\tSENT BLOCK_REQUEST " << QString(i->toHex())
+                         << " TO " << request.getOriginID();
+            }
         }
 
-        if(head.isAlive())
+        if(head->isAlive())
         {
-            qDebug() << "RE-QUEUE'ING HEAD " << head.toString();
+            qDebug() << "RE-QUEUE'ING HEAD " << head->toString();
 
             pendingDownloads->enqueue(head);
             return true;
         }
-
-        return false;
+        else
+        {
+            delete(head);
+            return false;
+        }
     }
 }
 
 void FileStore::cyclePendingDownloadQueue()
 {
+    qDebug() << "BEGIN CYCLE PENDING DOWNLOADQUEUE";
+
     int size = pendingDownloads->size();
     bool headReQueued;
 
@@ -279,7 +292,7 @@ void FileStore::cyclePendingDownloadQueue()
         }
     }
 
-    qDebug() << "CYCLE PENDING DOWNLOADQUEUE";
+    qDebug() << "END CYCLE PENDING DOWNLOADQUEUE";
 }
 
 // =========================FileStore::Download============================= //
@@ -303,10 +316,11 @@ FileStore::Download::~Download()
 
 QString FileStore::Download::toString()
 {
-    QString qstr = "-------- Download --------\n";
+    QString qstr = "\n-------- Download --------\n";
     qstr += "peer originID: " + peerID + "\n";
     qstr += "DownloadStatus: " + QString::number(downloadStatus) + "\n";
-    qstr += "File:\n" + file->toString() + "\n\n";
+    qstr += "isAlive?: " + QString::number(isAlive()) + "\n";
+    qstr += "File:\n" + file->toString();
     qstr += "--------------------------\n\n";
 
     return qstr;
@@ -346,8 +360,7 @@ QList<QByteArray> FileStore::Download::blocksNeeded()
 
 bool FileStore::Download::needsMetaData()
 {
-    return downloadStatus == (DownloadStatus::INIT | 
-                              DownloadStatus::CONFIRMING);
+    return !file->hasMetaData();
 }
 
 bool FileStore::Download::needsBlock(QByteArray blockID)
@@ -357,9 +370,9 @@ bool FileStore::Download::needsBlock(QByteArray blockID)
 
 bool FileStore::Download::isAlive()
 {
-    return downloadStatus == (DownloadStatus::INIT |
-                              DownloadStatus::CONFIRMING |
-                              DownloadStatus::DOWNLOADING);
+    return (downloadStatus == DownloadStatus::INIT) ||
+            ((downloadStatus == DownloadStatus::CONFIRMING) ||
+            (downloadStatus == DownloadStatus::DOWNLOADING));
 }
 
 void FileStore::Download::touch(QByteArray blockID)
@@ -426,83 +439,87 @@ FileStore::DownloadQueue::DownloadQueue(FileStore* fs)
 {}
 
 FileStore::DownloadQueue::~DownloadQueue()
-{}
+{
+    QList<Download*>::iterator i;
+    for(i = this->begin(); i != this->end(); ++i)
+    {
+        delete(*i);
+    }
+    delete(this);
+}
 
 quint32 FileStore::DownloadQueue::size()
 {
     return size();
 }
 
-FileStore::Download FileStore::DownloadQueue::dequeue()
+FileStore::Download* FileStore::DownloadQueue::dequeue()
 {
-    return (isEmpty() ? Download() : ((Download) takeFirst()));
+    return (isEmpty() ? NULL : (/*(Download*)*/ takeFirst()));
 }
 
-void FileStore::DownloadQueue::enqueue(Download d)
+void FileStore::DownloadQueue::enqueue(Download* d)
 {
     append(d);
 }
 
 FileStore::Download* FileStore::DownloadQueue::search(QByteArray blockID)
 {
-    QList<Download>::iterator i;
+    QList<Download*>::iterator i;
     for(i = this->begin(); i != this->end(); ++i)
     {
-        if(i->fileObject()->containsBlock(blockID) ||
-           i->fileObject()->fileID() == blockID)
+        if((*i)->fileObject()->containsBlock(blockID) ||
+           (*i)->fileObject()->fileID() == blockID)
         {
-            return &(*i);
+            qDebug() << "FOUND MATCH FOR QUERY " << QString(blockID.toHex());
+            return *i;
         }
     }
+    qDebug() << "NO MATCH QUERY " << QString(blockID.toHex());
 
     return NULL;    // blockID not found in any pending DL's blocks!
-}
-
-void FileStore::DownloadQueue::upadateDownloadInfo(QString path, 
-                                    DownloadStatus::Status status)
-{
-    Q_EMIT(filestore->updateDownloadInfo(path, status));
 }
 
 void FileStore::DownloadQueue::reap()
 {
     if(!isEmpty())
     {
-        QList<Download>::iterator i;
+        QList<Download*>::iterator i;
         for(i = this->begin(); i != this->end(); ++i)
         {
-            switch(i->status())
+            switch((*i)->status())
             {
                 case DownloadStatus::INIT:
-                    filestore->updateDownloadInfo(i->fileObject()->abspath(), 
+                    filestore->updateDownloadInfo((*i)->fileObject()->abspath(), 
                                           DownloadStatus::INIT);
                     qDebug() << "DOWNLOAD FLOW ERROR! SHOULD NOT BE IN "
                              << "INIT STATE AND ON DOWNLOADQUEUE!";
                     break;
                 case DownloadStatus::CONFIRMING:
-                    filestore->updateDownloadInfo(i->fileObject()->abspath(), 
+                    filestore->updateDownloadInfo((*i)->fileObject()->abspath(), 
                                           DownloadStatus::CONFIRMING);
                     break;
                 case DownloadStatus::DOWNLOADING:
-                    filestore->updateDownloadInfo(i->fileObject()->abspath(), 
+                    filestore->updateDownloadInfo((*i)->fileObject()->abspath(), 
                                           DownloadStatus::DOWNLOADING);
                     break;
                 case DownloadStatus::COMPLETED:
-                    filestore->updateDownloadInfo(i->fileObject()->abspath(), 
+                    filestore->updateDownloadInfo((*i)->fileObject()->abspath(), 
                                           DownloadStatus::COMPLETED);
                     erase(i);
                     break;
                 case DownloadStatus::FAILED:
-                    filestore->updateDownloadInfo(i->fileObject()->abspath(), 
+                    filestore->updateDownloadInfo((*i)->fileObject()->abspath(), 
                                           DownloadStatus::FAILED);
                     erase(i);
                     break;
                 case DownloadStatus::NONE:
-                    filestore->updateDownloadInfo(i->fileObject()->abspath(), 
+                    filestore->updateDownloadInfo((*i)->fileObject()->abspath(), 
                                           DownloadStatus::NONE);
                     break;
                 default:
-                    qDebug() << "INVALID DOWNLOADSTATUS " << QString(i->status());
+                    qDebug() << "INVALID DOWNLOADSTATUS " 
+                             << QString((*i)->status());
             }
         }
     }

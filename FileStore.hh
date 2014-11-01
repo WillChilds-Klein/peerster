@@ -88,16 +88,15 @@ class FileStore::Download : private QMap<QByteArray,quint32>
 };
 
 
-class FileStore::DownloadQueue : private QList<Download>
+class FileStore::DownloadQueue : private QList<Download*>
 {
     public:
         DownloadQueue(FileStore*);
         ~DownloadQueue();
         quint32 size();
-        Download dequeue();
-        void enqueue(Download);
+        Download* dequeue();
+        void enqueue(Download*);
         Download* search(QByteArray); // ret ptr to val, NULL on not found.
-        void upadateDownloadInfo(QString,DownloadStatus::Status);
         void reap();
         bool isEmpty();
         
