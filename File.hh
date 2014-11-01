@@ -43,13 +43,13 @@ class File
         quint32 fileSize;
         bool complete, shared;
         QFile *qfile, *metaFile;
-        QByteArray* metaFileID;
+        QByteArray metaFileID;
         QList<QByteArray>* blockIDList; // ID in here != have block data
         QHash<QByteArray,QFile*>* blockTable;
         void assemble();
         void cleanup();
         QString metaFileName();
-        QString blockFileName(quint32);
+        QString blockFileName(QByteArray,quint32);
         bool operator==(File);
         bool operator!=(File);
 };

@@ -19,6 +19,7 @@ FileStore::FileStore(Peerster* p)
     downloads = new QDir(QDir::currentPath() +
                         (QDir::currentPath().endsWith("/") ? "" : "/") +
                          DOWNLOADS_DIR_NAME + "/");
+
     if(downloads->exists())
     {
         qDebug() << "DOWNLOADS DIR ALREADY EXISTS! EMPTYING IT.";
@@ -31,8 +32,7 @@ FileStore::FileStore(Peerster* p)
             dir.remove(dirFile);
         }
     }
-
-    if(downloads->mkpath(downloads->absolutePath() + "/"))
+    else if(downloads->mkpath(downloads->absolutePath() + "/"))
     {
         qDebug() << "SUCCESSFULLY CREATED DOWNLOADS DIR: " 
                  << downloads->absolutePath();
@@ -66,8 +66,10 @@ void FileStore::setDownloadInfo(QMap<QString,DownloadStatus::Status>* di)
 
 void FileStore::gotProcessFilesToShare(QStringList absfilepaths)
 {
-    foreach(QString filepath, absfilepaths)
+    QStringList::iterator i;
+    for(i = absfilepaths.begin(); i != absfilepaths.end(); ++i)
     {
+        QString filepath = *i;
         if(!(sharedFileInfo->keys().contains(filepath)))
         {
             File file = File(filepath, tempdir->absolutePath());
@@ -85,20 +87,15 @@ void FileStore::gotRequestFileFromPeer(QString origin, QString fileIDString)
     qDebug() << "REQUESTING FILE " << fileIDString 
              << " FROM " << origin; 
 
-    QByteArray fileID = QByteArray::fromHex(fileIDString.toLatin1());
+    // change once search is implemented!
     QString fileName = "download-" +  QString::number((qrand() % 1000) + 1);
+
+    QByteArray fileID = QByteArray::fromHex(fileIDString.toLatin1());
     QString filePath = downloads->absolutePath() + 
                       (downloads->absolutePath().endsWith("/") ? "" : "/") + 
                        fileName;
-    
-    Message request;
-    request.setType(TYPE_BLOCK_REQUEST);
-    request.setDest(origin);
-    request.setOriginID(ID);
-    request.setHopLimit((quint32) BLOCK_HOP_LIMIT);
-    request.setBlockRequest(fileID);
 
-    File* newFile = new File(filePath, tempdir->absolutePath(), fileID);
+    File* newFile = new File(filePath, downloads->absolutePath(), fileID);
     Download* newDownload = new Download(newFile, origin);
     
     pendingDownloads->enqueue(newDownload);
@@ -197,9 +194,9 @@ void FileStore::gotReapChime()
     pendingDownloads->reap();
 }
 
-void FileStore::gotUpdateDownloadInfo(QString fn, DownloadStatus::Status status)
+void FileStore::gotUpdateDownloadInfo(Download dl)
 {
-    downloadInfo->insert(fn, status);
+    downloadInfo->insert(dl.fileObject()->abspath(), dl.status());
     Q_EMIT(refreshDownloadInfo());
 }
 
@@ -242,8 +239,9 @@ bool FileStore::enDequeuePendingDownloadQueue()
             request.setBlockRequest(head->fileObject()->fileID());
             Q_EMIT(sendDirect(request, request.getDest()));
 
-            Q_EMIT(updateDownloadInfo(head->fileObject()->abspath(), 
-                                      DownloadStatus::CONFIRMING));
+            head->begin();
+
+            Q_EMIT(updateDownloadInfo(*head));
             qDebug() << "SENT INITIAL METADATA REQUEST: " 
                      << request.toString();
         }
@@ -285,6 +283,7 @@ void FileStore::cyclePendingDownloadQueue()
 
     for(int i = 0; i < size; i++)
     {
+        qDebug() << "\tITERATION: " << QString::number(i);
         headReQueued = enDequeuePendingDownloadQueue();
         if(!headReQueued)
         {
@@ -316,12 +315,21 @@ FileStore::Download::~Download()
 
 QString FileStore::Download::toString()
 {
-    QString qstr = "\n-------- Download --------\n";
+    QString qstr = "\n---------- Download ----------\n";
     qstr += "peer originID: " + peerID + "\n";
     qstr += "DownloadStatus: " + QString::number(downloadStatus) + "\n";
     qstr += "isAlive?: " + QString::number(isAlive()) + "\n";
+
+    qstr += "touch counts:\n";
+    QList<QByteArray>::iterator i = this->keys().begin();
+    for(; i != this->keys().end(); ++i)
+    {
+        qstr += "\t[" + QString(i->toHex()) 
+               + ": " + QString::number(value(*i)) + "]\n";
+    }
+
     qstr += "File:\n" + file->toString();
-    qstr += "--------------------------\n\n";
+    qstr += "------------------------------\n\n";
 
     return qstr;
 }
@@ -375,6 +383,11 @@ bool FileStore::Download::isAlive()
             (downloadStatus == DownloadStatus::DOWNLOADING));
 }
 
+void FileStore::Download::begin()
+{
+    downloadStatus = DownloadStatus::CONFIRMING;
+}
+
 void FileStore::Download::touch(QByteArray blockID)
 {
     insert(blockID, value(blockID)+1);
@@ -410,11 +423,6 @@ void FileStore::Download::addBlockData(QByteArray blockID, QByteArray blockData)
             complete();
         }
     }
-}
-
-void FileStore::Download::begin()
-{
-    downloadStatus = DownloadStatus::CONFIRMING;
 }
 
 void FileStore::Download::confirm()
@@ -455,7 +463,7 @@ quint32 FileStore::DownloadQueue::size()
 
 FileStore::Download* FileStore::DownloadQueue::dequeue()
 {
-    return (isEmpty() ? NULL : (/*(Download*)*/ takeFirst()));
+    return isEmpty() ? NULL : takeFirst();
 }
 
 void FileStore::DownloadQueue::enqueue(Download* d)
@@ -475,7 +483,7 @@ FileStore::Download* FileStore::DownloadQueue::search(QByteArray blockID)
             return *i;
         }
     }
-    qDebug() << "NO MATCH QUERY " << QString(blockID.toHex());
+    qDebug() << "NO MATCH FOR QUERY " << QString(blockID.toHex());
 
     return NULL;    // blockID not found in any pending DL's blocks!
 }
@@ -484,42 +492,16 @@ void FileStore::DownloadQueue::reap()
 {
     if(!isEmpty())
     {
-        QList<Download*>::iterator i;
-        for(i = this->begin(); i != this->end(); ++i)
+        QList<Download*>::iterator i = this->begin();
+        while(i != this->end())
         {
-            switch((*i)->status())
+            if(!(*i)->isAlive())
             {
-                case DownloadStatus::INIT:
-                    filestore->updateDownloadInfo((*i)->fileObject()->abspath(), 
-                                          DownloadStatus::INIT);
-                    qDebug() << "DOWNLOAD FLOW ERROR! SHOULD NOT BE IN "
-                             << "INIT STATE AND ON DOWNLOADQUEUE!";
-                    break;
-                case DownloadStatus::CONFIRMING:
-                    filestore->updateDownloadInfo((*i)->fileObject()->abspath(), 
-                                          DownloadStatus::CONFIRMING);
-                    break;
-                case DownloadStatus::DOWNLOADING:
-                    filestore->updateDownloadInfo((*i)->fileObject()->abspath(), 
-                                          DownloadStatus::DOWNLOADING);
-                    break;
-                case DownloadStatus::COMPLETED:
-                    filestore->updateDownloadInfo((*i)->fileObject()->abspath(), 
-                                          DownloadStatus::COMPLETED);
-                    erase(i);
-                    break;
-                case DownloadStatus::FAILED:
-                    filestore->updateDownloadInfo((*i)->fileObject()->abspath(), 
-                                          DownloadStatus::FAILED);
-                    erase(i);
-                    break;
-                case DownloadStatus::NONE:
-                    filestore->updateDownloadInfo((*i)->fileObject()->abspath(), 
-                                          DownloadStatus::NONE);
-                    break;
-                default:
-                    qDebug() << "INVALID DOWNLOADSTATUS " 
-                             << QString((*i)->status());
+                i = erase(i);
+            }
+            else
+            {
+                i++;
             }
         }
     }

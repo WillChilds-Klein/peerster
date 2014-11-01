@@ -29,7 +29,7 @@ class FileStore : public QObject
     signals:
         void refreshSharedFiles();
         void sendDirect(Message,QString);
-        void updateDownloadInfo(QString,DownloadStatus::Status);
+        void updateDownloadInfo(Download);
         void refreshDownloadInfo();
 
     public slots:
@@ -42,8 +42,8 @@ class FileStore : public QObject
 
     private slots:
         void gotCycleChime();
-        void gotUpdateDownloadInfo(QString,DownloadStatus::Status);
         void gotReapChime();
+        void gotUpdateDownloadInfo(Download);
 
     private:
         Peerster* peerster;
@@ -73,6 +73,7 @@ class FileStore::Download : private QMap<QByteArray,quint32>
         bool needsMetaData();
         bool needsBlock(QByteArray);
         bool isAlive();
+        void begin();
         void touch(QByteArray);
         void addMetaData(QByteArray);
         void addBlockData(QByteArray,QByteArray);
@@ -81,7 +82,6 @@ class FileStore::Download : private QMap<QByteArray,quint32>
         File* file;
         QString peerID;
         DownloadStatus::Status downloadStatus;
-        void begin();
         void confirm();
         void complete();
         void kill();
