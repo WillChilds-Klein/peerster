@@ -40,8 +40,6 @@
 #include <QDir>
 #include <QIODevice>
 
-#include <tuple>
-
 #define ID_MAX (1000)
 
 #define DCHAT_HOP_LIMIT (10)
