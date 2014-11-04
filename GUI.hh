@@ -2,6 +2,7 @@
 #define PEERSTER_GUI_HH
 
 #define TITLE_FILESHARE ("Shared Files")
+#define TITLE_DOWNLOADS ("Downloads")
 #define TITLE_FILESEARCH ("Search Files")
 #define TITLE_NEIGHBOR ("Neighbor Peer Locations")
 #define TITLE_GROUPCHAT ("Group Chat")
@@ -28,7 +29,7 @@ class GUI : public QDialog
         void setID(QString);
         void setSharedFileInfo(QMap<QString,quint32>*);
         void setDownloadInfo(QMap<QString,DownloadStatus::Status>*);
-        void setSearchResults(QMap< QString,QPair<QString,QByteArray> >*);
+        void setSearchResults(QMultiHash< QString,QPair<QString,QByteArray> >*);
         void setGroupConvo(QList<Message>*);
         void setDirectStore(QMap<QString,QList<Message> >*);
 
@@ -52,6 +53,7 @@ class GUI : public QDialog
 
     private slots:
         void originSelected(QListWidgetItem*);
+        void searchresultSelected(QListWidgetItem*);
         void gotGroupChatEntered();
         void gotDirectChatEntered();
         void gotNeighborEntered();
@@ -62,7 +64,7 @@ class GUI : public QDialog
         Peerster* peerster;
         QMap<QString, quint32>* sharedFileInfo;
         QMap<QString, DownloadStatus::Status>* downloadInfo;
-        QMap< QString,QPair<QString,QByteArray> >* searchResults;
+        QMultiHash< QString,QPair<QString,QByteArray> >* searchResults;
         QMap< QString,QList<Message> >* directStore;
         QList<Message>* groupConvo;
         QString ID;
@@ -71,11 +73,11 @@ class GUI : public QDialog
                     *directchatlayout, *originslayout, 
                     *filesharelayout, *filesearchlayout;
         QTextEdit *neighborview, *groupchatview, *directchatview, 
-                  *fileshareview, *downloadsview, *filesearchview;
+                  *fileshareview, *downloadsviewd;
         EntryQTextEdit *filesearchentry, *groupchatentry, 
                        *neighborentry, *directchatentry;
         QPushButton *addneighborbutton, *sharefilebutton;
-        QListWidget* originslist;
+        QListWidget *originslist, searchresultlist;
         void createFileShareLayout();
         void createFileSearchLayout();
         void createNeighborLayout();

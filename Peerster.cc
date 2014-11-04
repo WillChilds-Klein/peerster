@@ -110,8 +110,8 @@ Peerster::Peerster()
     QMap<QString, quint32>* sharedFileInfo = new QMap<QString, quint32>;
     QMap<QString,DownloadStatus::Status>* 
         downloadInfo = new QMap<QString,DownloadStatus::Status>;
-    QMap<QString, QPair<QString,QByteArray> >* 
-        searchResults = new QMap<QString, QPair<QString,QByteArray> >;
+    QMultiHash<QString, QPair<QString,QByteArray> >* 
+        searchResults = new QMultiHash<QString, QPair<QString,QByteArray> >;
     QList<Message>* groupConvo = new QList<Message>;
     QMap< QString,QList<Message> >* directStore = 
         new QMap< QString,QList<Message> >;

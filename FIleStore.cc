@@ -65,7 +65,7 @@ void FileStore::setDownloadInfo(QMap<QString,DownloadStatus::Status>* di)
     downloadInfo = di;
 }
 
-void FileStore::setSearchResults(QMap< QString,QPair<QString,QByteArray> >* sr)
+void FileStore::setSearchResults(QMultiHash< QString,QPair<QString,QByteArray> >* sr)
 {
     searchResults = sr;
 }

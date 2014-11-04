@@ -35,7 +35,7 @@ class FileStore : public QObject
         void setID(QString);
         void setSharedFileInfo(QMap<QString,quint32>*);
         void setDownloadInfo(QMap<QString,DownloadStatus::Status>*);
-        void setSearchResults(QMap< QString,QPair<QString,QByteArray> >*);
+        void setSearchResults(QMultiHash< QString,QPair<QString,QByteArray> >*);
 
     signals:
         void postToInbox(Message,Peer);
@@ -70,7 +70,7 @@ class FileStore : public QObject
         QMap<QString,quint32>* sharedFileInfo;
         QMap<QString,DownloadStatus::Status>* downloadInfo;
         QHash<int,Search*>* pendingSearches;
-        QMap<QString, QPair<QString,QByteArray> >* searchResults;
+        QMultiHash<QString, QPair<QString,QByteArray> >* searchResults;
         QDir *tempdir, *downloads;
         QTimer *popTimer, *reapTimer;
         void makeTempdir();

@@ -39,6 +39,8 @@ GUI::GUI(Peerster* p)
         this, SLOT(originSelected(QListWidgetItem*)));
     connect(filesearchentry, SIGNAL(returnPressed()),
         this, SLOT(gotFileSearchEntered()));
+    connect(searchresultlist, SIGNAL(itemClicked(QListWidgetItem*)),
+        this, SLOT(searchresultSelected(QListWidgetItem*)));
     
     createFileShareLayout();
     createFileSearchLayout();
@@ -77,7 +79,7 @@ void GUI::setDownloadInfo(QMap<QString,DownloadStatus::Status>* di)
     downloadInfo = di;
 }
 
-void GUI::setSearchResults(QMap< QString,QPair<QString,QByteArray> >* sr)
+void GUI::setSearchResults(QMultiHash< QString,QPair<QString,QByteArray> >* sr)
 {
     searchResults = sr;
 }
@@ -191,13 +193,37 @@ void GUI::gotRefreshDownloadInfo()
 
 void GUI::gotRefreshSearchResults()
 {
-    // TODO: but make sure search entry is locked while pending...
-    // QByteArray::fromHex((match.second).toLatin1());
+    // TODO: but make sure search entry is locked while pend ing...
+    QString result;
+    searchresultlist->clear();
+    QMap< QString,QPair<QString,QByteArray> >::iterator i;
+    for(i = searchResults->begin(); i != searchResults->end(); ++i)
+    {
+        result = i.value().first + "\t(peer: " + i.key() + ")";
+        new QListWidgetItem(result, searchresultlist);
+    }
 }
 
 void GUI::originSelected(QListWidgetItem* item)
 {
     Q_EMIT(refreshDirectConvo(item->text()));
+}
+
+void GUI::searchresultSelected(QListWidgetItem* item)
+
+    QPair<QString,QByteArray> match;
+    QString formatted;
+
+    for(i = searchResults->begin(); i != searchResults->end(); ++i)
+    {
+        formatted = i.value().first + "\t(peer: " + i.key() + ")";
+        if(formatted == item->text())
+        {
+            Q_EMIT(requestFileFromPeer(i.key(), i.value()));
+            return;
+        }
+    }
+    qDebug() << "WHOOPS! SELECTED SEARCH RESULT NOT IN TABLE!";
 }
 
 void GUI::gotGroupChatEntered()
@@ -248,27 +274,30 @@ void GUI::gotFileSearchEntered()
 void GUI::createFileShareLayout()
 {
     QLabel* filesharelabel = new QLabel(TITLE_FILESHARE, this, 0);
+    QLabel* downloadslabel = new QLabel(TITLE_DOWNLOADS, this, 0);
 
     fileshareview->setReadOnly(true);
 
     sharefilebutton->setText(TITLE_SHAREFILE);
 
+    downloadsview->setReadOnly(true);
+
     filesharelayout->addWidget(filesharelabel);
     filesharelayout->addWidget(fileshareview);
     filesharelayout->addWidget(sharefilebutton);
+    filesharelayout->addWidget(downloadslabel);
+    filesharelayout->addWidget(downloadsview);
 }
 
 void GUI::createFileSearchLayout()
 {
     QLabel* filesearchlabel = new QLabel(TITLE_FILESEARCH, this, 0);
 
-    filesearchview->setReadOnly(true);
-
     filesearchentry->setReadOnly(false);
     filesearchentry->setLineWrapMode(QTextEdit::WidgetWidth);
 
     filesearchlayout->addWidget(filesearchlabel);
-    filesearchlayout->addWidget(filesearchview);
+    filesearchlayout->addWidget(searchresultlist);
     filesearchlayout->addWidget(filesearchentry);
 }
 
