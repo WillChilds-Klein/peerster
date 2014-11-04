@@ -11,7 +11,6 @@ GUI::GUI(Peerster* p)
     , directchatlayout(new QVBoxLayout(this))
     , fileshareview(new QTextEdit(this))
     , downloadsview(new QTextEdit(this))
-    , filesearchview(new QTextEdit(this))
     , groupchatview(new QTextEdit(this))
     , neighborview(new QTextEdit(this))
     , directchatview(new QTextEdit(this))
@@ -22,6 +21,7 @@ GUI::GUI(Peerster* p)
     , addneighborbutton(new QPushButton())
     , sharefilebutton(new QPushButton())
     , originslist(new QListWidget(this))
+    , searchresultlist(new QListWidget(this))
 {
     connect(groupchatentry, SIGNAL(returnPressed()), 
         this, SLOT(gotGroupChatEntered()));
@@ -196,7 +196,7 @@ void GUI::gotRefreshSearchResults()
     // TODO: but make sure search entry is locked while pend ing...
     QString result;
     searchresultlist->clear();
-    QMap< QString,QPair<QString,QByteArray> >::iterator i;
+    QMultiHash< QString,QPair<QString,QByteArray> >::iterator i;
     for(i = searchResults->begin(); i != searchResults->end(); ++i)
     {
         result = i.value().first + "\t(peer: " + i.key() + ")";
@@ -210,10 +210,11 @@ void GUI::originSelected(QListWidgetItem* item)
 }
 
 void GUI::searchresultSelected(QListWidgetItem* item)
-
+{
     QPair<QString,QByteArray> match;
     QString formatted;
 
+    QMultiHash< QString,QPair<QString,QByteArray> >::iterator i;
     for(i = searchResults->begin(); i != searchResults->end(); ++i)
     {
         formatted = i.value().first + "\t(peer: " + i.key() + ")";

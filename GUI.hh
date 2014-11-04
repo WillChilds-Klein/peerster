@@ -73,11 +73,11 @@ class GUI : public QDialog
                     *directchatlayout, *originslayout, 
                     *filesharelayout, *filesearchlayout;
         QTextEdit *neighborview, *groupchatview, *directchatview, 
-                  *fileshareview, *downloadsviewd;
+                  *fileshareview, *downloadsview;
         EntryQTextEdit *filesearchentry, *groupchatentry, 
                        *neighborentry, *directchatentry;
         QPushButton *addneighborbutton, *sharefilebutton;
-        QListWidget *originslist, searchresultlist;
+        QListWidget *originslist, *searchresultlist;
         void createFileShareLayout();
         void createFileSearchLayout();
         void createNeighborLayout();
