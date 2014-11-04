@@ -43,9 +43,6 @@
 #define ID_MAX (1000)
 
 #define DCHAT_HOP_LIMIT (10)
-#define BLOCK_HOP_LIMIT (10)
-#define SEARCH_BUDGET_INIT (8)
-#define SEARCH_REPLY_HOP_LIMIT (10)
 
 #define KEY_CHATTEXT ("ChatText")
 #define KEY_ORIGINID ("Origin")

@@ -270,6 +270,14 @@ bool Message::isEmptyStatus()
     return value(KEY_WANT).toMap().size() == 0;
 }
 
+bool Message::isEmptySearchRequest()
+{
+    return getType() == TYPE_SEARCH_REQUEST && 
+                !contains(KEY_ORIGINID) && 
+                !contains(KEY_SEARCH) && 
+                !contains(KEY_BUDGET);
+}
+
 bool Message::isDirectRumor()
 {
     return (getType() == TYPE_RUMOR_CHAT || getType() == TYPE_RUMOR_ROUTE) && 

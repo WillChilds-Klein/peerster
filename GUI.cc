@@ -218,13 +218,9 @@ void GUI::gotOpenFileDialog()
 
 void GUI::gotFileSearchEntered()
 {
-    QString entry = QString(filesearchentry->toPlainText());
-    QStringList args = entry.split(":");
+    QString keywords = QString(filesearchentry->toPlainText());
 
-    if(args.size() == 2)
-    {
-        Q_EMIT(requestFileFromPeer(args.first(), args.last()));
-    }
+    Q_EMIT(searchForKeywords(keywords));
 
     filesearchentry->clear();
 }

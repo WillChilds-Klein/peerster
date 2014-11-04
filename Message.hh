@@ -13,6 +13,7 @@ class Message : public QVariantMap
         QByteArray toSerializedQVMap();
         bool isWellFormed();
         bool isEmptyStatus();
+        bool isEmptySearchRequest();
         bool isDirectRumor();
         bool isValidBlockReply();
         void setType(QString);

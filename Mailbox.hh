@@ -30,6 +30,7 @@ class Mailbox : public QObject
 
     signals:
         void sendMessage(Message,Peer);
+        void sendSearchRequest(Message);
         void refreshNeighbors(QList<Peer>);
         void processRumor(Message,Peer);
         void processRumorRoute(Message,Peer);
@@ -67,6 +68,7 @@ class Mailbox : public QObject
         Peer *self, *invalid;
         Message* status;
         Peer pickRandomPeer();
+        void forwardSearchRequest(Message);
         void processCommand(QString);
 };
 

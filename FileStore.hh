@@ -1,12 +1,20 @@
 #ifndef PEERSTER_FILESTORE_HH
 #define PEERSTER_FILESTORE_HH
 
-#define POP_RATE (2000)            // 2s in ms
-#define REAP_RATE (5000)           // 5s in ms
+#define POP_RATE (2000)             // 2s in ms
+#define REAP_RATE (5000)            // 5s in ms
 #define CYCLE_THRESHOLD (10)
 #define BLOCK_REQUEST_LIMIT (10)
 #define SHARED_FILE_DIR_PREFIX ("/tmp/peerster-")
 #define TEMPDIR_NDIGITS (5)
+
+#define BLOCK_HOP_LIMIT (10)
+#define SEARCH_BUDGET_INIT (8)
+#define SEARCH_BUDGET_LIMIT (16)
+#define SEARCH_RESULTS_LIMIT (10)
+#define BUDGET_INCREMENT (2)
+#define BUDGET_INC_RATE (2000)      // 2s in ms
+#define SEARCH_REPLY_HOP_LIMIT (10)
 
 #include "Peerster.hh"
 
@@ -17,6 +25,7 @@ class FileStore : public QObject
 {
     Q_OBJECT
 
+    class Search;
     class DownloadQueue;
     class Download;
 
@@ -28,6 +37,7 @@ class FileStore : public QObject
         void setDownloadInfo(QMap<QString,DownloadStatus::Status>*);
 
     signals:
+        void postToInbox(Message);
         void refreshSharedFiles();
         void sendDirect(Message,QString);
         void updateDownloadInfo(Download);
@@ -35,6 +45,7 @@ class FileStore : public QObject
 
     public slots:
         void gotProcessFilesToShare(QStringList);
+        void gotSearchForKeywords(QString);
         void gotRequestFileFromPeer(QString,QString);
         void gotProcessBlockRequest(Message);
         void gotProcessBlockReply(Message);
@@ -46,6 +57,9 @@ class FileStore : public QObject
         void gotReapChime();
         void gotUpdateDownloadInfo(Download);
 
+    protected:
+        void timerEvent(QTimerEvent*);
+
     private:
         Peerster* peerster;
         QString ID;
@@ -53,11 +67,32 @@ class FileStore : public QObject
         DownloadQueue *pendingDownloads;
         QMap<QString,quint32>* sharedFileInfo;
         QMap<QString,DownloadStatus::Status>* downloadInfo;
+        QHash<int,Search*>* pendingSearches;
         QDir *tempdir, *downloads;
         QTimer *popTimer, *reapTimer;
         void makeTempdir();
+        void killSearch(int);
+        QStringList getSharedFileNames();
         bool enDequeuePendingDownloadQueue(); // true if head re-queue
         void cyclePendingDownloadQueue();
+};
+
+class FileStore::Search
+{
+    public:
+        Search(Message*,int);
+        ~Search();
+        void incrementBudget();
+        void incrementResults();
+        int budget();
+        int results();
+        QString keywords();
+        Message message();
+
+    private:
+        Message* msg;
+        int nResults, searchID;
+        QString keywordString;
 };
 
 class FileStore::Download : private QHash<QByteArray,quint32>
@@ -104,4 +139,5 @@ class FileStore::DownloadQueue : private QList<Download*>
     private:
         FileStore* filestore;
 };
+
 #endif // PEERSTER_FILESTORE_HH

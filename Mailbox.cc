@@ -66,11 +66,6 @@ void Mailbox::populateNeighbors()
     Q_EMIT(broadcastRoute());
 }
 
-Peer Mailbox::pickRandomPeer()
-{
-    return neighbors->at(qrand() % neighbors->size());
-}
-
 void Mailbox::gotPostToInbox(Message msg, Peer peer)
 {
     QString msgOrigin = msg.getOriginID();
@@ -98,7 +93,11 @@ void Mailbox::gotPostToInbox(Message msg, Peer peer)
     }
     else if(msg.getType() == TYPE_SEARCH_REQUEST)
     {
-        Q_EMIT(processSearchRequest(msg));
+        if(msg.getOriginID() != ID)
+        {
+            Q_EMIT(processSearchRequest(msg));
+        }
+        forwardSearchRequest(msg);
     }
     else if(msg.getType() == TYPE_SEARCH_REPLY)
     {
@@ -182,6 +181,16 @@ void Mailbox::route_chime()
 {
     Q_EMIT(broadcastRoute());
     qDebug() << "PERIODIC ROUTE BROADCAST";
+}
+
+Peer Mailbox::pickRandomPeer()
+{
+    return neighbors->at(qrand() % neighbors->size());
+}
+
+void Mailbox::forwardSearchRequest(Message msg)
+{
+    // TODO: implement budgeting logic!
 }
 
 void Mailbox::processCommand(QString cmd)

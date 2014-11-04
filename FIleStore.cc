@@ -4,7 +4,7 @@ FileStore::FileStore(Peerster* p)
     : peerster(p)
     , sharedFiles(new QList<File>)
     , pendingDownloads(new DownloadQueue(this))
-    , downloads(new QDir)
+    , pendingSearches(new QHash<int,Search*>)
     , popTimer(new QTimer(this))
     , reapTimer(new QTimer(this))
 {
@@ -83,12 +83,29 @@ void FileStore::gotProcessFilesToShare(QStringList absfilepaths)
     Q_EMIT(refreshSharedFiles());
 }
 
+void FileStore::gotSearchForKeywords(QString keywords)
+{
+    Message* msg = new Message();
+
+    msg->setType(TYPE_SEARCH_REQUEST);
+    msg->setOriginID(ID);
+    msg->setSearch(keywords);
+    msg->setBudget(SEARCH_BUDGET_INIT);
+
+    int searchID = startTimer(BUDGET_INC_RATE);
+
+    Search* search = new Search(msg, searchID);
+
+    pendingSearches->insert(searchID, search);
+    Q_EMIT(postToInbox(*msg));
+}
+
 void FileStore::gotRequestFileFromPeer(QString origin, QString fileIDString)
 {
     qDebug() << "REQUESTING FILE " << fileIDString 
              << " FROM " << origin; 
 
-    // change once search is implemented!
+    // TODO: change once search is implemented!
     QString fileName = "download-" +  QString::number((qrand() % 1000) + 1);
 
     QByteArray fileID = QByteArray::fromHex(fileIDString.toLatin1());
@@ -157,10 +174,6 @@ void FileStore::gotProcessBlockReply(Message reply)
     if(query == NULL)
     {
         qDebug() << "GOT REPLY FOR NON-PENDING OR UNREQUESTED DOWNLOAD";
-        // TODO: differentiate between:
-        //  1. unrequested block
-        //  2. block for failed download
-        //  3. block for complete file
     }
     else if(query->fileObject()->fileID() == blockID && query->needsMetaData())
     {   // got dl confirmation.
@@ -172,14 +185,48 @@ void FileStore::gotProcessBlockReply(Message reply)
     }
 }
 
-void FileStore::gotProcessSearchRequest(Message msg)
+void FileStore::gotProcessSearchRequest(Message request)
 {
-    // TODO
+    QVariantList matches;
+    QByteArray matchIDs;
+
+    QStringList keywords = request.getSearch().split(" ");
+
+    foreach(QString keyword, keywords)
+    {
+        foreach(File file, *sharedFiles)
+        {
+            if(file.name().contains(keyword, Qt::CaseInsensitive))
+            {
+                matches.append(file.name());
+                matchIDs.append(file.fileID());
+                qDebug() << "FOUND FILE MATCH " << file.name()
+                         << " TO QUERY KEYWORD " << keyword;
+            }
+        }
+    }
+
+    if(matches.size() > 0)
+    {
+        Message reply;
+
+        reply.setType(TYPE_SEARCH_REPLY);
+        reply.setOriginID(ID);
+        reply.setDest(request.getOriginID());
+        reply.setHopLimit(SEARCH_REPLY_HOP_LIMIT);
+        reply.setSearchReply(request.getSearch());
+        reply.setMatchNames(matches);
+        reply.setMatchIDs(matchIDs);
+
+        Q_EMIT(sendDirect(reply, reply.getDest()));
+    }
 }
 
 void FileStore::gotProcessSearchReply(Message msg)
 {
-    // TODO
+    // TODO: update pendingSearches by searching for keywords string
+    // TODO: update search results (abiding by result limit)
+    // TODO: refresh search results
 }
 
 void FileStore::gotPopChime()
@@ -207,6 +254,33 @@ void FileStore::gotUpdateDownloadInfo(Download dl)
     Q_EMIT(refreshDownloadInfo());
 }
 
+void FileStore::timerEvent(QTimerEvent* event)
+{
+    int searchID = event->timerId();
+    Search* search = pendingSearches->value(searchID);
+
+    if(search == NULL)
+    {
+        qDebug() << "REQUESTED SEARCH NOT PENDING!";
+        return;
+    }
+    else if(search->budget() >= SEARCH_BUDGET_LIMIT || 
+       search->results() >= SEARCH_RESULTS_LIMIT)
+    {
+        killSearch(searchID);
+    }
+    else
+    {
+        Q_EMIT(postToInbox(search->message()));
+
+        search->incrementBudget();
+        if(search->budget() >= SEARCH_BUDGET_LIMIT)
+        {
+            killSearch(searchID);
+        }
+    }    
+}
+
 void FileStore::makeTempdir()
 {
     tempdir = new QDir(QDir::tempPath() + "/peerster-" + ID);
@@ -222,6 +296,26 @@ void FileStore::makeTempdir()
                      << "! CHECK PERMISSIONS!";
         }
     }
+}
+
+void FileStore::killSearch(int searchID)
+{
+    if(pendingSearches->remove(searchID) > 0)
+    {
+        killTimer(searchID);
+    }
+}
+
+QStringList FileStore::getSharedFileNames()
+{
+    QStringList names;
+
+    foreach(File file, *sharedFiles)
+    {
+        names.append(file.name());
+    }
+
+    return names;
 }
 
 bool FileStore::enDequeuePendingDownloadQueue()
@@ -308,6 +402,48 @@ void FileStore::cyclePendingDownloadQueue()
     }
 
     qDebug() << "END CYCLE PENDING DOWNLOADQUEUE";
+}
+
+// ===========================FileStore::Search============================== //
+
+FileStore::Search::Search(Message* m, int id)
+    : msg(m)
+    , nResults(0)
+    , searchID(id)
+    , keywordString(m->getSearch())
+{}
+
+FileStore::Search::~Search()
+{}
+
+void FileStore::Search::incrementBudget()
+{
+    msg->setBudget(msg->getBudget() + BUDGET_INCREMENT);
+}
+
+void FileStore::Search::incrementResults()
+{
+    nResults++;
+}
+
+int FileStore::Search::budget()
+{
+    return msg->getBudget();
+}
+
+int FileStore::Search::results()
+{
+    return nResults;
+}
+
+QString FileStore::Search::keywords()
+{
+    return keywordString;
+}
+
+Message FileStore::Search::message()
+{
+    return *msg;
 }
 
 // =========================FileStore::Download============================= //
@@ -542,3 +678,8 @@ bool FileStore::DownloadQueue::isEmpty()
 {
     return count() == 0;
 }
+
+
+
+
+

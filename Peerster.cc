@@ -18,10 +18,8 @@ Peerster::Peerster()
         messagestore, SLOT(gotCreateDirectChat(QString,QString)));
     connect(gui, SIGNAL(processFilesToShare(QStringList)),
         filestore, SLOT(gotProcessFilesToShare(QStringList)));
-    connect(gui, SIGNAL(requestFileFromPeer(QString,QString)),
-        filestore, SLOT(gotRequestFileFromPeer(QString,QString)));
-    // connect(gui, SIGNAL(searchForFiles(QStringList)),
-    //     filestore, SLOT(gotSearchForFiles(QStringList)));
+    connect(gui, SIGNAL(searchForKeywords(QString)),
+        filestore, SLOT(gotSearchForKeywords(QString)));
 
     // Socket
     connect(socket, SIGNAL(postToInbox(Message,Peer)), 
@@ -86,6 +84,8 @@ Peerster::Peerster()
         gui, SLOT(gotRefreshDownloadInfo()));
     connect(filestore, SIGNAL(sendDirect(Message,QString)),
         messagestore, SLOT(gotSendDirect(Message,QString)));
+    connect(filestore, SIGNAL(postToInbox(Message)),
+        mailbox, SLOT(gotPostToInbox(Message)));
 
 
     qsrand(QTime(0,0,0).msecsTo(QTime::currentTime()));
