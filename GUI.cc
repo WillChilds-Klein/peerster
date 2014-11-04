@@ -76,6 +76,11 @@ void GUI::setDownloadInfo(QMap<QString,DownloadStatus::Status>* di)
     downloadInfo = di;
 }
 
+void GUI::setSearchResults(QMap< QString,QPair<QString,QByteArray> >* sr)
+{
+    searchResults = sr;
+}
+
 void GUI::setGroupConvo(QList<Message>* gc)
 {
     groupConvo = gc;
@@ -173,6 +178,11 @@ void GUI::gotRefreshSharedFiles()
 void GUI::gotRefreshDownloadInfo()
 {
     // TODO
+}
+
+void GUI::gotRefreshSearchResults()
+{
+    // TODO: but make sure search entry is locked while pending...
 }
 
 void GUI::originSelected(QListWidgetItem* item)

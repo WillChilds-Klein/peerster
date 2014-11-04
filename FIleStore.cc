@@ -65,6 +65,11 @@ void FileStore::setDownloadInfo(QMap<QString,DownloadStatus::Status>* di)
     downloadInfo = di;
 }
 
+void FileStore::setSearchResults(QMap< QString,QPair<QString,QByteArray> >* sr)
+{
+    searchResults = sr;
+}
+
 void FileStore::gotProcessFilesToShare(QStringList absfilepaths)
 {
     QStringList::iterator i;
@@ -85,6 +90,12 @@ void FileStore::gotProcessFilesToShare(QStringList absfilepaths)
 
 void FileStore::gotSearchForKeywords(QString keywords)
 {
+    if(searchIsPending(keywords))
+    {
+        qDebug() << "SEARCH IS ALREADY PENDING!";
+        return;
+    }
+
     Message* msg = new Message();
 
     msg->setType(TYPE_SEARCH_REQUEST);
@@ -222,11 +233,35 @@ void FileStore::gotProcessSearchRequest(Message request)
     }
 }
 
-void FileStore::gotProcessSearchReply(Message msg)
+void FileStore::gotProcessSearchReply(Message reply)
 {
-    // TODO: update pendingSearches by searching for keywords string
-    // TODO: update search results (abiding by result limit)
-    // TODO: refresh search results
+    QPair match;
+    QVariantList matchNames = reply.getMatchNames();
+    QList<QByteArray> matchIDs;
+
+    for(int i = 0; i < reply.getMatchIDs().size(); i += BLOCK_SIZE)
+    {
+        matchIDs.append(reply.getMatchIDs().mid(i,i+BLOCK_SIZE));
+    }
+
+    foreach(Search* search, pendingSearches->values())
+    {
+        if(search->keywords() == reply.getSearchReply())
+        {
+            if(searchResults->size() < SEARCH_RESULTS_LIMIT && 
+               !contains(reply.getOriginID()))
+            {
+                for(int i = 0; i < matchNames.size(); ++i)
+                {
+                    match = QPair(matchNames.at(i).toString(), matchIDs.at(i));
+                    searchResults->insert(reply.getOriginID(), match);
+                }
+            }
+
+            Q_EMIT(refreshSearchMatches());
+            break;
+        }
+    }
 }
 
 void FileStore::gotPopChime()
@@ -296,6 +331,18 @@ void FileStore::makeTempdir()
                      << "! CHECK PERMISSIONS!";
         }
     }
+}
+
+QString FileStore::searchIsPending(QString keywords)
+{
+    foreach(Search search, *pendingSearches)
+    {
+        if(search.keywords() == keywords)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 void FileStore::killSearch(int searchID)

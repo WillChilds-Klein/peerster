@@ -86,6 +86,8 @@ Peerster::Peerster()
         messagestore, SLOT(gotSendDirect(Message,QString)));
     connect(filestore, SIGNAL(postToInbox(Message)),
         mailbox, SLOT(gotPostToInbox(Message)));
+    connect(filestore, SIGNAL(refreshSearchResults()),
+        gui, SLOT(gotRefreshSearchResults()));
 
 
     qsrand(QTime(0,0,0).msecsTo(QTime::currentTime()));
@@ -106,6 +108,8 @@ Peerster::Peerster()
     QMap<QString, quint32>* sharedFileInfo = new QMap<QString, quint32>;
     QMap<QString,DownloadStatus::Status>* 
         downloadInfo = new QMap<QString,DownloadStatus::Status>;
+    QMap<QString, QPair<QString,QByteArray> >* 
+        searchResults = new QMap<QString, QPair<QString,QByteArray> >;
     QList<Message>* groupConvo = new QList<Message>;
     QMap< QString,QList<Message> >* directStore = 
         new QMap< QString,QList<Message> >;
@@ -116,6 +120,7 @@ Peerster::Peerster()
     gui->setID(ID);
     gui->setSharedFileInfo(sharedFileInfo);
     gui->setDownloadInfo(downloadInfo);
+    gui->setSearchResults(searchResults);
     gui->setGroupConvo(groupConvo);
     gui->setDirectStore(directStore);
 
@@ -130,6 +135,7 @@ Peerster::Peerster()
     filestore->setID(ID);
     filestore->setSharedFileInfo(sharedFileInfo);
     filestore->setDownloadInfo(downloadInfo);
+    filestore->setSearchResults(searchResults);
 
     // noforward stuff
     noforward = false;

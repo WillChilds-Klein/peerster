@@ -28,6 +28,7 @@ class GUI : public QDialog
         void setID(QString);
         void setSharedFileInfo(QMap<QString,quint32>*);
         void setDownloadInfo(QMap<QString,DownloadStatus::Status>*);
+        void setSearchResults(QMap< QString,QPair<QString,QByteArray> >*);
         void setGroupConvo(QList<Message>*);
         void setDirectStore(QMap<QString,QList<Message> >*);
 
@@ -47,6 +48,7 @@ class GUI : public QDialog
         void gotRefreshNeighbors(QList<Peer>);
         void gotRefreshSharedFiles();
         void gotRefreshDownloadInfo();
+        void gotRefreshSearchResults();
 
     private slots:
         void originSelected(QListWidgetItem*);
@@ -60,6 +62,7 @@ class GUI : public QDialog
         Peerster* peerster;
         QMap<QString, quint32>* sharedFileInfo;
         QMap<QString, DownloadStatus::Status>* downloadInfo;
+        QMap<QString, QPair<QString,QByteArray> >* searchResults;
         QMap< QString, QList<Message> >* directStore;
         QList<Message>* groupConvo;
         QString ID;

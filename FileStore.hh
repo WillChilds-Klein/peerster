@@ -35,6 +35,7 @@ class FileStore : public QObject
         void setID(QString);
         void setSharedFileInfo(QMap<QString,quint32>*);
         void setDownloadInfo(QMap<QString,DownloadStatus::Status>*);
+        void setSearchResults(QMap< QString,QPair<QString,QByteArray> >*);
 
     signals:
         void postToInbox(Message);
@@ -42,6 +43,7 @@ class FileStore : public QObject
         void sendDirect(Message,QString);
         void updateDownloadInfo(Download);
         void refreshDownloadInfo();
+        void refreshSearchMatches();
 
     public slots:
         void gotProcessFilesToShare(QStringList);
@@ -68,9 +70,11 @@ class FileStore : public QObject
         QMap<QString,quint32>* sharedFileInfo;
         QMap<QString,DownloadStatus::Status>* downloadInfo;
         QHash<int,Search*>* pendingSearches;
+        QMap<QString, QPair<QString,QByteArray> >* searchResults;
         QDir *tempdir, *downloads;
         QTimer *popTimer, *reapTimer;
         void makeTempdir();
+        bool searchIsPending(QString);
         void killSearch(int);
         QStringList getSharedFileNames();
         bool enDequeuePendingDownloadQueue(); // true if head re-queue

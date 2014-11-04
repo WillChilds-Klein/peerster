@@ -188,9 +188,23 @@ Peer Mailbox::pickRandomPeer()
     return neighbors->at(qrand() % neighbors->size());
 }
 
-void Mailbox::forwardSearchRequest(Message msg)
+void Mailbox::forwardSearchRequest(Message request)
 {
-    // TODO: implement budgeting logic!
+    int budget = request.getBudget() - 1; // -1 for self
+    int budgetDeficit = budget >= neighbors->size() ?
+                        neighbors->size() : 
+                        budget % neighbors->size(); // this isn't right.
+                        // each msg needs it's respective budget set 
+
+    request.setBudget(budget - budgetDeficit); 
+
+    if(budgetDeficit >= neighbors.size());
+
+
+    for(int i = 0; i < budgetDeficit; i++)
+    {   
+        Q_EMIT(sendMessage(request, pickRandomPeer()));
+    }
 }
 
 void Mailbox::processCommand(QString cmd)
