@@ -90,7 +90,7 @@ void FileStore::gotProcessFilesToShare(QStringList absfilepaths)
 
 void FileStore::gotSearchForKeywords(QString keywords)
 {
-    if(searchIsPending(keywords))
+    if(searchIDByKeywords(keywords) >= 0)
     {
         qDebug() << "SEARCH IS ALREADY PENDING!";
         return;
@@ -108,18 +108,18 @@ void FileStore::gotSearchForKeywords(QString keywords)
     Search* search = new Search(msg, searchID);
 
     pendingSearches->insert(searchID, search);
-    Q_EMIT(postToInbox(*msg));
+    Q_EMIT(postToInbox(*msg, Peer()));
 }
 
-void FileStore::gotRequestFileFromPeer(QString origin, QString fileIDString)
+void FileStore::gotRequestFileFromPeer(QString origin, QPair<QString,QByteArray> match)
 {
-    qDebug() << "REQUESTING FILE " << fileIDString 
-             << " FROM " << origin; 
+    qDebug() << "REQUESTING FILE " << match.first << " (FileID: " 
+             << QString((match.second).toHex())
+             << ") FROM " << origin; 
 
-    // TODO: change once search is implemented!
-    QString fileName = "download-" +  QString::number((qrand() % 1000) + 1);
+    QString fileName = match.first;
+    QByteArray fileID = match.second;
 
-    QByteArray fileID = QByteArray::fromHex(fileIDString.toLatin1());
     QString filePath = downloads->absolutePath() + 
                       (downloads->absolutePath().endsWith("/") ? "" : "/") + 
                        fileName;
@@ -176,7 +176,6 @@ void FileStore::gotProcessBlockReply(Message reply)
     qDebug() << "PROCESSING BLOCK REPLY FROM " << reply.getOriginID() 
              << ": " << reply.toString();
 
-    QFile* file;
     QByteArray blockID = reply.getBlockReply(),
                blockData = reply.getData();
 
@@ -235,7 +234,7 @@ void FileStore::gotProcessSearchRequest(Message request)
 
 void FileStore::gotProcessSearchReply(Message reply)
 {
-    QPair match;
+    QPair<QString,QByteArray> match;
     QVariantList matchNames = reply.getMatchNames();
     QList<QByteArray> matchIDs;
 
@@ -244,24 +243,21 @@ void FileStore::gotProcessSearchReply(Message reply)
         matchIDs.append(reply.getMatchIDs().mid(i,i+BLOCK_SIZE));
     }
 
-    foreach(Search* search, pendingSearches->values())
+    int searchID = searchIDByKeywords(reply.getSearchReply());
+    
+    if(searchID >= 0 && searchResults->size() < SEARCH_RESULTS_LIMIT && 
+       !searchResults->contains(reply.getOriginID()))
     {
-        if(search->keywords() == reply.getSearchReply())
+        for(int i = 0; i < matchNames.size(); ++i)
         {
-            if(searchResults->size() < SEARCH_RESULTS_LIMIT && 
-               !contains(reply.getOriginID()))
-            {
-                for(int i = 0; i < matchNames.size(); ++i)
-                {
-                    match = QPair(matchNames.at(i).toString(), matchIDs.at(i));
-                    searchResults->insert(reply.getOriginID(), match);
-                }
-            }
-
-            Q_EMIT(refreshSearchMatches());
-            break;
+            match.first = matchNames.at(i).toString();
+            match.second = matchIDs.at(i);
+            searchResults->insert(reply.getOriginID(), match);
         }
+        
+        Q_EMIT(refreshSearchResults());
     }
+
 }
 
 void FileStore::gotPopChime()
@@ -306,7 +302,7 @@ void FileStore::timerEvent(QTimerEvent* event)
     }
     else
     {
-        Q_EMIT(postToInbox(search->message()));
+        Q_EMIT(postToInbox(search->message(), Peer()));
 
         search->incrementBudget();
         if(search->budget() >= SEARCH_BUDGET_LIMIT)
@@ -333,16 +329,18 @@ void FileStore::makeTempdir()
     }
 }
 
-QString FileStore::searchIsPending(QString keywords)
+int FileStore::searchIDByKeywords(QString keywords)
 {
-    foreach(Search search, *pendingSearches)
+    QHash<int,Search*>::iterator i;
+    for(i = pendingSearches->begin(); i != pendingSearches->end(); ++i)
     {
-        if(search.keywords() == keywords)
+        if(i.value()->keywords() == keywords)
         {
-            return true;
+            return i.key();
         }
     }
-    return false;
+
+    return -1;
 }
 
 void FileStore::killSearch(int searchID)
@@ -458,7 +456,9 @@ FileStore::Search::Search(Message* m, int id)
     , nResults(0)
     , searchID(id)
     , keywordString(m->getSearch())
-{}
+{
+    msg->setType(TYPE_SEARCH_REQUEST);
+}
 
 FileStore::Search::~Search()
 {}

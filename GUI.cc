@@ -10,6 +10,7 @@ GUI::GUI(Peerster* p)
     , originslayout(new QVBoxLayout(this))
     , directchatlayout(new QVBoxLayout(this))
     , fileshareview(new QTextEdit(this))
+    , downloadsview(new QTextEdit(this))
     , filesearchview(new QTextEdit(this))
     , groupchatview(new QTextEdit(this))
     , neighborview(new QTextEdit(this))
@@ -177,12 +178,21 @@ void GUI::gotRefreshSharedFiles()
 
 void GUI::gotRefreshDownloadInfo()
 {
-    // TODO
+    downloadsview->clear();
+
+    QString download;
+    foreach(QString filename, downloadInfo->keys())
+    {
+        download = filename + "\t(" +  
+            DownloadStatus::statusString[downloadInfo->value(filename)] + ")";
+        downloadsview->append(download);
+    }   
 }
 
 void GUI::gotRefreshSearchResults()
 {
     // TODO: but make sure search entry is locked while pending...
+    // QByteArray::fromHex((match.second).toLatin1());
 }
 
 void GUI::originSelected(QListWidgetItem* item)

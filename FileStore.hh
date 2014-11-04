@@ -38,17 +38,17 @@ class FileStore : public QObject
         void setSearchResults(QMap< QString,QPair<QString,QByteArray> >*);
 
     signals:
-        void postToInbox(Message);
+        void postToInbox(Message,Peer);
         void refreshSharedFiles();
         void sendDirect(Message,QString);
         void updateDownloadInfo(Download);
         void refreshDownloadInfo();
-        void refreshSearchMatches();
+        void refreshSearchResults();
 
     public slots:
         void gotProcessFilesToShare(QStringList);
         void gotSearchForKeywords(QString);
-        void gotRequestFileFromPeer(QString,QString);
+        void gotRequestFileFromPeer(QString,QPair<QString,QByteArray>);
         void gotProcessBlockRequest(Message);
         void gotProcessBlockReply(Message);
         void gotProcessSearchRequest(Message);
@@ -74,7 +74,7 @@ class FileStore : public QObject
         QDir *tempdir, *downloads;
         QTimer *popTimer, *reapTimer;
         void makeTempdir();
-        bool searchIsPending(QString);
+        int searchIDByKeywords(QString);
         void killSearch(int);
         QStringList getSharedFileNames();
         bool enDequeuePendingDownloadQueue(); // true if head re-queue

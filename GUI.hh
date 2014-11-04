@@ -39,7 +39,7 @@ class GUI : public QDialog
         void createDirectChat(QString,QString);
         void refreshDirectConvo(QString);
         void searchForKeywords(QString);
-        void requestFileFromPeer(QString,QString);
+        void requestFileFromPeer(QString,QPair<QString,QByteArray>);
 
     public slots:
         void gotRefreshGroupConvo();
@@ -62,16 +62,16 @@ class GUI : public QDialog
         Peerster* peerster;
         QMap<QString, quint32>* sharedFileInfo;
         QMap<QString, DownloadStatus::Status>* downloadInfo;
-        QMap<QString, QPair<QString,QByteArray> >* searchResults;
-        QMap< QString, QList<Message> >* directStore;
+        QMap< QString,QPair<QString,QByteArray> >* searchResults;
+        QMap< QString,QList<Message> >* directStore;
         QList<Message>* groupConvo;
         QString ID;
         QGridLayout* mainlayout;
         QVBoxLayout *groupchatlayout, *neighborlayout, 
                     *directchatlayout, *originslayout, 
                     *filesharelayout, *filesearchlayout;
-        QTextEdit *neighborview, *groupchatview, 
-                  *directchatview, *fileshareview, *filesearchview;
+        QTextEdit *neighborview, *groupchatview, *directchatview, 
+                  *fileshareview, *downloadsview, *filesearchview;
         EntryQTextEdit *filesearchentry, *groupchatentry, 
                        *neighborentry, *directchatentry;
         QPushButton *addneighborbutton, *sharefilebutton;

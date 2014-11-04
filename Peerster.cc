@@ -20,6 +20,8 @@ Peerster::Peerster()
         filestore, SLOT(gotProcessFilesToShare(QStringList)));
     connect(gui, SIGNAL(searchForKeywords(QString)),
         filestore, SLOT(gotSearchForKeywords(QString)));
+    connect(gui, SIGNAL(requestFileFromPeer(QString,QPair<QString,QByteArray>)),
+        filestore, SLOT(gotRequestFileFromPeer(QString,QPair<QString,QByteArray>)));
 
     // Socket
     connect(socket, SIGNAL(postToInbox(Message,Peer)), 
@@ -84,15 +86,15 @@ Peerster::Peerster()
         gui, SLOT(gotRefreshDownloadInfo()));
     connect(filestore, SIGNAL(sendDirect(Message,QString)),
         messagestore, SLOT(gotSendDirect(Message,QString)));
-    connect(filestore, SIGNAL(postToInbox(Message)),
-        mailbox, SLOT(gotPostToInbox(Message)));
+    connect(filestore, SIGNAL(postToInbox(Message,Peer)),
+        mailbox, SLOT(gotPostToInbox(Message,Peer)));
     connect(filestore, SIGNAL(refreshSearchResults()),
         gui, SLOT(gotRefreshSearchResults()));
 
 
     qsrand(QTime(0,0,0).msecsTo(QTime::currentTime()));
     ID = QString::number((qrand() % ID_MAX) + 1);
-    qDebug() << "Instance ID: "<< ID; 
+    qDebug() << "Instance ID: "<< ID;
 
     myPortMin = 32718 + (getuid() % 4096)*4;
     myPortMax = myPortMin + 3;

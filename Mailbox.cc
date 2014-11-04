@@ -190,20 +190,33 @@ Peer Mailbox::pickRandomPeer()
 
 void Mailbox::forwardSearchRequest(Message request)
 {
+    Peer neighbor;
+
     int budget = request.getBudget() - 1; // -1 for self
-    int budgetDeficit = budget >= neighbors->size() ?
+    
+    int budgetPerNeighbor = qFloor(budget / neighbors->size());
+    
+    int remainder = budget % neighbors->size();
+
+    int sendCount = budget >= neighbors->size() ?
                         neighbors->size() : 
-                        budget % neighbors->size(); // this isn't right.
-                        // each msg needs it's respective budget set 
+                        remainder;
 
-    request.setBudget(budget - budgetDeficit); 
-
-    if(budgetDeficit >= neighbors.size());
-
-
-    for(int i = 0; i < budgetDeficit; i++)
+    for(int i = 0; i < sendCount; i++)
     {   
-        Q_EMIT(sendMessage(request, pickRandomPeer()));
+        neighbor = pickRandomPeer();
+        request.setBudget(budgetPerNeighbor);
+
+        if(i < remainder)
+        {
+            request.setBudget(budgetPerNeighbor + 1);
+        }
+
+        Q_EMIT(sendMessage(request, neighbor));
+
+        qDebug() << "SENT SEARCH REQUEST FROM " << request.getOriginID()
+                 << " WITH BUDGET " << request.getBudget() << " TO "
+                 << neighbor.toString();
     }
 }
 

@@ -85,6 +85,16 @@ namespace DownloadStatus
         FAILED      = 4,
         NONE        = 5
     };
+
+    static const char* statusString[] = 
+    {
+        "INIT",
+        "CONFIRMING",
+        "DOWNLOADING",
+        "COMPLETED",
+        "FAILED",
+        "NONE" 
+    };
 }
 
 #include "GUI.hh"
