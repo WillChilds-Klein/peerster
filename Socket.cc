@@ -60,9 +60,12 @@ void Socket::gotReadyRead()
         if(msg.isWellFormed()) 
         {
             Peer sender = Peer(senderInfo);
+
+            qDebug() <<  "GOT MSG: " << msg.toString() 
+                     << " FROM: " << sender.toString();
+
             Q_EMIT(processNeighbor(sender));
             Q_EMIT(postToInbox(msg, sender));
-            qDebug() << "GOT MSG: " << msg.toString() << " FROM: " << sender.toString();
         }
         else
         {

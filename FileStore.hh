@@ -43,6 +43,8 @@ class FileStore : public QObject
         void sendDirect(Message,QString);
         void refreshDownloadInfo();
         void refreshSearchResults();
+        void startSearch(); // necessary for non-concurrent
+        void endSearch();   // search implementation...
 
     public slots:
         void gotProcessFilesToShare(QStringList);

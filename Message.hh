@@ -16,6 +16,7 @@ class Message : public QVariantMap
         bool isEmptySearchRequest();
         bool isDirectRumor();
         bool isValidBlockReply();
+        bool isValidSearchReply();
         void setType(QString);
         void setChatText(QString);
         void setOriginID(QString);

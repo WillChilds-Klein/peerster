@@ -157,7 +157,7 @@ void GUI::gotRefreshOrigins(QStringList origins)
 }
 
 void GUI::gotRefreshNeighbors(QList<Peer> neighbors)
-{ // TODO: change input to QStringList
+{ 
     neighborview->clear();
 
     foreach(Peer neighbor, neighbors)
@@ -174,6 +174,7 @@ void GUI::gotRefreshSharedFiles()
     foreach(QString filename, sharedFileInfo->keys())
     {
         entry = filename + "(" + sharedFileInfo->value(filename) + "B)";
+        entry += "\n------------------------------";
         fileshareview->append(filename);
     }
 }
@@ -193,7 +194,6 @@ void GUI::gotRefreshDownloadInfo()
 
 void GUI::gotRefreshSearchResults()
 {
-    // TODO: but make sure search entry is locked while pend ing...
     QString result;
     searchresultlist->clear();
     QMultiHash< QString,QPair<QString,QByteArray> >::iterator i;
@@ -202,6 +202,16 @@ void GUI::gotRefreshSearchResults()
         result = i.value().first + "\t(peer: " + i.key() + ")";
         new QListWidgetItem(result, searchresultlist);
     }
+}
+
+void GUI::gotStartSearch()
+{
+    filesearchentry->setReadOnly(true);
+}
+
+void GUI::gotEndSearch()
+{
+    filesearchentry->setReadOnly(false);
 }
 
 void GUI::originSelected(QListWidgetItem* item)
@@ -221,10 +231,14 @@ void GUI::searchresultSelected(QListWidgetItem* item)
         if(formatted == item->text())
         {
             Q_EMIT(requestFileFromPeer(i.key(), i.value()));
+            item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
             return;
         }
     }
-    qDebug() << "WHOOPS! SELECTED SEARCH RESULT NOT IN TABLE!";
+
+    QString errormsg = "WHOOPS! SELECTED SEARCH RESULT NOT IN TABLE!";
+    new QListWidgetItem(errormsg, searchresultlist);
+    qDebug() << errormsg;
 }
 
 void GUI::gotGroupChatEntered()
@@ -265,8 +279,14 @@ void GUI::gotOpenFileDialog()
 
 void GUI::gotFileSearchEntered()
 {
-    QString keywords = QString(filesearchentry->toPlainText());
+    QStringList keys = searchResults->keys();
+    foreach(QString key, keys)
+    {
+        searchResults->remove(key);
+    }
+    searchresultlist->clear();
 
+    QString keywords = QString(filesearchentry->toPlainText());
     Q_EMIT(searchForKeywords(keywords));
 
     filesearchentry->clear();

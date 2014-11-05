@@ -50,6 +50,8 @@ class GUI : public QDialog
         void gotRefreshSharedFiles();
         void gotRefreshDownloadInfo();
         void gotRefreshSearchResults();
+        void gotStartSearch();
+        void gotEndSearch();
 
     private slots:
         void originSelected(QListWidgetItem*);

@@ -90,6 +90,10 @@ Peerster::Peerster()
         mailbox, SLOT(gotPostToInbox(Message,Peer)));
     connect(filestore, SIGNAL(refreshSearchResults()),
         gui, SLOT(gotRefreshSearchResults()));
+    connect(filestore, SIGNAL(startSearch()),
+        gui, SLOT(gotStartSearch()));
+    connect(filestore, SIGNAL(endSearch()),
+        gui, SLOT(gotEndSearch()));
 
 
     qsrand(QTime(0,0,0).msecsTo(QTime::currentTime()));

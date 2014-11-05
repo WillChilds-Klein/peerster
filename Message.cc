@@ -257,6 +257,11 @@ bool Message::isWellFormed()
         qDebug() << "INVALID BLOCK REPLY!!";
         return false;
     }
+    else if(getType() == TYPE_SEARCH_REPLY && !isValidSearchReply())
+    {
+        qDebug() << "INVALID SEARCH REPLY!!";
+        return false;
+    }
     else if(isStatus || isRumor || isDChat || isBlock || isSearch)
     {
         return true;
@@ -296,6 +301,19 @@ bool Message::isValidBlockReply()
     QByteArray hash = sha.final().toByteArray();
 
     return hash == getBlockReply();
+}
+
+bool Message::isValidSearchReply()
+{
+    bool isSearchReply = (getType() == TYPE_SEARCH_REPLY),
+         consistent = isSearchReply &&
+            ((getMatchNames().size()*HASH_SIZE) == getMatchIDs().size());
+
+    // qDebug() << "MATCHNAMES SIZE: " << QString::number(getMatchNames().size())
+    //          << "HASH SIZE: " << QString::number(BLOCK_SIZE)
+    //          << "MATCHIDS SIZE: " << QString::number(getMatchIDs().size());
+
+    return consistent;
 }
 
 void Message::setType(QString str)

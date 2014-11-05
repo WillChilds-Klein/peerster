@@ -83,6 +83,10 @@ void FileStore::gotProcessFilesToShare(QStringList absfilepaths)
             sharedFiles->append(file);
             sharedFileInfo->insert(file.abspath(), file.size());
         }
+        else
+        {
+            qDebug() << "ALREADY SHARING FILE [" << *i << "] !";
+        }
     }
 
     Q_EMIT(refreshSharedFiles());
@@ -106,12 +110,12 @@ void FileStore::gotSearchForKeywords(QString keywords)
     msg->setBudget(SEARCH_BUDGET_INIT);
 
     int searchID = startTimer(BUDGET_INC_RATE);
-    qDebug() << "SEARCH ID: " << QString::number(searchID);
-
     Search* search = new Search(msg, searchID);
     pendingSearches->insert(searchID, search);
+    Q_EMIT(startSearch());
 
-    qDebug() << "POSTING SEARCH REQUEST TO INBOX: " << msg->toString();
+    qDebug() << "POSTING SEARCH REQUEST TO INBOX: " << msg->toString()
+             << " WITH SEARCHID " << QString::number(searchID);
     Q_EMIT(postToInbox(*msg, Peer()));
 }
 
@@ -252,15 +256,15 @@ void FileStore::gotProcessSearchRequest(Message request)
 
 void FileStore::gotProcessSearchReply(Message reply)
 {
-    qDebug() << "PROCESSING SEARCH REPLY" << reply;
+    qDebug() << "PROCESSING SEARCH REPLY" << reply.toString();
 
-    QPair<QString,QByteArray> match;
     QVariantList matchNames = reply.getMatchNames();
+    QByteArray matchIDArray = reply.getMatchIDs();
     QList<QByteArray> matchIDs;
 
-    for(int i = 0; i < reply.getMatchIDs().size(); i += BLOCK_SIZE)
+    for(int i = 0; i < matchIDArray.size(); i += HASH_SIZE)
     {
-        matchIDs.append(reply.getMatchIDs().mid(i,i+BLOCK_SIZE));
+        matchIDs.append(matchIDArray.mid(i, i+HASH_SIZE));
     }
 
     int searchID = searchIDByKeywords(reply.getSearchReply());
@@ -270,12 +274,14 @@ void FileStore::gotProcessSearchReply(Message reply)
     {
         for(int i = 0; i < matchNames.size(); ++i)
         {
+            QPair<QString,QByteArray> match;
             match.first = matchNames.at(i).toString();
             match.second = matchIDs.at(i);
             searchResults->insert(reply.getOriginID(), match);
 
             qDebug() << "FOUND MATCH: [" << match.first << "," 
-                                         << match.second << "]";
+                                         << QString(match.second.toHex()) 
+                                         << "]";
         }
         
         Q_EMIT(refreshSearchResults());
@@ -366,6 +372,7 @@ void FileStore::killSearch(int searchID)
     {
         killTimer(searchID);
     }
+    Q_EMIT(endSearch());
 }
 
 void FileStore::updateDownloadInfo(Download dl)
