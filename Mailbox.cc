@@ -91,7 +91,8 @@ void Mailbox::gotPostToInbox(Message msg, Peer peer)
     {
         Q_EMIT(processBlockReply(msg));
     }
-    else if(msg.getType() == TYPE_SEARCH_REQUEST)
+    else if(msg.getType() == TYPE_SEARCH_REQUEST && 
+            msg.getOriginID() != ID)
     {
         if(msg.getOriginID() != ID)
         {
@@ -204,7 +205,7 @@ void Mailbox::forwardSearchRequest(Message request)
 
     for(int i = 0; i < sendCount; i++)
     {   
-        neighbor = pickRandomPeer();
+        neighbor = neighbors->at(i);//pickRandomPeer();
         request.setBudget(budgetPerNeighbor);
 
         if(i < remainder)

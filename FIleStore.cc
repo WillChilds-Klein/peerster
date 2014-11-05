@@ -90,6 +90,8 @@ void FileStore::gotProcessFilesToShare(QStringList absfilepaths)
 
 void FileStore::gotSearchForKeywords(QString keywords)
 {
+    qDebug() << "SEARCHING FOR KEYWORS " << keywords;
+
     if(searchIDByKeywords(keywords) >= 0)
     {
         qDebug() << "SEARCH IS ALREADY PENDING!";
@@ -197,20 +199,24 @@ void FileStore::gotProcessBlockReply(Message reply)
 
 void FileStore::gotProcessSearchRequest(Message request)
 {
+    qDebug() << "PROCESSING SEARCH REQUEST: " << request.toString();
+
     QVariantList matches;
     QByteArray matchIDs;
+    QList<File> files;
 
     QStringList keywords = request.getSearch().split(" ");
 
     foreach(QString keyword, keywords)
     {
-        foreach(File file, *sharedFiles)
+        QList<File>::iterator i;
+        for(i = files.begin(); i != files.end(); ++i)
         {
-            if(file.name().contains(keyword, Qt::CaseInsensitive))
+            if(i->name().contains(keyword, Qt::CaseInsensitive))
             {
-                matches.append(file.name());
-                matchIDs.append(file.fileID());
-                qDebug() << "FOUND FILE MATCH " << file.name()
+                matches.append(i->name());
+                matchIDs.append(i->fileID());
+                qDebug() << "FOUND FILE MATCH " << i->name()
                          << " TO QUERY KEYWORD " << keyword;
             }
         }
@@ -218,6 +224,7 @@ void FileStore::gotProcessSearchRequest(Message request)
 
     if(matches.size() > 0)
     {
+        qDebug() << "WE FOUND >= 1 MATCHES!";
         Message reply;
 
         reply.setType(TYPE_SEARCH_REPLY);
@@ -234,6 +241,8 @@ void FileStore::gotProcessSearchRequest(Message request)
 
 void FileStore::gotProcessSearchReply(Message reply)
 {
+    qDebug() << "PROCESSING SEARCH REPLY" << reply;
+
     QPair<QString,QByteArray> match;
     QVariantList matchNames = reply.getMatchNames();
     QList<QByteArray> matchIDs;
@@ -253,6 +262,9 @@ void FileStore::gotProcessSearchReply(Message reply)
             match.first = matchNames.at(i).toString();
             match.second = matchIDs.at(i);
             searchResults->insert(reply.getOriginID(), match);
+
+            qDebug() << "FOUND MATCH: [" << match.first << "," 
+                                         << match.second << "]";
         }
         
         Q_EMIT(refreshSearchResults());
