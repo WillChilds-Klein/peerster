@@ -217,7 +217,7 @@ QByteArray Message::toSerializedQVMap()
     else if(getType() == TYPE_SEARCH_REQUEST)
     {
         map.insert(KEY_ORIGINID, value(KEY_ORIGINID));
-        map.insert(KEY_SEARCH, value(KEY_BUDGET));
+        map.insert(KEY_SEARCH, value(KEY_SEARCH));
         map.insert(KEY_BUDGET, value(KEY_BUDGET));
     }
     else if(getType() == TYPE_SEARCH_REPLY)

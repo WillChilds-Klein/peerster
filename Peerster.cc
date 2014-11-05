@@ -126,6 +126,7 @@ Peerster::Peerster()
     gui->setGroupConvo(groupConvo);
     gui->setDirectStore(directStore);
 
+    mailbox->setID(ID);
     mailbox->setPortInfo(myPortMin, myPortMax, port);
     mailbox->setSelfPeer(self);
 

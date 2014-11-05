@@ -90,7 +90,7 @@ void FileStore::gotProcessFilesToShare(QStringList absfilepaths)
 
 void FileStore::gotSearchForKeywords(QString keywords)
 {
-    qDebug() << "SEARCHING FOR KEYWORS " << keywords;
+    qDebug() << "SEARCHING FOR KEYWORDS " << keywords;
 
     if(searchIDByKeywords(keywords) >= 0)
     {
@@ -106,10 +106,12 @@ void FileStore::gotSearchForKeywords(QString keywords)
     msg->setBudget(SEARCH_BUDGET_INIT);
 
     int searchID = startTimer(BUDGET_INC_RATE);
+    qDebug() << "SEARCH ID: " << QString::number(searchID);
 
     Search* search = new Search(msg, searchID);
-
     pendingSearches->insert(searchID, search);
+
+    qDebug() << "POSTING SEARCH REQUEST TO INBOX: " << msg->toString();
     Q_EMIT(postToInbox(*msg, Peer()));
 }
 
@@ -186,6 +188,7 @@ void FileStore::gotProcessBlockReply(Message reply)
     if(query == NULL)
     {
         qDebug() << "GOT REPLY FOR NON-PENDING OR UNREQUESTED DOWNLOAD";
+        return;
     }
     else if(query->fileObject()->fileID() == blockID && query->needsMetaData())
     {   // got dl confirmation.
@@ -195,6 +198,8 @@ void FileStore::gotProcessBlockReply(Message reply)
     {
         query->addBlockData(blockID, blockData);
     }
+
+    updateDownloadInfo(*query);
 }
 
 void FileStore::gotProcessSearchRequest(Message request)
@@ -203,15 +208,21 @@ void FileStore::gotProcessSearchRequest(Message request)
 
     QVariantList matches;
     QByteArray matchIDs;
-    QList<File> files;
+    QList<File> files = *sharedFiles;
 
-    QStringList keywords = request.getSearch().split(" ");
+    QStringList keywords = request.getSearch().contains(" ") ? 
+                           request.getSearch().split(" ") :
+                           QStringList(request.getSearch());
+    qDebug() << "KEYWORDS LENGTH: " << QString::number(keywords.size())
+             << "SHAREDFILES LENGTH: " << QString::number(files.size());
 
     foreach(QString keyword, keywords)
     {
         QList<File>::iterator i;
         for(i = files.begin(); i != files.end(); ++i)
         {
+            qDebug() << "CURR KEYWORD: " << keyword
+                     << "CURR FILENAME: " << i->name() << "\n";
             if(i->name().contains(keyword, Qt::CaseInsensitive))
             {
                 matches.append(i->name());
@@ -291,12 +302,6 @@ void FileStore::gotReapChime()
     pendingDownloads->reap();
 }
 
-void FileStore::gotUpdateDownloadInfo(Download dl)
-{
-    downloadInfo->insert(dl.fileObject()->abspath(), dl.status());
-    Q_EMIT(refreshDownloadInfo());
-}
-
 void FileStore::timerEvent(QTimerEvent* event)
 {
     int searchID = event->timerId();
@@ -363,6 +368,12 @@ void FileStore::killSearch(int searchID)
     }
 }
 
+void FileStore::updateDownloadInfo(Download dl)
+{
+    downloadInfo->insert(dl.fileObject()->abspath(), dl.status());
+    Q_EMIT(refreshDownloadInfo());
+}
+
 QStringList FileStore::getSharedFileNames()
 {
     QStringList names;
@@ -408,7 +419,6 @@ bool FileStore::enDequeuePendingDownloadQueue()
         head->begin();
         head->touch(fileID);
 
-        Q_EMIT(updateDownloadInfo(*head));
         qDebug() << "SENT INITIAL METADATA REQUEST: " 
                  << request.toString();
     }
@@ -426,6 +436,8 @@ bool FileStore::enDequeuePendingDownloadQueue()
                      << " TO " << request.getOriginID();
         }
     }
+
+    updateDownloadInfo(*head);
 
     if(head->isAlive())
     {

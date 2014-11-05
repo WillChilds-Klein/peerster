@@ -31,6 +31,11 @@ Mailbox::Mailbox(Peerster* p)
 Mailbox::~Mailbox()
 {}
 
+void Mailbox::setID(QString id)
+{
+    ID = id;
+}
+
 void Mailbox::setPortInfo(quint32 min, quint32 max, quint32 p)
 {
     myPortMin = min;
@@ -91,8 +96,7 @@ void Mailbox::gotPostToInbox(Message msg, Peer peer)
     {
         Q_EMIT(processBlockReply(msg));
     }
-    else if(msg.getType() == TYPE_SEARCH_REQUEST && 
-            msg.getOriginID() != ID)
+    else if(msg.getType() == TYPE_SEARCH_REQUEST)
     {
         if(msg.getOriginID() != ID)
         {
@@ -194,6 +198,11 @@ void Mailbox::forwardSearchRequest(Message request)
     Peer neighbor;
 
     int budget = request.getBudget() - 1; // -1 for self
+    if(budget < 1)
+    {
+        qDebug() << "NO MORE BUDGET!!";
+        return;
+    }
     
     int budgetPerNeighbor = qFloor(budget / neighbors->size());
     
@@ -202,6 +211,12 @@ void Mailbox::forwardSearchRequest(Message request)
     int sendCount = budget >= neighbors->size() ?
                         neighbors->size() : 
                         remainder;
+
+    qDebug() << "\nFORWARD SEARCH REQUEST: " << request.toString();
+    qDebug() << "BUDGET TAKING ONE FOR SELF: " << QString::number(budget);
+    qDebug() << "BUDGET PER NEIGHBOR: " << QString::number(budgetPerNeighbor);
+    qDebug() << "REMAINDER: " << QString::number(remainder);
+    qDebug() << "SEND COUNT: " << QString::number(sendCount);
 
     for(int i = 0; i < sendCount; i++)
     {   
@@ -213,11 +228,13 @@ void Mailbox::forwardSearchRequest(Message request)
             request.setBudget(budgetPerNeighbor + 1);
         }
 
-        Q_EMIT(sendMessage(request, neighbor));
+        if(request.getBudget() >= 1)
+        {
+            Q_EMIT(sendMessage(request, neighbor));
 
-        qDebug() << "SENT SEARCH REQUEST FROM " << request.getOriginID()
-                 << " WITH BUDGET " << request.getBudget() << " TO "
-                 << neighbor.toString();
+            qDebug() << "SENT SEARCH REQUEST " << request.toString()
+                     << " TO " << neighbor.toString();
+        }
     }
 }
 

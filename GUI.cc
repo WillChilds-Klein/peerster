@@ -39,7 +39,7 @@ GUI::GUI(Peerster* p)
         this, SLOT(originSelected(QListWidgetItem*)));
     connect(filesearchentry, SIGNAL(returnPressed()),
         this, SLOT(gotFileSearchEntered()));
-    connect(searchresultlist, SIGNAL(itemClicked(QListWidgetItem*)),
+    connect(searchresultlist, SIGNAL(itemDoubleClicked(QListWidgetItem*)),
         this, SLOT(searchresultSelected(QListWidgetItem*)));
     
     createFileShareLayout();

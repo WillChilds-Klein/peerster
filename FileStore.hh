@@ -10,7 +10,7 @@
 
 #define BLOCK_HOP_LIMIT (10)
 #define SEARCH_BUDGET_INIT (8)
-#define SEARCH_BUDGET_LIMIT (16)
+#define SEARCH_BUDGET_LIMIT (12)
 #define SEARCH_RESULTS_LIMIT (10)
 #define BUDGET_INCREMENT (2)
 #define BUDGET_INC_RATE (2000)      // 2s in ms
@@ -41,7 +41,6 @@ class FileStore : public QObject
         void postToInbox(Message,Peer);
         void refreshSharedFiles();
         void sendDirect(Message,QString);
-        void updateDownloadInfo(Download);
         void refreshDownloadInfo();
         void refreshSearchResults();
 
@@ -57,7 +56,6 @@ class FileStore : public QObject
     private slots:
         void gotPopChime();
         void gotReapChime();
-        void gotUpdateDownloadInfo(Download);
 
     protected:
         void timerEvent(QTimerEvent*);
@@ -75,8 +73,9 @@ class FileStore : public QObject
         QTimer *popTimer, *reapTimer;
         void makeTempdir();
         int searchIDByKeywords(QString);
-        void killSearch(int);
         QStringList getSharedFileNames();
+        void killSearch(int);
+        void updateDownloadInfo(Download);
         bool enDequeuePendingDownloadQueue(); // true if head re-queue
         void cyclePendingDownloadQueue();
 };
