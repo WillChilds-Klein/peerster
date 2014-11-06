@@ -205,11 +205,11 @@ Further Work
 
 Miscellaneous
 -------------
+### Opinion ###
+
 ### Coin-Hedge Profile ###
 
 ### Volatility Profile ###
-
-### Opinion ###
 
 ### Passivity & Monitoring ###
 
