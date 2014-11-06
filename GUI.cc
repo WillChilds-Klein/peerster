@@ -212,6 +212,8 @@ void GUI::gotStartSearch()
 void GUI::gotEndSearch()
 {
     filesearchentry->setReadOnly(false);
+    QListWidgetItem* item = new QListWidgetItem("SEARCH COMPLETED", searchresultlist);
+    item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
 }
 
 void GUI::originSelected(QListWidgetItem* item)

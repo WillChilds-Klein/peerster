@@ -198,10 +198,16 @@ Further Work
   * this eliminates the possibility of a node falsifying its voting history.
 
 ### Rapid Liquidator ###
-  * Because profitability is often correlated with price, it would be advantageous for nodes to automatically liquidate coins they mine to BTC or USD 
+  * Because profitability is often correlated with price, it would be
+    advantageous for nodes to automatically liquidate coins they mine to BTC or
+    USD
   * node defines rules of when to liquidate
-  * logical time would be immediately liquidating entire chunk of mined coins the second GroupThink moves away from a coin
-  * could potentially set up the liquidator to flow mined capital through alt-coins as they are recommended/mined. in this case, Rapid Liquidator would be transferring currency through exchanges per the mining recommendations of GroupThink.
+  * logical time would be immediately liquidating entire chunk of mined coins
+    the second GroupThink moves away from a coin
+  * could potentially set up the liquidator to flow mined capital through alt-
+    coins as they are recommended/mined. in this case, Rapid Liquidator would be
+    transferring currency through exchanges per the mining recommendations of
+    GroupThink.
 
 Miscellaneous
 -------------

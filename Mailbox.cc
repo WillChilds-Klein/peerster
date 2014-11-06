@@ -75,7 +75,8 @@ void Mailbox::gotPostToInbox(Message msg, Peer peer)
 {
     QString msgOrigin = msg.getOriginID();
 
-    if(msg.getType() == TYPE_RUMOR_CHAT || msg.getType() == TYPE_RUMOR_ROUTE)
+    if((msg.getType() == TYPE_RUMOR_CHAT || msg.getType() == TYPE_RUMOR_ROUTE) && 
+        msg.getOriginID() != ID)
     {
         Q_EMIT(processRumorRoute(msg, peer));
         Q_EMIT(processRumor(msg, peer));

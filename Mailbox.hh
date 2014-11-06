@@ -6,8 +6,8 @@
 #define CMD_PRINT_NEIGHBORS ("PRINT_NEIGHBORS")
 #define CMD_PRINT_TABLE ("PRINT_TABLE")
 
-#define STATUS_CLOCK_RATE (5000) // 5s in ms
-#define ROUTE_CLOCK_RATE (60000) // 60s in ms
+#define STATUS_CLOCK_RATE (15000)   // 15s in ms
+#define ROUTE_CLOCK_RATE (60000)    // 60s in ms
 
 #include "Peerster.hh"
 

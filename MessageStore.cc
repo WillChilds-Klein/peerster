@@ -127,7 +127,7 @@ void MessageStore::gotProcessRumor(Message msg, Peer peer)
     }
     else
     {
-        qDebug() << "GOT OLD RUMOR:" << msg.toString();
+        // qDebug() << "GOT OLD RUMOR:" << msg.toString();
     }
 }
 
@@ -359,7 +359,8 @@ void MessageStore::addRumor(Message msg)
     {
         rumorStore->insert(origin, QList<Message>());
         Q_EMIT(refreshOrigins(rumorStore->keys()));
-        Q_EMIT(broadcast(routeRumor()));
+        // Q_EMIT(broadcast(routeRumor()));
+        Q_EMIT(sendDirect(routeRumor(), origin));
     }
 
     QList<Message> originRumors = rumorStore->value(origin);
@@ -412,7 +413,9 @@ QList<Message> MessageStore::getMessagesInRange(QString origin,
         curr = *i;
         currSeqNo = curr.getSeqNo();
         if(currSeqNo >= firstSeqNo && currSeqNo <= lastSeqNo)
+        {
             ret.append(curr);
+        }
     }
 
     return ret;

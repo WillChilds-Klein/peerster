@@ -69,7 +69,8 @@ void Socket::gotReadyRead()
         }
         else
         {
-            qDebug() << "GOT BAD MSG " << msg.toString() << " FROM: " << senderInfo;
+            qDebug() << "GOT BAD MSG " << msg.toString() 
+                     << " FROM: " << senderInfo;
         }
     }
 }
@@ -77,8 +78,12 @@ void Socket::gotReadyRead()
 void Socket::gotSendMessage(Message msg, Peer peer)
 {
     QString type = msg.getType();
-    if(!noforward || (type == TYPE_RUMOR_ROUTE))
+    if((!noforward || (type == TYPE_RUMOR_ROUTE)) && 
+        msg.getType() != TYPE_NONE)
     {
+        qDebug() << "SENDING MSG " << msg.toString() 
+                 << " TO " << peer.toString();
+
         QByteArray msgArr = msg.toSerializedQVMap();
 
         writeDatagram(msgArr, peer.getAddress(), peer.getPort());
